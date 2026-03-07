@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openai-sdk-demo
+  labels:
+    app: openai-sdk-demo
+spec:
+  replicas: {{ .Values.agent.replicas }}
+  selector:
+    matchLabels:
+      app: openai-sdk-demo
+  template:
+    metadata:
+      labels:
+        app: openai-sdk-demo
+    spec:
+      containers:
+        - name: agent
+          image: "{{ .Values.agent.image.repository }}:{{ .Values.agent.image.tag }}"
+          imagePullPolicy: {{ .Values.agent.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.agent.port }}
+          envFrom:
+            - secretRef:
+                name: agent-secrets
+          volumeMounts:
+            - name: agent-config
+              mountPath: "/app/config.yaml"
+              subPath: config.yaml
+              readOnly: true
+            - name: custom-ca
+              mountPath: "/etc/ssl/certs/custom"
+              readOnly: true
+          env:
+            - name: BACKEND_CORS_ORIGINS
+              value: {{ .Values.agent.corsOrigins | quote }}
+            - name: OTEL_ENABLED
+              value: "true"
+            - name: OTEL_CONSOLE_EXPORT
+              value: "true"
+            - name: OTEL_NO_FILE_EXPORT
+              value: "true"
+            - name: OTEL_SERVICE_NAME
+              value: "openai-sdk-demo-tracer"
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: grpc
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "127.0.0.1:4317"
+            - name: OTEL_EXPORTER_OTLP_INSECURE
+              value: "true"
+            - name: OTEL_LOGS_EXPORTER
+              value: "none"
+            - name: OTEL_METRICS_EXPORTER
+              value: "none"
+            - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
+              value: "false"
+            - name: OTEL_PYTHON_DISABLED_INSTRUMENTATIONS
+              value: "system_metrics"
+            - name: OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
+              value: ""
+            - name: OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
+              value: ""
+            - name: OTEL_EXPORTER_OTLP_LOGS_PROTOCOL
+              value: "none"
+            - name: OTEL_EXPORTER_OTLP_METRICS_PROTOCOL
+              value: "none"
+            - name: OTEL_LOG_LEVEL
+              value: "info"
+            - name: REQUESTS_CA_BUNDLE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            - name: SSL_CERT_FILE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+      volumes:
+        - name: agent-config
+          secret:
+            secretName: agent-secrets
+            items:
+              - key: config.yaml
+                path: config.yaml
+        - name: custom-ca
+          configMap:
+            name: acuvity-ca-bundle
+            optional: false
+
+

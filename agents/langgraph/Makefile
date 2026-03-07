@@ -54,7 +54,7 @@ containers: demo-container
 deploy/k8s/charts/%: .charts-clean %-chart-lint
 	helm package deploy/k8s/charts/$* -d deploy/k8s/charts/repo --version $(PACKAGES_VERSION) --app-version $(CONTAINER_TAG)
 
-.PHONY: charts lint
+.PHONY: charts lint deptry
 charts: $(filter-out deploy/k8s/charts/repo%, $(patsubst %/,%, $(filter %/, $(wildcard deploy/k8s/charts/*/))))
 
 PYLINT_SOURCES := $(patsubst src/agent/%,%,$(shell find src/agent -name '*.py' -not -path 'src/agent/.venv/*'))
@@ -63,5 +63,10 @@ lint:
 	@uv run --directory src/agent --with pylint pylint $(PYLINT_SOURCES)
 	@uv run --directory src/agent --with pyright pyright
 	@cd src/ui/chat_ui && npm install && npm run lint
+
+PYTHON_PROJECTS := src/agent
+
+deptry:
+	@$(foreach project,$(PYTHON_PROJECTS),uv run --directory $(project) --with deptry deptry .;)
 
 push: demo-container-push
