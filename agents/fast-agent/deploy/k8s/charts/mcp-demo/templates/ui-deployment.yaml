@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-ui
+  labels:
+    app: {{ .Release.Name }}-ui
+    type: ui
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-ui
+      type: ui
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-ui
+        type: ui
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.ui.repository }}:{{ .Values.image.ui.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.ui.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.ui.port }}
+              protocol: TCP
+          volumeMounts:
+            - name: custom-ca
+              mountPath: "/etc/ssl/certs/custom"
+              readOnly: true
+          env:
+          - name: REACT_APP_API_SERVER_BASE_URL
+            # value: http://localhost:8000/api/v1/chat
+            value: {{ .Values.ui.apiBaseURL | quote }}
+          {{- if .Values.secrets.descope_project_id }}
+          - name: REACT_APP_DESCOPE_PROJECT_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-secrets
+                key: descope_project_id
+          {{- end }}
+          - name: REQUESTS_CA_BUNDLE # python requests module
+            value: /etc/ssl/certs/custom/ca-bundle.crt
+          - name: SSL_CERT_FILE # python httpx module
+            value: /etc/ssl/certs/custom/ca-bundle.crt
+      volumes:
+        - name: custom-ca
+          configMap:
+            name: acuvity-ca-bundle
+            optional: false

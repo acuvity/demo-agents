@@ -34,14 +34,14 @@ default: charts containers
 demo-container: demo-agent-container demo-ui-container
 
 demo-agent-container:
-	@cd src/agent && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/google-adk-demo-agent:${CONTAINER_TAG} .
+	@cd src/agent && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/openai-sdk-demo-agent:${CONTAINER_TAG} .
 
 demo-ui-container:
-	@cd src/ui && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/google-adk-demo-ui:${CONTAINER_TAG} .
+	@cd src/ui && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/openai-sdk-demo-ui:${CONTAINER_TAG} .
 
 demo-container-push:
-	@cd src/agent && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/google-adk-demo-agent:$(CONTAINER_TAG) .
-	@cd src/ui && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/google-adk-demo-ui:$(CONTAINER_TAG) .
+	@cd src/agent && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/openai-sdk-demo-agent:$(CONTAINER_TAG) .
+	@cd src/ui && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/openai-sdk-demo-ui:$(CONTAINER_TAG) .
 
 containers: demo-container
 
@@ -62,7 +62,7 @@ PYLINT_SOURCES := $(patsubst src/agent/%,%,$(shell find src/agent -name '*.py' -
 lint:
 	@uv run --directory src/agent --with pylint pylint $(PYLINT_SOURCES)
 	@uv run --directory src/agent --with pyright pyright
-	@cd src/ui/chat_ui && npm install &&npm run lint
+	@cd src/ui/chat_ui && npm install && npm run lint
 
 PYTHON_PROJECTS := src/agent
 

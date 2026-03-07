@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: openai-sdk-demo-svc
+spec:
+  selector:
+    app: openai-sdk-demo
+  ports:
+    - port: 80
+      targetPort: {{ .Values.agent.port }}
+  type:  {{ .Values.agent.serviceType }}

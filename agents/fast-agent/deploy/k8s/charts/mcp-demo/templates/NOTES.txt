@@ -1,0 +1,8 @@
+If you have left the services at their default ClusterIP setting, then you need to port-forward to the Kubernetes pods to access the application.
+
+You can do so with the following commands (and keep them running in separate terminals):
+
+kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-ui {{ .Values.service.ui.port }}
+kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-agent {{ .Values.service.agent.port }}
+
+Then visit the application at http://localhost:{{ .Values.service.ui.port }}/ in your browser.
