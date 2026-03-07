@@ -1,0 +1,43 @@
+agent:
+  image:
+    repository: acuvity/google-adk-demo-agent
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 8300
+  serviceType: ClusterIP
+  corsOrigins: "*"
+  config:
+    agentModel: "anthropic/claude-sonnet-4-6"
+  mcpServers:
+    - name: mcp-server-sequential-thinking
+      description: Sequential thinking MCP server
+      url: "http://mcp-server-sequential-thinking:8000/sse"
+    - name: mcp-server-brave-search
+      description: Brave search MCP server
+      url: "http://mcp-server-brave-search:8000/sse"
+  otel:
+    enabled: true
+    serviceName: "google-adk-demo-tracer"
+    sendSpans: true
+    consoleExport: true
+    noFileExport: true
+    file: "trace.log"
+    otlpEndpoint: "http://127.0.0.1:4317"
+    insecure: true
+
+ui:
+  image:
+    repository: acuvity/google-adk-demo-ui
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 5174
+  serviceType: ClusterIP
+  backendUrl: "http://google-adk-demo-svc"
+
+secrets:
+  anthropicApiKey: ""
+  braveApiKey: ""
+
+
