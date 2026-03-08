@@ -1,0 +1,22 @@
+app_name: g-adk-demo
+title: Google ADK
+cors_origins: "*"
+instruction: You are a research assistant that can search the web and read from a database
+tools:
+mcp_servers:
+  # - name: mcp-brave-search
+  #   description: Search the web for information
+  #   url: http://mcp-server-brave-search:8000/sse
+  - name: mcp-server-sequential-thinking
+    description: Read from a database
+    url: http://mcp-server-sequential-thinking:8000/sse
+otel:
+  enabled: true
+  service_name: g-adk-demo-tracer
+  send_spans: true
+  console_export: true
+  no_file_export: true
+  file: trace.log
+  otlp_endpoint: http://127.0.0.1:4317
+  insecure: true
+
