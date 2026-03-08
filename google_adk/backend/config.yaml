@@ -1,5 +1,5 @@
-app_name: research_assistant
-title: Research Assistant
+app_name: g-adk
+title: Google ADK
 cors_origins: "*"
 instruction: You are a research assistant that can search the web and read from a database
 tools:
@@ -12,7 +12,7 @@ mcp_servers:
     url: http://localhost:8001/sse
 otel:
   enabled: true
-  service_name: research_assistant_tracer
+  service_name: g-adk_tracer
   send_spans: true
   console_export: true
   no_file_export: false
@@ -26,10 +26,4 @@ otel:
     - name: MCPInstrumentor
     - name: GoogleADKInstrumentor
     - name: LiteLLMInstrumentor
-user_id: default_user
-api_key: 
-  - name: brave_api_key
-    value: YOUR_BRAVE_API_KEY
-  - name: ANTHROPIC_API_KEY
-    value: YOUR_ANTHROPIC_API_KEY
-  
+
