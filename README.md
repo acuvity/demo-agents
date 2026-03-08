@@ -1,2 +1,0 @@
-# demo-agents
-Demo Agents

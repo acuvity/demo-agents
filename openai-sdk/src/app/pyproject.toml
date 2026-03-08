@@ -1,0 +1,24 @@
+[project]
+name = "mcp-agent"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "httpx",
+    "pyyaml",
+    "openai",
+    "openai-agents",
+    "litellm",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp",
+    "opentelemetry-instrumentation-fastapi",
+    "opentelemetry-instrumentation-httpx",
+    "opentelemetry-instrumentation-threading",
+    "opentelemetry-instrumentation-aiohttp-client",
+    "openinference-instrumentation-mcp",
+]
+
+[tool.uv]
+package = false
