@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-agent
+  labels:
+    app: {{ .Release.Name }}-agent
+    type: mcp-client
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-agent
+      type: mcp-client
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-agent
+        type: mcp-client
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: db-migrations
+          image: "{{ .Values.image.agent.repository }}:{{ .Values.image.agent.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.agent.pullPolicy }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              alembic upgrade head
+              if [ $? -ne 0 ]; then
+                echo "Database migrations failed. Exiting."
+                exit 1
+              fi
+              echo "Database migrations completed successfully."
+          env:
+          - name: POSTGRES_SERVER
+            value: "{{ .Release.Name }}-postgres"
+          - name: POSTGRES_USER
+            value: postgres
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-secrets
+                key: postgres_password
+          - name: POSTGRES_DB
+            value: chat_db
+          - name: ENVIRONMENT
+            value: "development"
+      containers:
+        - name: agent
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.agent.repository }}:{{ .Values.image.agent.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.agent.pullPolicy }}
+          command:
+            - /bin/bash
+            - -c
+            - "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.agent.port }}
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /config/fastagent.config.yaml
+              subPath: fastagent.config.yaml
+              readOnly: true
+            - name: custom-ca
+              mountPath: "/etc/ssl/certs/custom"
+              readOnly: true
+          env:
+          - name: POSTGRES_SERVER
+            value: {{ .Release.Name }}-postgres
+          - name: POSTGRES_USER
+            value: postgres
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-secrets
+                key: postgres_password
+          - name: POSTGRES_DB
+            value: chat_db
+          - name: ENVIRONMENT
+            value: "development"
+          - name: ACCESS_TOKEN_SECURITY_KEY
+            value: {{ randAlphaNum 16 | quote}}
+          - name: ACCESS_TOKEN_EXPIRE_MINUTES
+            value: "10080"
+          - name: BACKEND_CORS_ORIGINS
+            value: {{ .Values.agent.corsOrigins | quote }}
+          - name: ANTHROPIC_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-secrets
+                key: anthropic_key
+          - name: AGENT_CONFIG_PATH
+            value: "/config/fastagent.config.yaml"
+          # OpenTelemetry environment variables to report to Acuvity Apex Agent
+          - name: OTEL_ENABLED
+            value: "true"
+          - name: OTEL_NO_FILE_EXPORT
+            value: "true"
+          - name: OTEL_SERVICE_NAME
+            value: "agent"
+          - name: OTEL_EXPORTER_OTLP_PROTOCOL
+            value: grpc
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: "127.0.0.1:4317"
+          - name: OTEL_EXPORTER_OTLP_INSECURE
+            value: "true"
+          - name: REQUESTS_CA_BUNDLE # python requests module
+            value: /etc/ssl/certs/custom/ca-bundle.crt
+          - name: SSL_CERT_FILE # python httpx module
+            value: /etc/ssl/certs/custom/ca-bundle.crt
+          {{- if .Values.secrets.descope_project_id }}
+          - name: DESCOPE_PROJECT_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-secrets
+                key: descope_project_id
+          {{- end }}
+      volumes:
+        - name: config
+          secret:
+            secretName: {{ .Release.Name }}-secrets
+        - name: custom-ca
+          configMap:
+            name: acuvity-ca-bundle
+            optional: false
