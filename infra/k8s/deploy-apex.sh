@@ -2,10 +2,11 @@
 
 set -e
 
-cd acuvity
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APEX_DIR="$SCRIPT_DIR/apex-agent"
 
 # Use prod values file
-cp apex-agent/apex-agent-values-template.yaml apex-agent/apex-agent-values.yaml
+cp "$APEX_DIR/apex-agent-values-template.yaml" "$APEX_DIR/apex-agent-values.yaml"
 
 IMAGE_TAG="stable"
 HELM_TAG="1.0.0"
@@ -26,7 +27,7 @@ while getopts "ai:j:t:" opt; do
       [ -f "$ACUVITY_REPO/backend/dev/data/apex-agent-apptoken" ] || { echo "Missing acumux app agent token at: $ACUVITY_REPO/backend/dev/data/apex-agent-apptoken! Are you sure you are running acumux?"; exit 1; }
 
       MODE="acumux"
-      cp apex-agent/apex-agent-acumux-values.yaml apex-agent/apex-agent-values.yaml
+      cp "$APEX_DIR/apex-agent-acumux-values.yaml" "$APEX_DIR/apex-agent-values.yaml"
 
       # TODO: we should actually use the helm chart and the image from the repo, but that will require some more work, and is not what most people will want anyways
       # switch to the latest development image and helm chart
@@ -35,8 +36,8 @@ while getopts "ai:j:t:" opt; do
 
       # use the acumux generated token
       TOKEN=$(cat "$ACUVITY_REPO/backend/dev/data/apex-agent-apptoken")
-      cp apex-agent/acuvity-apptoken-template.yaml apex-agent/acuvity-apptoken.yaml
-      sed -i.bak "s|YOUR_APP_TOKEN_HERE|$TOKEN|" apex-agent/acuvity-apptoken.yaml && rm -f apex-agent/acuvity-apptoken.yaml.bak
+      cp "$APEX_DIR/acuvity-apptoken-template.yaml" "$APEX_DIR/acuvity-apptoken.yaml"
+      sed -i.bak "s|YOUR_APP_TOKEN_HERE|$TOKEN|" "$APEX_DIR/acuvity-apptoken.yaml" && rm -f "$APEX_DIR/acuvity-apptoken.yaml.bak"
       ;;
     i)
       IMAGE_TAG="$OPTARG"
@@ -46,8 +47,8 @@ while getopts "ai:j:t:" opt; do
       ;;
     t)
       TOKEN=$OPTARG
-      cp apex-agent/acuvity-apptoken-template.yaml apex-agent/acuvity-apptoken.yaml
-      sed -i.bak "s|YOUR_APP_TOKEN_HERE|$TOKEN|" apex-agent/acuvity-apptoken.yaml && rm -f apex-agent/acuvity-apptoken.yaml.bak
+      cp "$APEX_DIR/acuvity-apptoken-template.yaml" "$APEX_DIR/acuvity-apptoken.yaml"
+      sed -i.bak "s|YOUR_APP_TOKEN_HERE|$TOKEN|" "$APEX_DIR/acuvity-apptoken.yaml" && rm -f "$APEX_DIR/acuvity-apptoken.yaml.bak"
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -57,11 +58,11 @@ while getopts "ai:j:t:" opt; do
 done
 
 # replace the image tag
-sed -i.bak "s|tag: \".*\"|tag: \"$IMAGE_TAG\"|" apex-agent/apex-agent-values.yaml && rm -f apex-agent/apex-agent-values.yaml.bak
+sed -i.bak "s|tag: \".*\"|tag: \"$IMAGE_TAG\"|" "$APEX_DIR/apex-agent-values.yaml" && rm -f "$APEX_DIR/apex-agent-values.yaml.bak"
 
-kubectl -n mcp-demo get pods || { echo "no mcp-demo namespace found"; exit 1; }
+kubectl -n g-adk-demo get pods || { echo "no g-adk-demo namespace found"; exit 1; }
 
-[ -f apex-agent/acuvity-apptoken.yaml ] || { echo "missing token file."; exit 1; }
+[ -f "$APEX_DIR/acuvity-apptoken.yaml" ] || { echo "missing token file."; exit 1; }
 
 echo "----------------------------------------------------"
 echo "Removing cert-manager and acuvity namespaces..."
@@ -73,7 +74,7 @@ kubectl delete namespace acuvity       || { echo "no acuvity namespace found"; }
 echo "----------------------------------------------------"
 echo "Creating acuvity namespace..."
 echo "----------------------------------------------------"
-kubectl apply -f apex-agent/acuvity-namespace.yaml
+kubectl apply -f "$APEX_DIR/acuvity-namespace.yaml"
 
 echo "----------------------------------------------------"
 echo "Installing cert manager..."
@@ -87,7 +88,7 @@ echo "Creating trust-manager for acuvity namespace..."
 echo "----------------------------------------------------"
 helm upgrade trust-manager jetstack/trust-manager   --install   --namespace cert-manager   --set app.trust.namespace=acuvity   --wait
 
-kubectl apply -f apex-agent/cert-manager-resources.yaml
+kubectl apply -f "$APEX_DIR/cert-manager-resources.yaml"
 
 if [ "$MODE" == "acumux" ]; then
     echo "----------------------------------------------------"
@@ -98,15 +99,15 @@ if [ "$MODE" == "acumux" ]; then
 	echo "----------------------------------------------------"
     echo "Add reachability in k8s to API gateway for Apex..."
     echo "----------------------------------------------------"
-	kubectl -n acuvity apply -f apex-agent/apex-agent-acumux-svc.yaml
+	kubectl -n acuvity apply -f "$APEX_DIR/apex-agent-acumux-svc.yaml"
 fi
 
 echo "----------------------------------------------------"
 echo "Creating app token secret..."
 echo "----------------------------------------------------"
-kubectl apply -f apex-agent/acuvity-apptoken.yaml
+kubectl apply -f "$APEX_DIR/acuvity-apptoken.yaml"
 
 echo "----------------------------------------------------"
 echo "Install Apex..."
 echo "----------------------------------------------------"
-helm upgrade apex oci://docker.io/acuvity/apex-agent --version "$HELM_TAG" --install --create-namespace --namespace acuvity -f apex-agent/apex-agent-values.yaml
+helm upgrade apex oci://docker.io/acuvity/apex-agent --version "$HELM_TAG" --install --create-namespace --namespace acuvity -f "$APEX_DIR/apex-agent-values.yaml"
