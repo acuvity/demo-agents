@@ -1,0 +1,51 @@
+# ─────────────────────────────────────────────
+#  MCP Agent Configuration
+# ─────────────────────────────────────────────
+
+# ── 1. LLM configuration ──────────────────────
+llm:
+  # provider: openai | claude
+  provider: ${LLM_PROVIDER}         # or set directly as "openai" or "claude"
+
+  openai:
+    model: gpt-4o-mini
+    api_key: ${OPENAI_API_KEY}      # or set directly as a string
+    base_url: ~                     # null = default OpenAI endpoint
+
+  claude:
+    model: claude-sonnet-4-20250514
+    api_key: ${ANTHROPIC_API_KEY}   # or set directly as a string
+
+# ── 2. Remote MCP servers (Streamable HTTP) ───
+mcp_servers:
+  # - name: example-mcp
+  #   url: http://localhost:8000/mcp
+  #   headers:
+  #     Authorization: "Bearer ${MCP_TOKEN}"
+  #   timeout: 30           # seconds
+  #   cache_tools: false
+
+  # Add more servers as needed:
+  # - name: another-mcp
+  #   url: https://my-mcp.example.com/mcp
+  #   headers: {}
+  #   timeout: 30
+  #   cache_tools: true
+
+# ── 3. OpenTelemetry exporter ─────────────────
+otel:
+  enabled: true
+  service_name: mcp-agent
+
+  # exporter: otlp_http | otlp_grpc | console
+  exporter: console
+
+  otlp_http:
+    endpoint: http://localhost:4318/v1/traces
+    headers:
+      # api-key: "your-key"
+
+  otlp_grpc:
+    endpoint: http://localhost:4317
+    headers:
+      # api-key: "your-key"
