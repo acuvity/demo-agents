@@ -1,147 +1,168 @@
-# Chatbot Example with Google ADK
+# Google ADK Demo
+
+An agent built with Google Agent Development Kit (ADK).
 
 ## Overview
 
-This is a Google ADK Chatbot Demo that uses the Google Agent Development Kit to create a research assistant with MCP server integration.
+This demo provides a conversational AI Agent with the following capabilities:
+
+- **Web Search** — Query the internet for real-time information via Brave Search
+- **Sequential Thinking** — Advanced reasoning through structured thought processes
+- **Extensible Architecture** — Add custom MCP servers to expand functionality
 
 ## Architecture
 
-In this demo, we have the following components:
+### Frameworks & Libraries
 
-- A **Web Interface** which presents a chat to the user. This is a Vite + React application making calls to the Agent.
-- An **Agent** built with Google ADK using LiteLLM for model flexibility (default: Anthropic Claude).
-- Some **[Secure MCP servers](https://mcp.acuvity.ai)** which provide additional capabilities to the Agent.
+- [Google ADK](https://github.com/google/adk-python) — Google Agent Development Kit for building AI agents
 
-> [!TIP]
-> Add more Secure MCP Servers as needed to make your Chatbot more powerful!
+### Acuvity Secure MCP Servers
 
-> [!NOTE]
-> Understand the benefits of these MCP Secure Server by visiting our [Github mcp-servers-registry repository](https://github.com/acuvity/mcp-servers-registry)
+| Server | Purpose | Resources |
+|--------|---------|-----------|
+| mcp-server-sequential-thinking | Structured reasoning and analysis | [Dockerfile](https://github.com/acuvity/mcp-servers-registry/tree/main/mcp-server-sequential-thinking) · [Container](https://hub.docker.com/r/acuvity/mcp-server-sequential-thinking) |
+| mcp-server-brave-search | Web search capabilities | [Dockerfile](https://github.com/acuvity/mcp-servers-registry/tree/main/mcp-server-brave-search) · [Container](https://hub.docker.com/r/acuvity/mcp-server-brave-search) |
 
-### Framework used:
 
-- [Google ADK](https://github.com/google/adk-python) - Google Agent Development Kit for building AI agents.
-- [LiteLLM](https://github.com/BerriAI/litellm) - Unified interface for multiple LLM providers.
-- [Minibridge](https://github.com/acuvity/minibridge) makes it secure and production ready in the [secure MCP servers](https://mcp.acuvity.ai).
+### API Keys
 
-### Enterprise Ready MCP servers used:
+Obtain the following API keys before proceeding:
 
-- mcp-server-sequential-thinking [Dockerfile](https://github.com/acuvity/mcp-servers-registry/tree/main/mcp-server-sequential-thinking) [Container](https://hub.docker.com/r/acuvity/mcp-server-sequential-thinking)
-- mcp-server-brave-search [Dockerfile](https://github.com/acuvity/mcp-servers-registry/tree/main/mcp-server-brave-search) [Container](https://hub.docker.com/r/acuvity/mcp-server-brave-search)
+| Provider | Environment Variable | Obtain From |
+|----------|---------------------|-------------|
+| Anthropic | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
+| Brave Search | `BRAVE_API_KEY` | [brave.com/search/api](https://brave.com/search/api) |
 
-## Prerequisites
 
-- Python 3.12 or higher
-- [uv](https://github.com/astral-sh/uv) package manager
-- Node.js 22 or higher (for the UI)
-- Docker (for containerized deployment)
-- API keys for your chosen LLM provider (e.g., `ANTHROPIC_API_KEY`)
+## Local Development
 
-## Installation and Setup
+### Agent Backend
 
-### Getting started
-
-Clone the repository:
-
-```bash
-git clone <repository-url>
-cd agents/google_adk
-```
-
-### Running the Agent Locally
-
-1. Install dependencies:
+1. Navigate to the agent directory and install dependencies:
 
 ```bash
 cd src/agent
 uv sync
 ```
 
-2. Create a `.env` file in `src/agent/` with your API keys:
+2. Create a `.env` file with your API credentials:
 
-```
+```bash
+cat > .env << EOF
 ANTHROPIC_API_KEY=your_api_key_here
+EOF
 ```
 
-3. Run the agent:
+3. Start the agent server:
 
 ```bash
 uv run python main.py
 ```
 
-The agent will start on `http://localhost:8300`.
+The agent API will be available at `http://localhost:8300`.
 
-### Running the UI Locally
+### Web UI
 
-1. Install dependencies:
+1. Navigate to the UI directory and install dependencies:
 
 ```bash
 cd src/ui/chat_ui
 npm install
 ```
 
-2. Run the development server:
+2. Start the development server:
 
 ```bash
 npm run dev
 ```
 
-The UI will start on `http://localhost:5174`.
+The web interface will be available at `http://localhost:5174`.
 
-Configure the backend URL via environment variable if needed:
+To connect to a different backend URL:
 
 ```bash
-BACKEND_URL=http://127.0.0.1:8300 npm run dev
+BACKEND_URL=http://your-backend-host:8300 npm run dev
 ```
 
-### Deploying on Kubernetes
+## Container Build
 
-Set your API keys and run the deployment script:
+The project includes a `Makefile` for streamlined container operations.
+
+### Build Containers Locally
 
 ```bash
+# Build both agent and UI containers
+make containers
+```
+
+### Build and Push to Registry
+
+```bash
+# Set your registry (default: acuvity)
+export OCI_REGISTRY=your-registry
+
+# Build and push containers
+make push
+```
+
+### Helm Chart Operations
+
+```bash
+# Lint the Helm chart
+make g-adk-demo-chart-lint
+
+# Package the Helm chart
+make charts
+```
+
+## Kubernetes Deployment
+
+The deployment script handles the complete setup including MCP servers:
+
+```bash
+# Set required environment variables
 export ANTHROPIC_API_KEY=your_anthropic_key
 export BRAVE_API_KEY=your_brave_key
-./deploy/k8s/deploy-app.yaml
+
+# Run the deployment script
+./deploy/k8s/deploy-app.sh
 ```
 
-This script installs the MCP servers and the application in the `g-adk-demo` namespace.
+This script will:
 
-For configuration options, see `deploy/k8s/charts/g-adk-demo/values.yaml`.
+1. Create the `g-adk-demo` namespace
+2. Install the Sequential Thinking MCP server
+3. Install the Brave Search MCP server
+4. Deploy the agent and UI components
+
+### Accessing the Application
+
+Once deployed, forward the UI service to your local machine:
+
+```bash
+kubectl -n g-adk-demo port-forward svc/g-adk-demo-ui-svc 5174:5174
+```
+
+Open your browser and navigate to `http://localhost:5174`.
 
 ## Configuration
 
-The agent is configured via `src/agent/config.yaml`:
+The agent is configured via `src/agent/config.yaml` for local development.
 
-| Field | Description |
-|-------|-------------|
-| `app_name` | Application identifier |
-| `title` | FastAPI title |
-| `cors_origins` | Allowed CORS origins |
-| `instruction` | System instruction for the agent |
-| `mcp_servers` | List of MCP server configurations |
-| `otel` | OpenTelemetry configuration |
+For Kubernetes deployments, configuration is managed through Helm values in `deploy/k8s/charts/g-adk-demo/values.yaml`.
 
-## API Endpoints
+### Custom Deployment
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/send` | POST | Send a message to the agent |
-| `/health` | GET | Health check endpoint |
-
-### Example Request
+Override values during installation:
 
 ```bash
-curl -X POST http://localhost:8300/send \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello, research assistant"}'
+helm install g-adk-demo ./deploy/k8s/charts/g-adk-demo \
+  --namespace g-adk-demo \
+  --set secrets.anthropicApiKey=$ANTHROPIC_API_KEY \
+  --set secrets.braveApiKey=$BRAVE_API_KEY \
+  --set agent.replicas=3 \
+  --set agent.config.agentModel="anthropic/claude-sonnet-4-6"
 ```
+---
 
-## Observability
-
-The agent includes OpenTelemetry instrumentation with support for:
-
-- Trace export to OTLP endpoints (default: 127.0.0.1 at `http://127.0.0.1:4317`)
-- Console export for debugging
-- FastAPI, HTTPX, MCP, GOOGLE-ADK, AIOHTTP, Threading and LiteLLM instrumentation
-
-Configure observability settings in `config.yaml` under the `otel` section.
+For additional MCP servers and capabilities, visit the [Acuvity MCP Servers Registry](https://github.com/acuvity/mcp-servers-registry).

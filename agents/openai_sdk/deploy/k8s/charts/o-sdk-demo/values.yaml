@@ -1,6 +1,6 @@
 agent:
   image:
-    repository: acuvity/g-adk-demo-agent
+    repository: acuvity/o-sdk-demo-agent
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -17,7 +17,7 @@ agent:
       url: "http://mcp-server-brave-search:8000/sse"
   otel:
     enabled: true
-    serviceName: "g-adk-demo-tracer"
+    serviceName: "o-sdk-demo-tracer"
     sendSpans: true
     consoleExport: true
     noFileExport: true
@@ -27,13 +27,13 @@ agent:
 
 ui:
   image:
-    repository: acuvity/g-adk-demo-ui
+    repository: acuvity/o-sdk-demo-ui
     tag: latest
     pullPolicy: Always
   replicas: 1
   port: 5174
   serviceType: LoadBalancer
-  backendUrl: "http://g-adk-demo-svc"
+  backendUrl: "http://o-sdk-demo-svc"
 
 secrets:
   anthropicApiKey: ""
