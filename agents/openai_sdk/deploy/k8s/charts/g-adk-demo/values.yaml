@@ -1,6 +1,6 @@
 agent:
   image:
-    repository: kanavg004/o-sdk-demo-agent
+    repository: acuvity/o-sdk-demo-agent
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -27,7 +27,7 @@ agent:
 
 ui:
   image:
-    repository: kanavg004/o-sdk-demo-ui
+    repository: acuvity/o-sdk-demo-ui
     tag: latest
     pullPolicy: Always
   replicas: 1

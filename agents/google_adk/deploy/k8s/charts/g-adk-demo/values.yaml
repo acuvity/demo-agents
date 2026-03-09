@@ -1,6 +1,6 @@
 agent:
   image:
-    repository: kanavg004/g-adk-demo-agent
+    repository: acuvity/g-adk-demo-agent
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -27,7 +27,7 @@ agent:
 
 ui:
   image:
-    repository: kanavg004/g-adk-demo-ui
+    repository: acuvity/g-adk-demo-ui
     tag: latest
     pullPolicy: Always
   replicas: 1

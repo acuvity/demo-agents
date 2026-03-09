@@ -100,7 +100,7 @@ make containers
 ### Build and Push to Registry
 
 ```bash
-# Set your registry (default: kanavg004)
+# Set your registry (default: acuvity)
 export OCI_REGISTRY=your-registry
 
 # Build and push containers

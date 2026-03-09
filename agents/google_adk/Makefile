@@ -8,7 +8,7 @@ PACKAGES_RELEASE ?= 1
 # Default to linux x86 build for now
 ARCH ?= x86
 
-OCI_REGISTRY ?= "kanavg004"
+OCI_REGISTRY ?= "acuvity"
 
 HOST_OS := $(shell uname -s)
 HOST_ARCH := $(shell uname -m)
