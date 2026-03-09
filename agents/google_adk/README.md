@@ -15,10 +15,8 @@ This demo provides a conversational AI Agent with the following capabilities:
 ### Frameworks & Libraries
 
 - [Google ADK](https://github.com/google/adk-python) — Google Agent Development Kit for building AI agents
-- [LiteLLM](https://github.com/BerriAI/litellm) — Unified interface supporting Anthropic, OpenAI, and other providers
-- [Minibridge](https://github.com/acuvity/minibridge) — Secure, production-ready MCP server infrastructure
 
-### MCP Servers
+### Acuvity Secure MCP Servers
 
 | Server | Purpose | Resources |
 |--------|---------|-----------|
@@ -127,7 +125,7 @@ export ANTHROPIC_API_KEY=your_anthropic_key
 export BRAVE_API_KEY=your_brave_key
 
 # Run the deployment script
-./deploy/k8s/deploy-app.yaml
+./deploy/k8s/deploy-app.sh
 ```
 
 This script will:
