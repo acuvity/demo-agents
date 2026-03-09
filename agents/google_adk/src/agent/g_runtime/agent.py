@@ -7,13 +7,10 @@ from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.tools.mcp_tool import McpToolset, SseConnectionParams, StreamableHTTPConnectionParams
 
-from utils import setup_otel
-from utils import load_config_yaml
+from observability import setup_otel
+from config import load_config_yaml
 
-_RUNTIME_DIR = os.path.dirname(os.path.abspath(__file__))
-_BACKEND_DIR = os.path.dirname(_RUNTIME_DIR)
-
-load_dotenv(os.path.join(_BACKEND_DIR, ".env"))
+load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 def setup_mcp_toolsets(cfg: dict) -> list[McpToolset]:
     toolsets: list[McpToolset] = []
+    if not cfg.get("mcp_servers"):
+        return toolsets
     for server in cfg["mcp_servers"]:
         if server["url"].rstrip("/").endswith("/sse"):
             connection_params = SseConnectionParams(
@@ -45,7 +44,7 @@ def setup_mcp_toolsets(cfg: dict) -> list[McpToolset]:
 
 def setup_root_agent() -> LlmAgent:
 
-    cfg = load_config_yaml(os.path.join(_BACKEND_DIR, "config.yaml"))
+    cfg = load_config_yaml()
     setup_otel(cfg)
     mcp_toolsets = setup_mcp_toolsets(cfg)
 
@@ -69,7 +68,7 @@ def create_fastapi_app_google_adk():
     from google.adk.sessions import InMemorySessionService
     from google.genai import types
 
-    cfg = load_config_yaml(os.path.join(_BACKEND_DIR, "config.yaml"))
+    cfg = load_config_yaml()
     root_agent = setup_root_agent()
 
     session_service = InMemorySessionService()

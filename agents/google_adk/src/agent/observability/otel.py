@@ -7,7 +7,7 @@ from openinference.instrumentation.google_adk import GoogleADKInstrumentor
 from openinference.instrumentation.litellm import LiteLLMInstrumentor
 from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
 
-from utils.exporter import FileSpanExporter
+from observability.exporter import FileSpanExporter
 
 logger = logging.getLogger(__name__)
 
