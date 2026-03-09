@@ -31,15 +31,19 @@ export DOCKER_DEFAULT_PLATFORM CONTAINER_ENGINE
 
 default: charts containers
 
-o-sdk-demo-container:
+demo-container: demo-agent-container demo-ui-container
+
+demo-agent-container:
 	@cd src/agent && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/o-sdk-demo-agent:${CONTAINER_TAG} .
+
+demo-ui-container:
 	@cd src/ui && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/o-sdk-demo-ui:${CONTAINER_TAG} .
 
-o-sdk-demo-container-push:
+demo-container-push:
 	@cd src/agent && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/o-sdk-demo-agent:$(CONTAINER_TAG) .
 	@cd src/ui && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/o-sdk-demo-ui:$(CONTAINER_TAG) .
 
-containers: o-sdk-demo-container
+containers: demo-container
 
 %-chart-lint:
 	@helm lint deploy/k8s/charts/$*
@@ -53,4 +57,4 @@ deploy/k8s/charts/%: .charts-clean %-chart-lint
 .PHONY: charts
 charts: $(filter-out deploy/k8s/charts/repo%, $(patsubst %/,%, $(filter %/, $(wildcard deploy/k8s/charts/*/))))
 
-push: o-sdk-demo-container-push
+push: demo-container-push
