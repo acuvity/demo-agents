@@ -1,11 +1,11 @@
 import logging
-import os
 import sys
+from contextlib import AsyncExitStack
 
 from dotenv import load_dotenv
 from agents import Agent, Runner
 from agents.extensions.models.litellm_model import LitellmModel
-from agents.mcp import MCPServerStreamableHttp, MCPServerStreamableHttpParams
+from agents.mcp import MCPServerSse
 
 load_dotenv()
 
@@ -20,17 +20,14 @@ class OpenAISDKRuntime:
 
     def __init__(self, cfg: dict):
         self.cfg = cfg
-        self.mcp_toolsets = self.setup_mcp_toolsets()
         self.app_name = cfg["app_name"]
-
-        self.root_agent = Agent(
+        self.agent = Agent(
             name="openai-sdk-mcp-agent",
             instructions=self.cfg["instruction"],
             model=LitellmModel(model="anthropic/claude-sonnet-4-20250514"),
-            mcp_servers=self.mcp_toolsets,
         )
 
-    def setup_mcp_toolsets(self) -> list[MCPServerStreamableHttp]:
+    async def setup_mcp_toolsets(self, stack: AsyncExitStack) -> list[MCPServerSse]:
         servers_cfg: list[dict] = self.cfg.get("mcp_servers") or []
 
         if not servers_cfg:
@@ -40,7 +37,7 @@ class OpenAISDKRuntime:
             )
             return []
 
-        servers: list[MCPServerStreamableHttp] = []
+        connected_servers: list[MCPServerSse] = []
 
         for entry in servers_cfg:
             name: str = entry.get("name") or entry.get("url", "unnamed-mcp")
@@ -50,41 +47,39 @@ class OpenAISDKRuntime:
                 logger.warning(f"MCP server entry '{name}' has no 'url' – skipping.")
                 continue
 
-            headers: dict = entry.get("headers") or {}
-            timeout: float = float(entry.get("timeout", 30))
-            cache_tools: bool = bool(entry.get("cache_tools", False))
-
-            params: MCPServerStreamableHttpParams = {
-                "url": url,
-                "headers": headers,
-                "timeout": timeout,
-            }
-
-            server = MCPServerStreamableHttp(
+            server = MCPServerSse(
                 name=name,
-                params=params,
-                cache_tools_list=cache_tools,
+                params={
+                    "url": url,
+                    "headers": entry.get("headers") or {},
+                    "timeout": float(entry.get("timeout", 30)),
+                },
+                cache_tools_list=bool(entry.get("cache_tools", False)),
             )
 
-            servers.append(server)
+            try:
+                await stack.enter_async_context(server)
+                connected_servers.append(server)
+                logger.info(f"mcp: connected server  name='{name}'  url='{url}'")
+            except Exception as e:
+                logger.error(f"MCP server '{name}' failed to connect: {e}")
 
-            logger.info(f"mcp: registered server  name='{name}'  url='{url}'")
-
-        if not servers:
+        if not connected_servers:
             logger.warning(
-                "No MCP servers configured – agent will run without any MCP tools."
+                "No MCP servers connected – agent will run without any MCP tools."
             )
 
-        return servers
-
-
+        return connected_servers
 
     async def send(self, input: str) -> str:
-        result = await Runner.run(
-            self.root_agent,
-            input=input,
-            max_turns=20,
-        )
+        async with AsyncExitStack() as stack:
+            connected_servers = await self.setup_mcp_toolsets(stack)
+            self.agent.mcp_servers = connected_servers
 
-        return str(result.final_output)
+            result = await Runner.run(
+                self.agent,
+                input=input,
+                max_turns=20,
+            )
 
+            return str(result.final_output)
