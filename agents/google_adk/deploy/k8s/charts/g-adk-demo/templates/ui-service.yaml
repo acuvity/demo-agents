@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: g-adk-demo-ui-svc
+spec:
+  selector:
+    app: g-adk-demo-ui
+  ports:
+    - port: 80
+      targetPort: {{ .Values.ui.port }}
+  type: {{ .Values.ui.serviceType }}
