@@ -9,7 +9,7 @@ apps:
         - "@source:name=app-tokens"
         - "@org=acuvity.ai"
         - "@scope:project=demo-agents"
-        - "@apptoken:name=demo-agents-utm-k8s"
+        - "@apptoken:name=demo-agents"
     tracing: Recording
     otelReceivers:
       - endpoint: "127.0.0.1:4317"
