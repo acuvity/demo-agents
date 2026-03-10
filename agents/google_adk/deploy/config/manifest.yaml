@@ -8,8 +8,8 @@ apps:
         - "@source:type=mtls"
         - "@source:name=app-tokens"
         - "@org=acuvity.ai"
-        - "@scope:project=satyam"
-        - "@apptoken:name=satyam-utm-k8s"
+        - "@scope:project=demo-agents"
+        - "@apptoken:name=demo-agents-utm-k8s"
     tracing: Recording
     otelReceivers:
       - endpoint: "127.0.0.1:4317"
