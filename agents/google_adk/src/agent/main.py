@@ -1,9 +1,9 @@
-
+"""FastAPI entrypoint for the Google ADK agent service."""
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore[import-untyped]  # pylint: disable=import-error,no-name-in-module
 from config import load_config_yaml
 from observability import setup_otel
 from runtime import GoogleADKRuntime
@@ -18,8 +18,8 @@ runtime = GoogleADKRuntime(cfg)
 
 FastAPIInstrumentor.instrument_app(app)
 
-cors_origins = cfg["cors_origins"]
-origins = (
+cors_origins: str | list[str] = cfg["cors_origins"]
+origins: list[str] = (
     [o.strip() for o in cors_origins.split(",")]
     if isinstance(cors_origins, str)
     else cors_origins
@@ -33,17 +33,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class MessageRequest(BaseModel):
+    """Request body for the /send endpoint."""
+
     message: str
+
 
 @app.post("/send")
 async def send_message(req: MessageRequest):
-
+    """Handle an incoming chat message and return the agent response."""
     response_text = await runtime.send(req.message)
     return {"output": response_text}
 
+
 @app.get("/health")
 def health():
+    """Return a simple health-check response."""
     return {"status": "ok"}
 
 

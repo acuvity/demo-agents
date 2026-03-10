@@ -1,0 +1,30 @@
+name: Lint
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install Python dependencies
+        run: uv sync --directory agents/google_adk/src/agent
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: agents/google_adk/src/ui/chat_ui/package-lock.json
+
+      - name: Install Node dependencies
+        run: npm ci --prefix agents/google_adk/src/ui/chat_ui
+
+      - name: Lint
+        run: make lint
+        working-directory: agents

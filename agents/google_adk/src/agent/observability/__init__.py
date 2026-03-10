@@ -1,3 +1,4 @@
+"""Observability package."""
 from .exporter import FileSpanExporter
 from .otel import setup_otel
 

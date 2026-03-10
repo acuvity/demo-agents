@@ -26,3 +26,7 @@ dependencies = [
     "openinference-instrumentation-openai",
     "opentelemetry-instrumentation-aiohttp-client",
 ]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
