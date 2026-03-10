@@ -23,6 +23,8 @@ This demo provides a conversational AI Agent with the following capabilities:
 | mcp-server-sequential-thinking | Structured reasoning and analysis | [Dockerfile](https://github.com/acuvity/mcp-servers-registry/tree/main/mcp-server-sequential-thinking) · [Container](https://hub.docker.com/r/acuvity/mcp-server-sequential-thinking) |
 | mcp-server-brave-search | Web search capabilities | [Dockerfile](https://github.com/acuvity/mcp-servers-registry/tree/main/mcp-server-brave-search) · [Container](https://hub.docker.com/r/acuvity/mcp-server-brave-search) |
 
+For additional MCP servers and capabilities, visit the [Acuvity MCP Servers Registry](https://mcp.acuvity.ai) and [Github](https://github.com/acuvity/mcp-servers-registry).
+
 
 ### API Keys
 
@@ -33,8 +35,64 @@ Obtain the following API keys before proceeding:
 | Anthropic | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
 | Brave Search | `BRAVE_API_KEY` | [brave.com/search/api](https://brave.com/search/api) |
 
+## Kubernetes Deployment
+
+<details>
+
+The deployment script handles the complete setup including MCP servers:
+
+```bash
+# Set required environment variables
+export ANTHROPIC_API_KEY=your_anthropic_api_key
+export BRAVE_API_KEY=your_brave_api_key
+
+# Run the deployment script
+./deploy/k8s/deploy-app.sh
+```
+
+This script will:
+
+1. Create the `google-adk-demo` namespace
+2. Install the Sequential Thinking MCP server
+3. Install the Brave Search MCP server
+4. Deploy the agent and UI components
+
+### Accessing the Application
+
+Once deployed, forward the UI service to your local machine:
+
+```bash
+kubectl -n google-adk-demo port-forward svc/google-adk-demo-ui-svc 5174:80
+```
+
+Open your browser and navigate to `http://localhost:5174`.
+
+## Configuration
+
+The agent is configured via `src/agent/config.yaml` for local development.
+
+For Kubernetes deployments, configuration is managed through Helm values in `deploy/k8s/charts/google-adk-demo/values.yaml`.
+
+### Custom Deployment
+
+Override values during installation:
+
+```bash
+helm install google-adk-demo ./deploy/k8s/charts/google-adk-demo \
+  --namespace google-adk-demo \
+  --set secrets.anthropicApiKey=$ANTHROPIC_API_KEY \
+  --set secrets.braveApiKey=$BRAVE_API_KEY \
+  --set agent.replicas=3 \
+  --set agent.config.agentModel="anthropic/claude-sonnet-4-6"
+```
+---
+
+</details>
+
 
 ## Local Development
+
+<details>
 
 ### Agent Backend
 
@@ -49,7 +107,8 @@ uv sync
 
 ```bash
 cat > .env << EOF
-ANTHROPIC_API_KEY=your_api_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key
+BRAVE_API_KEY=your_brave_api_key
 EOF
 ```
 
@@ -99,7 +158,7 @@ make containers
 
 ```bash
 # Set your registry (default: acuvity)
-export OCI_REGISTRY=your-registry
+export OCI_REGISTRY=your_container_registry
 
 # Build and push containers
 make push
@@ -108,61 +167,9 @@ make push
 ### Helm Chart Operations
 
 ```bash
-# Lint the Helm chart
-make google-adk-demo-chart-lint
-
 # Package the Helm chart
 make charts
 ```
 
-## Kubernetes Deployment
+</details>
 
-The deployment script handles the complete setup including MCP servers:
-
-```bash
-# Set required environment variables
-export ANTHROPIC_API_KEY=your_anthropic_key
-export BRAVE_API_KEY=your_brave_key
-
-# Run the deployment script
-./deploy/k8s/deploy-app.sh
-```
-
-This script will:
-
-1. Create the `google-adk-demo` namespace
-2. Install the Sequential Thinking MCP server
-3. Install the Brave Search MCP server
-4. Deploy the agent and UI components
-
-### Accessing the Application
-
-Once deployed, forward the UI service to your local machine:
-
-```bash
-kubectl -n google-adk-demo port-forward svc/google-adk-demo-ui-svc 5174:80
-```
-
-Open your browser and navigate to `http://localhost:5174`.
-
-## Configuration
-
-The agent is configured via `src/agent/config.yaml` for local development.
-
-For Kubernetes deployments, configuration is managed through Helm values in `deploy/k8s/charts/google-adk-demo/values.yaml`.
-
-### Custom Deployment
-
-Override values during installation:
-
-```bash
-helm install google-adk-demo ./deploy/k8s/charts/google-adk-demo \
-  --namespace google-adk-demo \
-  --set secrets.anthropicApiKey=$ANTHROPIC_API_KEY \
-  --set secrets.braveApiKey=$BRAVE_API_KEY \
-  --set agent.replicas=3 \
-  --set agent.config.agentModel="anthropic/claude-sonnet-4-6"
-```
----
-
-For additional MCP servers and capabilities, visit the [Acuvity MCP Servers Registry](https://github.com/acuvity/mcp-servers-registry).
