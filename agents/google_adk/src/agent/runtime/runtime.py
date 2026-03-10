@@ -51,14 +51,14 @@ class GoogleADKRuntime:
             if server["url"].rstrip("/").endswith("/sse"):
                 connection_params = SseConnectionParams(
                     url=server["url"],
-                    timeout=30,
-                    sse_read_timeout=300,
+                    timeout=60,
+                    sse_read_timeout=6500,
                 )
             else:
                 connection_params = StreamableHTTPConnectionParams(
                     url=server["url"],
-                    timeout=30,
-                    sse_read_timeout=300,
+                    timeout=60,
+                    sse_read_timeout=6500,
                 )
             toolsets.append(
                 McpToolset(connection_params=connection_params)
