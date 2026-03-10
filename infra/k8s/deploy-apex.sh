@@ -60,7 +60,7 @@ done
 # replace the image tag
 sed -i.bak "s|tag: \".*\"|tag: \"$IMAGE_TAG\"|" "$APEX_DIR/apex-agent-values.yaml" && rm -f "$APEX_DIR/apex-agent-values.yaml.bak"
 
-kubectl -n g-adk-demo get pods || { echo "no g-adk-demo namespace found"; exit 1; }
+kubectl -n google-adk-demo get pods || { echo "no google-adk-demo namespace found"; exit 1; }
 
 [ -f "$APEX_DIR/acuvity-apptoken.yaml" ] || { echo "missing token file."; exit 1; }
 

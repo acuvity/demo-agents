@@ -1,10 +1,11 @@
 agent:
   image:
-    repository: acuvity/g-adk-demo-agent
+    repository: acuvity/google-adk-demo-agent
     tag: latest
     pullPolicy: Always
   replicas: 1
   port: 8300
+  serviceType: ClusterIP
   corsOrigins: "*"
   config:
     agentModel: "anthropic/claude-sonnet-4-6"
@@ -17,7 +18,7 @@ agent:
       url: "http://mcp-server-brave-search:8000/sse"
   otel:
     enabled: true
-    serviceName: "g-adk-demo-tracer"
+    serviceName: "google-adk-demo-tracer"
     sendSpans: true
     consoleExport: true
     noFileExport: true
@@ -27,13 +28,13 @@ agent:
 
 ui:
   image:
-    repository: acuvity/g-adk-demo-ui
+    repository: acuvity/google-adk-demo-ui
     tag: latest
     pullPolicy: Always
   replicas: 1
   port: 5174
-  serviceType: LoadBalancer
-  backendUrl: "http://g-adk-demo-svc"
+  serviceType: ClusterIP
+  backendUrl: "http://google-adk-demo-svc"
 
 secrets:
   anthropicApiKey: ""

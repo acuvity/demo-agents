@@ -1,4 +1,4 @@
-app_name: g-adk-demo
+app_name: google-adk-demo
 title: Google ADK
 cors_origins: "*"
 instruction: You are a research assistant that can search the web and read from a database
@@ -12,7 +12,7 @@ mcp_servers:
   #   url: http://mcp-server-sequential-thinking:8000/sse
 otel:
   enabled: true
-  service_name: g-adk-demo-tracer
+  service_name: google-adk-demo-tracer
   send_spans: true
   console_export: true
   no_file_export: true

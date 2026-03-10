@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: g-adk-demo
+  name: google-adk-demo
   labels:
-    app: g-adk-demo
+    app: google-adk-demo
 spec:
   replicas: {{ .Values.agent.replicas }}
   selector:
     matchLabels:
-      app: g-adk-demo
+      app: google-adk-demo
   template:
     metadata:
       labels:
-        app: g-adk-demo
+        app: google-adk-demo
     spec:
       containers:
         - name: agent
@@ -41,7 +41,7 @@ spec:
             - name: OTEL_NO_FILE_EXPORT
               value: "true"
             - name: OTEL_SERVICE_NAME
-              value: "g-adk-demo-tracer"
+              value: "google-adk-demo-tracer"
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
               value: grpc
             - name: OTEL_EXPORTER_OTLP_ENDPOINT

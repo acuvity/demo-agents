@@ -2,8 +2,8 @@
 
 set -e
 
-NAMESPACE="g-adk-demo"
-CHART_DIR="$(cd "$(dirname "$0")/charts/g-adk-demo" && pwd)"
+NAMESPACE="google-adk-demo"
+CHART_DIR="$(cd "$(dirname "$0")/charts/google-adk-demo" && pwd)"
 
 [ "$ANTHROPIC_API_KEY" ] || { echo "ANTHROPIC_API_KEY is not set. Please export it before running this script."; exit 1; }
 [ "$BRAVE_API_KEY" ] || { echo "BRAVE_API_KEY is not set. Please export it before running this script."; exit 1; }
@@ -31,13 +31,13 @@ helm upgrade mcp-server-brave-search oci://docker.io/acuvity/mcp-server-brave-se
   --version 1.0.0 \
   --set-string secrets.BRAVE_API_KEY.value="$BRAVE_API_KEY"
 
-echo "Installing g-adk-demo..."
-helm upgrade g-adk-demo "$CHART_DIR" \
+echo "Installing google-adk-demo..."
+helm upgrade google-adk-demo "$CHART_DIR" \
   --install \
   --namespace "$NAMESPACE" \
   --set secrets.anthropicApiKey="$ANTHROPIC_API_KEY" \
   --set secrets.braveApiKey="$BRAVE_API_KEY"
 
 echo ""
-echo "g-adk-demo deployed successfully."
-echo "  Agent: g-adk-demo-svc.${NAMESPACE}.svc.cluster.local:80"
+echo "google-adk-demo deployed successfully."
+echo "  Agent: google-adk-demo-svc.${NAMESPACE}.svc.cluster.local:80"

@@ -109,7 +109,7 @@ make push
 
 ```bash
 # Lint the Helm chart
-make g-adk-demo-chart-lint
+make google-adk-demo-chart-lint
 
 # Package the Helm chart
 make charts
@@ -130,7 +130,7 @@ export BRAVE_API_KEY=your_brave_key
 
 This script will:
 
-1. Create the `g-adk-demo` namespace
+1. Create the `google-adk-demo` namespace
 2. Install the Sequential Thinking MCP server
 3. Install the Brave Search MCP server
 4. Deploy the agent and UI components
@@ -140,7 +140,7 @@ This script will:
 Once deployed, forward the UI service to your local machine:
 
 ```bash
-kubectl -n g-adk-demo port-forward svc/g-adk-demo-ui-svc 5174:5174
+kubectl -n google-adk-demo port-forward svc/google-adk-demo-ui-svc 5174:80
 ```
 
 Open your browser and navigate to `http://localhost:5174`.
@@ -149,15 +149,15 @@ Open your browser and navigate to `http://localhost:5174`.
 
 The agent is configured via `src/agent/config.yaml` for local development.
 
-For Kubernetes deployments, configuration is managed through Helm values in `deploy/k8s/charts/g-adk-demo/values.yaml`.
+For Kubernetes deployments, configuration is managed through Helm values in `deploy/k8s/charts/google-adk-demo/values.yaml`.
 
 ### Custom Deployment
 
 Override values during installation:
 
 ```bash
-helm install g-adk-demo ./deploy/k8s/charts/g-adk-demo \
-  --namespace g-adk-demo \
+helm install google-adk-demo ./deploy/k8s/charts/google-adk-demo \
+  --namespace google-adk-demo \
   --set secrets.anthropicApiKey=$ANTHROPIC_API_KEY \
   --set secrets.braveApiKey=$BRAVE_API_KEY \
   --set agent.replicas=3 \

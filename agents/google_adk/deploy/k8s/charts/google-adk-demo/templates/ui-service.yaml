@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: g-adk-demo-ui-svc
+  name: google-adk-demo-ui-svc
 spec:
   selector:
-    app: g-adk-demo-ui
+    app: google-adk-demo-ui
   ports:
     - port: 80
       targetPort: {{ .Values.ui.port }}

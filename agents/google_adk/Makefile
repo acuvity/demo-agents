@@ -34,14 +34,14 @@ default: charts containers
 demo-container: demo-agent-container demo-ui-container
 
 demo-agent-container:
-	@cd src/agent && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/g-adk-demo-agent:${CONTAINER_TAG} .
+	@cd src/agent && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/google-adk-demo-agent:${CONTAINER_TAG} .
 
 demo-ui-container:
-	@cd src/ui && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/g-adk-demo-ui:${CONTAINER_TAG} .
+	@cd src/ui && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/google-adk-demo-ui:${CONTAINER_TAG} .
 
 demo-container-push:
-	@cd src/agent && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/g-adk-demo-agent:$(CONTAINER_TAG) .
-	@cd src/ui && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/g-adk-demo-ui:$(CONTAINER_TAG) .
+	@cd src/agent && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/google-adk-demo-agent:$(CONTAINER_TAG) .
+	@cd src/ui && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/google-adk-demo-ui:$(CONTAINER_TAG) .
 
 containers: demo-container
 
