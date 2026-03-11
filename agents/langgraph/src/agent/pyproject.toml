@@ -1,0 +1,38 @@
+[project]
+name = "LanggraphAgent"
+version = "0.1.0"
+description = "An agent built using Langgraph"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langgraph",
+    "langchain-anthropic",
+    "langchain-mcp-adapters",
+    "langchain-core",
+    "litellm",
+    "httpx",
+    "python-dotenv",
+    "uvicorn",
+    "fastapi",
+    "pydantic",
+    "pyyaml",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
+    "opentelemetry-exporter-otlp",
+    "opentelemetry-instrumentation-httpx",
+    "opentelemetry-instrumentation-system-metrics",
+    "openinference-instrumentation-langchain",
+    "opentelemetry-instrumentation-threading",
+    "openinference-instrumentation-mcp",
+    "opentelemetry-instrumentation-fastapi",
+    "openinference-instrumentation-litellm",
+    "openinference-instrumentation-anthropic",
+    "openinference-instrumentation-openai",
+    "opentelemetry-instrumentation-aiohttp-client",
+]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
