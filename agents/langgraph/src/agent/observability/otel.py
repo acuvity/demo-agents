@@ -1,6 +1,6 @@
 """OpenTelemetry setup and instrumentation for the Langgraph agent."""
 
-import logging          
+import logging
 
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
@@ -10,9 +10,8 @@ from opentelemetry.instrumentation.threading import (  # type: ignore[import-unt
 )
 from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor  # type: ignore[import-untyped]  # pylint: disable=import-error,no-name-in-module
 from openinference.instrumentation.mcp import MCPInstrumentor  # type: ignore[import-untyped]  # pylint: disable=import-error
-from openinference.instrumentation.litellm import LiteLLMInstrumentor  # type: ignore[import-untyped]  # pylint: disable=import-error
-from openinference.instrumentation.langchain import LangChainInstrumentor  # type: ignore[import-untyped]  # pylint: disable=import-error
-from openinference.instrumentation.anthropic import AnthropicInstrumentor  # type: ignore[import-untyped]  # pylint: disable=import-error
+from openinference.instrumentation.langchain import LangChainInstrumentor # type: ignore[import-untyped]  # pylint: disable=import-error
+
 from config import AgentConfig
 from observability.exporter import FileSpanExporter
 

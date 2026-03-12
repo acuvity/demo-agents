@@ -34,3 +34,5 @@ dependencies = [
 [tool.pyright]
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
+reportMissingTypeStubs = false
+reportUnknownMemberType = false

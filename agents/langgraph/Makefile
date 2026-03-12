@@ -60,7 +60,7 @@ charts: $(filter-out deploy/k8s/charts/repo%, $(patsubst %/,%, $(filter %/, $(wi
 PYLINT_SOURCES := $(patsubst src/agent/%,%,$(shell find src/agent -name '*.py' -not -path 'src/agent/.venv/*'))
 
 lint:
-	@uv run --directory src/agent pylint $(PYLINT_SOURCES)
+	@uv run --directory src/agent --with pylint pylint $(PYLINT_SOURCES)
 	@uv run --directory src/agent --with pyright pyright
 	@cd src/ui/chat_ui && npm run lint
 

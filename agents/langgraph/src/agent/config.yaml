@@ -4,12 +4,12 @@ cors_origins: "*"
 instruction: You are a research assistant that can search the web and read from a database
 tools:
 mcp_servers:
-  - name: mcp-brave-search
-    description: Search the web for information
-    url: http://localhost:8000/sse
+  # - name: mcp-brave-search
+  #   description: Search the web for information
+  #   url: http://mcp-server-brave-search:8000/sse
   # - name: mcp-server-sequential-thinking
   #   description: Read from a database
-  #   url: http://localhost:8001/sse
+  #   url: http://mcp-server-sequential-thinking:8000/sse
 otel:
   enabled: true
   service_name: langgraph-demo-tracer

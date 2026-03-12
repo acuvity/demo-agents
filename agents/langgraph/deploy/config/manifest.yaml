@@ -1,7 +1,7 @@
 label: apps/langgraph-demo
 apps:
   - name: langgraph-demo
-    description: "Langgraph agent application using Langgraph."
+    description: "Langgraph agent application"
     subject:
       - - "@source:namespace=/"
         - "@source:type=mtls"
