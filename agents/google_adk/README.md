@@ -10,6 +10,8 @@ This demo provides a conversational AI agent with the following capabilities:
 - **Sequential Thinking** — Advanced reasoning through structured thought processes
 - **Extensible Architecture** — Add custom MCP servers to expand functionality
 
+NOTE: This demo agent has a [manifest file](./deploy/config/manifest.yaml) which describes the components in the agent as well as access policies in there.
+
 ## Architecture
 
 ### Frameworks & Libraries
@@ -66,11 +68,12 @@ kubectl -n google-adk-demo port-forward svc/google-adk-demo-ui-svc 5174:80
 
 Open your browser and navigate to `http://localhost:5174`.
 
+To visualize this agent, import the [manifest file](./deploy/config/manifest.yaml) into Acuvity console using [instructions provided here](../../infra/cli/README.md).
+
+
 </details>
 
 ## Configuration
-
-The agent is configured via `src/agent/config.yaml` for local development.
 
 For Kubernetes deployments, configuration is managed through Helm values in `deploy/k8s/charts/google-adk-demo/values.yaml`.
 
@@ -114,6 +117,9 @@ EOF
 ```bash
 uv run python main.py
 ```
+
+4. The agent is configured via `src/agent/config.yaml` for local development.
+
 
 The agent API will be available at `http://localhost:8300`.
 
