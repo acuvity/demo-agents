@@ -2,6 +2,7 @@
 
 This repo is a collection of demo-agents.
 
+```bash
 .
 ├── agents                # Various Agent Implementations, Dockerfiles, K8s/Helm Charts and Agent Manifest.
 │   ├── google_adk
@@ -10,4 +11,4 @@ This repo is a collection of demo-agents.
     ├── cli               # CLI for configurations
     ├── sandbox           # Details about Acuvity Agentic Sandbox
     └── vm                # Quick install of k3s on a VM
-
+```
