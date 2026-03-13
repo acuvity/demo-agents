@@ -43,11 +43,13 @@ Acuvity CLI tool `acuctl` can be used to make configuration changes.
    chmod +x ~/.acuctl/acuctl
    ```
 
+
 ## 🌟 Create a token with `acuctl`
 
 
    ```bash
    export ACUCTL_ORG="acuvity.ai"
+   acuctl login  -A https://api.acuvity.ai --apps
    export ACUCTL_TOKEN=$(acuctl login -A https://api.acuvity.ai --apps --reinit --print-token)
    echo "Token: ${ACUCTL_TOKEN}"
    ```
