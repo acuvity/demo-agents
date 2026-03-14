@@ -1,5 +1,6 @@
+"""Security utilities for JWT token creation and password hashing."""
 from datetime import datetime, timedelta
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from jose import jwt
 from passlib.context import CryptContext
@@ -8,7 +9,9 @@ from app.core.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def create_access_token(subject: Union[str, Any], expires_delta: timedelta = None) -> str:
+
+def create_access_token(subject: Union[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+    """Create a signed JWT access token for the given subject."""
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -19,8 +22,12 @@ def create_access_token(subject: Union[str, Any], expires_delta: timedelta = Non
     encoded_jwt = jwt.encode(to_encode, settings.ACCESS_TOKEN_SECURITY_KEY, algorithm="HS256")
     return encoded_jwt
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a plain-text password against a hashed password."""
     return pwd_context.verify(plain_password, hashed_password)
 
+
 def get_password_hash(password: str) -> str:
+    """Return the bcrypt hash of the given password."""
     return pwd_context.hash(password)

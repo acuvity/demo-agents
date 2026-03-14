@@ -1,8 +1,10 @@
+"""Chat API routes for messaging and conversation management."""
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
+from app.models.chat import Conversation, Message
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.chat_service import chat_service
 from app.api.auth import auth
@@ -32,8 +34,6 @@ def get_conversations(
     current_user_id: int = Depends(auth.get_verified_user_id),
 ):
     """Get all conversations for the current user"""
-    from app.models.chat import Conversation
-
     conversations = (
         db.query(Conversation).filter(Conversation.user_id == current_user_id).all()
     )
@@ -48,8 +48,6 @@ def get_conversation_messages(
     current_user_id: int = Depends(auth.get_verified_user_id),
 ):
     """Get all messages for a specific conversation"""
-    from app.models.chat import Conversation, Message
-
     conversation = (
         db.query(Conversation)
         .filter(

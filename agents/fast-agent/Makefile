@@ -53,18 +53,18 @@ deploy/k8s/charts/%: .charts-clean %-chart-lint
 .PHONY: charts lint deptry
 charts: $(filter-out deploy/k8s/charts/repo%, $(patsubst %/,%, $(filter %/, $(wildcard deploy/k8s/charts/*/))))
 
-PYLINT_SOURCES := $(patsubst src/agent/%,%,$(shell find src/agent -name '*.py' -not -path 'src/agent/.venv/*'))
+PYLINT_SOURCES := $(patsubst src/agent/%,%,$(shell find src/agent -name '*.py' -not -path 'src/agent/.venv/*' -not -path 'src/agent/tests/*'))
 
 lint:
-	@echo "TODO: add linting for fast-agent"
-# 	@uv run --directory src/agent --with pylint pylint $(PYLINT_SOURCES)
-# 	@uv run --directory src/agent --with pyright pyright
-# 	@cd src/ui/chat_ui && npm run lint
+	@echo "Linting sources... $(PYLINT_SOURCES)"
+	@uv run --directory src/agent --with pylint pylint $(PYLINT_SOURCES)
+	@uv run --directory src/agent --with pyright pyright $(PYLINT_SOURCES)
+	@cd src/ui && npm install && npm run lint
 
 PYTHON_PROJECTS := src/agent
 
 deptry:
-	@echo "TODO: add deptry for fast-agent"
-#	@$(foreach project,$(PYTHON_PROJECTS),uv run --directory $(project) --with deptry deptry .;)
+	@echo "Linting sources... $(PYTHON_PROJECTS)"
+	@$(foreach project,$(PYTHON_PROJECTS),uv run --directory $(project) --with deptry deptry .;)
 
 push: mcp-demo-container-push

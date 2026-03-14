@@ -1,12 +1,13 @@
+"""Database initialisation helpers for seeding initial data."""
 import logging
 from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash
 from app.models.chat import User
-from app.core.config import settings
 
 # Initialize logging
 logger = logging.getLogger(__name__)
+
 
 def init_db(db: Session) -> None:
     """Initialize database with first admin user"""

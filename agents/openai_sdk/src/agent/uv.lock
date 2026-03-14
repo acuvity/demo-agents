@@ -1088,6 +1088,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a9/49/285ea5d15bac82a03eae1167ae69d871edfe08ed596d18dbb73bef018137/openai_agents-0.12.2-py3-none-any.whl", hash = "sha256:56f760fabe1062d87124746748ff51f7e2ed3a843eb3938224a499e95dd60344", size = 449016 },
 ]
 
+[package.optional-dependencies]
+litellm = [
+    { name = "litellm" },
+]
+
 [[package]]
 name = "openaisdkagent"
 version = "0.1.0"
@@ -1095,8 +1100,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "fastapi" },
-    { name = "litellm" },
-    { name = "openai-agents" },
+    { name = "openai-agents", extra = ["litellm"] },
     { name = "openinference-instrumentation-anthropic" },
     { name = "openinference-instrumentation-litellm" },
     { name = "openinference-instrumentation-mcp" },
@@ -1119,8 +1123,8 @@ dependencies = [
 requires-dist = [
     { name = "aiohttp" },
     { name = "fastapi" },
-    { name = "litellm" },
     { name = "openai-agents" },
+    { name = "openai-agents", extras = ["litellm"] },
     { name = "openinference-instrumentation-anthropic" },
     { name = "openinference-instrumentation-litellm" },
     { name = "openinference-instrumentation-mcp" },

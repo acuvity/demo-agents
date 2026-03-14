@@ -24,7 +24,7 @@ export AGENT_CONFIG_YAML="
         # If not specified, defaults to 'haiku'.
         # Can be overriden with a command line switch --model=<model>, or within the Agent constructor.
 
-        default_model: haiku
+        default_model: sonnet
 
         Logging and Console Configuration:
         logger:

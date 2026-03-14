@@ -34,7 +34,7 @@ const Login = () => {
             <Descope
               flowId="sign-up-or-in"
               onSuccess={(e) => console.log(e.detail.user)}
-              onError={(e) => console.log('Log in failed!')}
+              onError={(_e) => console.log('Log in failed!')}
             />
           </div>
         </div>
