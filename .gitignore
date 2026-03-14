@@ -46,7 +46,6 @@ out/
 
 # Environment / secrets
 .env
-.env.*
 .envrc
 
 # Editor

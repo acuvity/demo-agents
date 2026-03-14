@@ -1,0 +1,80 @@
+services:
+  ui:
+    image: acuvity/google-adk-demo-ui:latest
+    ports:
+      - "5174:5174"
+    depends_on:
+      - agent
+    environment:
+      BACKEND_URL: "http://agent:8300"
+    restart: always
+
+  agent:
+    image: acuvity/google-adk-demo-agent:latest
+    ports:
+      - "8300:8300"
+    depends_on:
+      - mcp-server-sequential-thinking
+      - mcp-server-brave-search
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      BRAVE_API_KEY: ${BRAVE_API_KEY}
+      BACKEND_CORS_ORIGINS: "*"
+      OTEL_ENABLED: "true"
+      OTEL_CONSOLE_EXPORT: "true"
+      OTEL_NO_FILE_EXPORT: "true"
+      OTEL_SERVICE_NAME: "google-adk-demo-tracer"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://127.0.0.1:4317"
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+      OTEL_LOGS_EXPORTER: "none"
+      OTEL_METRICS_EXPORTER: "none"
+      OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED: "false"
+      OTEL_PYTHON_DISABLED_INSTRUMENTATIONS: "system_metrics"
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: ""
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ""
+      OTEL_EXPORTER_OTLP_LOGS_PROTOCOL: "none"
+      OTEL_EXPORTER_OTLP_METRICS_PROTOCOL: "none"
+      OTEL_LOG_LEVEL: "info"
+    configs:
+      - source: agent-config
+        target: /app/config.yaml
+    restart: always
+
+  mcp-server-brave-search:
+    image: acuvity/mcp-server-brave-search:latest
+    environment:
+      BRAVE_API_KEY: ${BRAVE_API_KEY}
+      MINIBRIDGE_LOG_LEVEL: ${MCP_SERVER_LOG_LEVEL:-info}
+    restart: always
+
+  mcp-server-sequential-thinking:
+    image: acuvity/mcp-server-sequential-thinking:latest
+    environment:
+      MINIBRIDGE_LOG_LEVEL: ${MCP_SERVER_LOG_LEVEL:-info}
+    restart: always
+
+configs:
+  agent-config:
+    content: |
+      app_name: google-adk-demo
+      title: Google ADK
+      cors_origins: "*"
+      instruction: You are a research assistant that can search the web and read from a database
+      tools:
+      mcp_servers:
+        - name: mcp-server-sequential-thinking
+          description: Sequential thinking MCP server
+          url: http://mcp-server-sequential-thinking:8000/sse
+        - name: mcp-server-brave-search
+          description: Brave search MCP server
+          url: http://mcp-server-brave-search:8000/sse
+      otel:
+        enabled: true
+        service_name: google-adk-demo-tracer
+        send_spans: true
+        console_export: true
+        no_file_export: true
+        file: trace.log
+        otlp_endpoint: http://127.0.0.1:4317
+        insecure: true
