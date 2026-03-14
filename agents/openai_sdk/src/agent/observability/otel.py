@@ -10,7 +10,7 @@ from opentelemetry.instrumentation.threading import (  # type: ignore[import-unt
 )
 from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor  # type: ignore[import-untyped]  # pylint: disable=import-error,no-name-in-module
 from openinference.instrumentation.mcp import MCPInstrumentor  # type: ignore[import-untyped]  # pylint: disable=import-error
-from openinference.instrumentation.openai_sdk import OpenAISDKInstrumentor  # type: ignore[import-untyped]  # pylint: disable=import-error,no-name-in-module
+from openinference.instrumentation.openai import OpenAIInstrumentor  # type: ignore[import-untyped]  # pylint: disable=import-error,no-name-in-module
 from openinference.instrumentation.litellm import LiteLLMInstrumentor  # type: ignore[import-untyped]  # pylint: disable=import-error
 
 from config import AgentConfig
@@ -75,7 +75,7 @@ def setup_otel(cfg: AgentConfig) -> TracerProvider:
     AioHttpClientInstrumentor().instrument()
     ThreadingInstrumentor().instrument()
     MCPInstrumentor().instrument()
-    OpenAISDKInstrumentor().instrument()  # type: ignore[no-untyped-call]
+    OpenAIInstrumentor().instrument()  # type: ignore[no-untyped-call]
     LiteLLMInstrumentor().instrument()
 
     return provider
