@@ -1,13 +1,23 @@
-from sqlalchemy.orm import Session
+"""Service layer for processing chat requests and managing conversations."""
 from typing import Optional
 
-from app.models.chat import User, Conversation, Message
-from app.schemas.chat import ChatRequest, MessageCreate
+from sqlalchemy.orm import Session
+
+from app.models.chat import Conversation, Message
+from app.schemas.chat import ChatRequest
 
 from app.services.agent_service import agent_service
 
+
 class ChatService:
-    def get_or_create_conversation(self, db: Session, user_id: int, conversation_id: Optional[int] = None) -> tuple[Conversation, bool]:
+    """Handles conversation lifecycle and delegates AI response generation."""
+
+    def get_or_create_conversation(
+        self,
+        db: Session,
+        user_id: int,
+        conversation_id: Optional[int] = None,
+    ) -> tuple[Conversation, bool]:
         """Get existing conversation or create a new one"""
         if conversation_id:
             conversation = db.query(Conversation).filter(
@@ -42,18 +52,22 @@ class ChatService:
     def process_chat_request(self, db: Session, user_id: int, chat_request: ChatRequest) -> dict:
         """Process a chat request and generate a response"""
         # Get or create conversation
-        conversation, new = self.get_or_create_conversation(db, user_id, chat_request.conversation_id)
+        conversation, new = self.get_or_create_conversation(
+            db, user_id, chat_request.conversation_id
+        )
         if new:
             agent_service.clear()
 
         # Add user message to conversation
-        self.add_message(db, conversation.id, "user", chat_request.message)
+        self.add_message(
+            db, conversation.id, "user", chat_request.message  # type: ignore[arg-type]
+        )
 
         # Generate response (in a real app, this might call an LLM API)
         response_text = self.generate_ai_response(chat_request.message)
 
         # Add assistant message to conversation
-        self.add_message(db, conversation.id, "assistant", response_text)
+        self.add_message(db, conversation.id, "assistant", response_text)  # type: ignore[arg-type]
 
         return {
             "message": response_text,
@@ -66,6 +80,7 @@ class ChatService:
         In a real application, this would likely call an external LLM API.
         """
         # Placeholder response generation
-        return agent_service.send(user_message, block=True)
+        return agent_service.send(user_message, block=True) or ""
+
 
 chat_service = ChatService()

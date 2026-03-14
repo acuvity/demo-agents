@@ -19,7 +19,7 @@ function Message({ message }) {
           remarkPlugins={[remarkGfm]}
           components={{
             // Custom rendering for code blocks with syntax highlighting
-            code({node, inline, className, children, ...props}) {
+            code({node: _node, inline, className, children, ...props}) {
               const match = /language-(\w+)/.exec(className || '');
               return !inline && match ? (
                 <SyntaxHighlighter
@@ -37,40 +37,40 @@ function Message({ message }) {
               );
             },
             // Make links open in new tab with proper accessibility
-            a: ({node, children, ...props}) => (
+            a: ({node: _node, children, ...props}) => (
               <a target="_blank" rel="noopener noreferrer" {...props}>
                 {children}
               </a>
             ),
             // Add accessibility-friendly heading components
-            h1: ({node, children, ...props}) => (
+            h1: ({node: _node, children, ...props}) => (
               <h1 className="markdown-h1" {...props}>
                 {children}
               </h1>
             ),
-            h2: ({node, children, ...props}) => (
+            h2: ({node: _node, children, ...props}) => (
               <h2 className="markdown-h2" {...props}>
                 {children}
               </h2>
             ),
-            h3: ({node, children, ...props}) => (
+            h3: ({node: _node, children, ...props}) => (
               <h3 className="markdown-h3" {...props}>
                 {children}
               </h3>
             ),
             // Style lists better
-            ul: ({node, children, ...props}) => (
+            ul: ({node: _node, children, ...props}) => (
               <ul className="markdown-ul" {...props}>
                 {children}
               </ul>
             ),
-            ol: ({node, children, ...props}) => (
+            ol: ({node: _node, children, ...props}) => (
               <ol className="markdown-ol" {...props}>
                 {children}
               </ol>
             ),
             // Add styling for blockquotes
-            blockquote: ({node, children, ...props}) => (
+            blockquote: ({node: _node, children, ...props}) => (
               <blockquote className="markdown-blockquote" {...props}>
                 {children}
               </blockquote>

@@ -5,8 +5,9 @@ Revises:
 Create Date: 2023-10-10 10:00:00.000000
 
 """
-from alembic import op
+# pylint: disable=no-member,invalid-name
 import sqlalchemy as sa
+from alembic import op
 
 
 # revision identifiers, used by Alembic.
@@ -17,6 +18,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    """Apply schema changes: create users, conversations, and messages tables."""
     # Create users table
     op.create_table('users',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -37,7 +39,12 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('title', sa.String(), nullable=True),
         sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column(
+            'created_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.text('now()'),
+            nullable=True,
+        ),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
         sa.PrimaryKeyConstraint('id')
@@ -51,7 +58,12 @@ def upgrade() -> None:
         sa.Column('conversation_id', sa.Integer(), nullable=True),
         sa.Column('role', sa.String(), nullable=False),
         sa.Column('content', sa.Text(), nullable=False),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+        sa.Column(
+            'created_at',
+            sa.DateTime(timezone=True),
+            server_default=sa.text('now()'),
+            nullable=True,
+        ),
         sa.ForeignKeyConstraint(['conversation_id'], ['conversations.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
@@ -59,6 +71,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Reverse schema changes: drop messages, conversations, and users tables."""
     # Drop tables in reverse order
     op.drop_index(op.f('ix_messages_id'), table_name='messages')
     op.drop_table('messages')

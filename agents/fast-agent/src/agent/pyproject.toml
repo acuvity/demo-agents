@@ -9,30 +9,27 @@ readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "alembic (>=1.12.0)",
-    "bcrypt (==3.2.2)",
     "descope (>=0.1.0)",
     "fast-agent-mcp @ git+https://github.com/acuvity/fast-agent.git",
     "fastapi (>=0.103.1)",
-    "httpx (>=0.25.0)",
-    "opentelemetry-api (>=1.31.1,<2.0.0)",
+    "mcp",
     "openinference-instrumentation-mcp",
+    "opentelemetry-api (>=1.31.1,<2.0.0)",
+    "opentelemetry-exporter-otlp (>=1.34.0,<2.0.0)",
     "opentelemetry-instrumentation-fastapi",
     "opentelemetry-instrumentation-httpx",
     "opentelemetry-instrumentation-threading",
+    "opentelemetry-sdk (>=1.34.0,<2.0.0)",
     "passlib (>=1.7.4)",
-    "psycopg2-binary (>=2.9.6)",
     "pydantic (>=2.4.2)",
-    "pydantic-settings (>=2.0.3)",
-    "pytest (>=7.4.2)",
-    "python-dotenv (>=1.0.0)",
+    "psycopg2-binary (>=2.9.6)",
     "python-jose[cryptography] (>=3.3.0)",
-    "python-multipart (>=0.0.6)",
     "sqlalchemy (>=2.0.21)",
     "uvicorn (>=0.23.2)",
-    "opentelemetry-sdk (>=1.34.0,<2.0.0)",
-    "opentelemetry-exporter-otlp (>=1.34.0,<2.0.0)",
 ]
 
+[tool.deptry.per_rule_ignores]
+DEP002 = ["psycopg2-binary"]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

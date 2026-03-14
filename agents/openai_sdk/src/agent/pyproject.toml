@@ -5,26 +5,31 @@ description = "An agent that is built using the OpenAI SDK"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "aiohttp",
-    "litellm",
-    "python-dotenv",
-    "uvicorn",
+    "aiohttp",          # used by google-adk and not directly imported in our code
     "fastapi",
-    "pydantic",
+    "openai-agents",
+    "openai-agents[litellm]",
+    "openinference-instrumentation-anthropic",
+    "openinference-instrumentation-litellm",
+    "openinference-instrumentation-mcp",
+    "openinference-instrumentation-openai",
     "opentelemetry-api",
-    "opentelemetry-sdk",
     "opentelemetry-exporter-otlp",
+    "opentelemetry-instrumentation-aiohttp-client",
+    "opentelemetry-instrumentation-fastapi",
     "opentelemetry-instrumentation-httpx",
     "opentelemetry-instrumentation-system-metrics",
     "opentelemetry-instrumentation-threading",
-    "openinference-instrumentation-mcp",
-    "opentelemetry-instrumentation-fastapi",
-    "openinference-instrumentation-litellm",
-    "openinference-instrumentation-anthropic",
-    "openinference-instrumentation-openai",
-    "opentelemetry-instrumentation-aiohttp-client",
-    "openai-agents",
-    "pyyaml"
+    "opentelemetry-sdk",
+    "pydantic",
+    "python-dotenv",
+    "pyyaml",
+    "uvicorn"
+]
+
+[tool.deptry.per_rule_ignores]
+DEP002 = [
+    "aiohttp",          # used by google-adk and not directly imported in our code
 ]
 
 [tool.pyright]

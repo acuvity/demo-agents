@@ -1,6 +1,7 @@
-import pytest
+"""Integration tests for the chat API endpoints."""
 from app.models.chat import User, Conversation, Message
 from app.core.security import get_password_hash
+
 
 def create_test_user(db):
     """Create a test user in the database"""

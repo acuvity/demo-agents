@@ -28,3 +28,7 @@ jobs:
       - name: Lint
         run: make lint
         working-directory: agents
+
+      - name: Deptry
+        run: make deptry
+        working-directory: agents
