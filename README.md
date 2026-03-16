@@ -5,10 +5,10 @@ This repo is a collection of demo-agents.
 ```bash
 .
 ├── agents                # Various Agent Implementations, Dockerfiles, K8s/Helm Charts and Agent Manifest.
-│   ├── google_adk
-│   └── langgraph
+|.  ├── fast-agent        # Agent demonstrating Fast Agent
+│   ├── google_adk        # Agent demonstrating Google ADK
+│   └── langgraph         # Agent demonstrating Langgraph
+│   └── openai-sdk        # Agent demonstrating OpenAI SDK
 └── infra                 # Tools and utilities
-    ├── cli               # CLI for configurations
-    ├── sandbox           # Details about Acuvity Agentic Sandbox
     └── vm                # Quick install of k3s on a VM
 ```
