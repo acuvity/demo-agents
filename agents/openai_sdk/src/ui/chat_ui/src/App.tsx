@@ -81,7 +81,7 @@ function App() {
         </div>
         <div>
           <h1 className="text-base font-semibold text-foreground tracking-tight">Research Assistant</h1>
-          <p className="text-xs text-muted-foreground">Powered by Google ADK</p>
+          <p className="text-xs text-muted-foreground">Powered by OpenAI SDK</p>
         </div>
       </header>
 

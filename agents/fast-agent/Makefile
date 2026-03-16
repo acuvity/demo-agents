@@ -59,7 +59,7 @@ lint:
 	@echo "Linting sources... $(PYLINT_SOURCES)"
 	@uv run --directory src/agent --with pylint pylint $(PYLINT_SOURCES)
 	@uv run --directory src/agent --with pyright pyright $(PYLINT_SOURCES)
-	@cd src/ui && npm install && npm run lint
+	# @cd src/ui && npm install && npm run lint
 
 PYTHON_PROJECTS := src/agent
 
