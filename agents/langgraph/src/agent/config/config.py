@@ -19,9 +19,11 @@ class OtelConfig(TypedDict):
     insecure: bool
 
 
-class McpServerConfig(TypedDict):
+class McpServerConfig(TypedDict, total=False):
     """MCP server connection configuration."""
 
+    name: str
+    description: str
     url: str
 
 
@@ -32,6 +34,7 @@ class AgentConfig(TypedDict):
     title: str
     cors_origins: str | list[str]
     instruction: str
+    llm_model: str
     mcp_servers: list[McpServerConfig] | None
     otel: OtelConfig
 

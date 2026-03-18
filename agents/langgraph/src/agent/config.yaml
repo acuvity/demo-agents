@@ -2,6 +2,7 @@ app_name: langgraph-demo
 title: Langgraph
 cors_origins: "*"
 instruction: You are a research assistant that can search the web and read from a database
+llm_model: qwen/qwen3-32b
 tools:
 mcp_servers:
   # - name: mcp-brave-search

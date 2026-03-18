@@ -8,7 +8,7 @@ agent:
   serviceType: ClusterIP
   corsOrigins: "*"
   config:
-    agentModel: "anthropic/claude-sonnet-4-6"
+    agentModel: "qwen/qwen3-32b"
   mcpServers:
     - name: mcp-server-sequential-thinking
       description: Sequential thinking MCP server
@@ -37,7 +37,5 @@ ui:
   backendUrl: "http://langgraph-demo-svc"
 
 secrets:
-  anthropicApiKey: ""
+  groqApiKey: ""
   braveApiKey: ""
-
-

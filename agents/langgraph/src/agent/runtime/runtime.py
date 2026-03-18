@@ -5,7 +5,7 @@ import sys
 from typing import Any, Literal, Mapping
 
 from dotenv import load_dotenv
-from langchain_anthropic import ChatAnthropic
+from langchain_groq import ChatGroq
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_mcp_adapters.sessions import (  # type: ignore[import-untyped]
     SSEConnection,
@@ -78,14 +78,15 @@ class LanggraphRuntime:
                 self.mcp_client = MultiServerMCPClient(dict(self.mcp_config))
                 self.tools = await self.mcp_client.get_tools()
 
-            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            api_key = os.environ.get("GROQ_API_KEY")
             if not api_key:
                 raise ValueError(
-                    "ANTHROPIC_API_KEY environment variable is not set. "
-                    "Create a .env file with ANTHROPIC_API_KEY=sk-ant-... or export it"
+                    "GROQ_API_KEY environment variable is not set. "
+                    "Create a .env file with GROQ_API_KEY=gsk_... or export it"
                 )
-            llm = ChatAnthropic(  # type: ignore[call-arg]
-                model_name="claude-sonnet-4-20250514", api_key=api_key
+            llm = ChatGroq(
+                model=self.cfg["llm_model"],
+                groq_api_key=api_key,
             )
 
             if self.tools:

@@ -17,7 +17,7 @@ services:
       - mcp-server-sequential-thinking
       - mcp-server-brave-search
     environment:
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY}
       BRAVE_API_KEY: ${BRAVE_API_KEY}
       BACKEND_CORS_ORIGINS: "*"
       OTEL_ENABLED: "true"
@@ -61,6 +61,7 @@ configs:
       title: LangGraph
       cors_origins: "*"
       instruction: You are a research assistant that can search the web and read from a database
+      llm_model: qwen/qwen3-32b
       tools:
       mcp_servers:
         - name: mcp-server-sequential-thinking

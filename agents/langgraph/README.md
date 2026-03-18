@@ -33,7 +33,7 @@ Obtain the following API keys before proceeding:
 
 | Provider | Environment Variable | Obtain From |
 |----------|---------------------|-------------|
-| Anthropic | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
+| Groq | `GROQ_API_KEY` | [console.groq.com/keys](https://console.groq.com/keys) |
 | Brave Search | `BRAVE_API_KEY` | [brave.com/search/api](https://brave.com/search/api) |
 
 ## Kubernetes Deployment
@@ -44,7 +44,7 @@ The deployment script handles the complete setup including MCP servers:
 
 ```bash
 # Set required environment variables
-export ANTHROPIC_API_KEY=<your_anthropic_key>
+export GROQ_API_KEY=<your_groq_key>
 export BRAVE_API_KEY=<your_brave_key>
 
 # Run the deployment script
@@ -84,10 +84,10 @@ Override values during Helm installation:
 ```bash
 helm install langgraph-demo ./deploy/k8s/charts/langgraph-demo \
   --namespace langgraph-demo \
-  --set secrets.anthropicApiKey=$ANTHROPIC_API_KEY \
+  --set secrets.groqApiKey=$GROQ_API_KEY \
   --set secrets.braveApiKey=$BRAVE_API_KEY \
   --set agent.replicas=3 \
-  --set agent.config.agentModel="anthropic/claude-sonnet-4-6"
+  --set agent.config.agentModel="qwen/qwen3-32b"
 ```
 
 ## Local Development
@@ -107,7 +107,7 @@ uv sync
 
 ```bash
 cat > .env << EOF
-ANTHROPIC_API_KEY=<your_anthropic_key>
+GROQ_API_KEY=<your_groq_key>
 BRAVE_API_KEY=<your_brave_key>
 EOF
 ```

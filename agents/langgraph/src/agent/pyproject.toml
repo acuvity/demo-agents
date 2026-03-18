@@ -7,11 +7,10 @@ requires-python = ">=3.12"
 dependencies = [
     "aiohttp",          # used by google-adk and not directly imported in our code
     "fastapi",
-    "langchain-anthropic",
     "langchain-core",
+    "langchain-groq",
     "langchain-mcp-adapters",
     "langgraph",
-    "openinference-instrumentation-anthropic",
     "openinference-instrumentation-langchain",
     "openinference-instrumentation-litellm",
     "openinference-instrumentation-mcp",

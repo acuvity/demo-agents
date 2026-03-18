@@ -120,13 +120,12 @@ apps:
                   appComponents:
                     - "langgraph-demo/mcp-sequential-thinking"
                     - "langgraph-demo/mcp-brave-search"
-            - name: allow-anthropic
-              description: "Allow requests to Anthropic API"
-              rules:
-                - mode: Proxy
-                  proxyAction: Allow
-                  providers:
-                  - anthropic-api
+            - name: allow-groq
+              description: "Allow requests to Groq API"
+              ACLs:
+                - action: Allow
+                  hostnames:
+                    - "api.groq.com"
       - name: mcp-sequential-thinking
         description: "MCP Server: Sequential Thinking"
         kind: Tool

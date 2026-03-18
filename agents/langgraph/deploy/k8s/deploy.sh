@@ -2,7 +2,7 @@
 # deploy.sh — Deploy the Langgraph demo and its MCP server dependencies to Kubernetes.
 #
 # Usage:
-#   ANTHROPIC_API_KEY=<key> BRAVE_API_KEY=<key> ./deploy.sh
+#   GROQ_API_KEY=<key> BRAVE_API_KEY=<key> ./deploy.sh
 #
 # Prerequisites: kubectl and helm must be available on PATH and pointing at the target cluster.
 
@@ -40,7 +40,7 @@ require_env() {
 # ---------------------------------------------------------------------------
 require_cmd kubectl
 require_cmd helm
-require_env ANTHROPIC_API_KEY
+require_env GROQ_API_KEY
 require_env BRAVE_API_KEY
 
 # ---------------------------------------------------------------------------
@@ -61,32 +61,21 @@ kubectl label namespace "$NAMESPACE" acuvity.ai/inject-custom-ca=enabled --overw
 # MCP: Sequential Thinking
 # ---------------------------------------------------------------------------
 step "MCP Server — Sequential Thinking"
-helm upgrade mcp-server-sequential-thinking "$MCP_SEQUENTIAL_THINKING_CHART" \
-  --install \
-  --namespace "$NAMESPACE" \
-  --version "$MCP_SEQUENTIAL_THINKING_VERSION"
+helm upgrade mcp-server-sequential-thinking "$MCP_SEQUENTIAL_THINKING_CHART"   --install   --namespace "$NAMESPACE"   --version "$MCP_SEQUENTIAL_THINKING_VERSION"
 log "mcp-server-sequential-thinking installed."
 
 # ---------------------------------------------------------------------------
 # MCP: Brave Search
 # ---------------------------------------------------------------------------
 step "MCP Server — Brave Search"
-helm upgrade mcp-server-brave-search "$MCP_BRAVE_SEARCH_CHART" \
-  --install \
-  --namespace "$NAMESPACE" \
-  --version "$MCP_BRAVE_SEARCH_VERSION" \
-  --set-string secrets.BRAVE_API_KEY.value="$BRAVE_API_KEY"
+helm upgrade mcp-server-brave-search "$MCP_BRAVE_SEARCH_CHART"   --install   --namespace "$NAMESPACE"   --version "$MCP_BRAVE_SEARCH_VERSION"   --set-string secrets.BRAVE_API_KEY.value="$BRAVE_API_KEY"
 log "mcp-server-brave-search installed."
 
 # ---------------------------------------------------------------------------
 # Langgraph Demo
 # ---------------------------------------------------------------------------
 step "Langgraph Demo"
-helm upgrade langgraph-demo "$CHART_DIR" \
-  --install \
-  --namespace "$NAMESPACE" \
-  --set secrets.anthropicApiKey="$ANTHROPIC_API_KEY" \
-  --set secrets.braveApiKey="$BRAVE_API_KEY"
+helm upgrade langgraph-demo "$CHART_DIR"   --install   --namespace "$NAMESPACE"   --set secrets.groqApiKey="$GROQ_API_KEY"   --set secrets.braveApiKey="$BRAVE_API_KEY"
 log "langgraph-demo installed."
 
 # ---------------------------------------------------------------------------
