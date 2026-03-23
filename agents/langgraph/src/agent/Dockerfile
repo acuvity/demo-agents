@@ -10,7 +10,7 @@
 # COPY g_runtime/ ./g_runtime/
 # COPY utils/ ./utils/
 
-# EXPOSE 8300
+# EXPOSE 8301
 # CMD ["python", "main.py"]
 
 # syntax=docker/dockerfile:1.7
@@ -54,6 +54,6 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8300
+EXPOSE 8301
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8300"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8301"]

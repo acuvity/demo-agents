@@ -1,0 +1,141 @@
+LangGraph + Apex Kubernetes Command Reference
+
+Cluster
+-------
+kubectl get nodes -o wide
+kubectl get ns
+systemctl status k3s            # check k3s service health inside the VM
+
+LangGraph app
+-------------
+kubectl -n langgraph-demo get pods -o wide
+kubectl -n langgraph-demo get svc,endpoints
+kubectl -n langgraph-demo logs deploy/langgraph-demo --tail=200
+kubectl -n langgraph-demo logs -f deploy/langgraph-demo
+kubectl -n langgraph-demo logs deploy/langgraph-demo-ui --tail=200
+
+Port-forward and test
+---------------------
+Backend:
+kubectl -n langgraph-demo port-forward svc/langgraph-demo-svc 8300:80
+
+Health:
+curl http://127.0.0.1:8300/health
+
+Send a message:
+curl -X POST http://127.0.0.1:8300/send \
+  -H "Content-Type: application/json" \
+  -d '{"message":"hello"}'
+
+UI:
+kubectl -n langgraph-demo port-forward svc/langgraph-demo-ui-svc 5174:80
+
+Open:
+http://localhost:5174
+
+Apex
+----
+kubectl -n acuvity get pods -o wide
+kubectl -n acuvity get ds
+kubectl -n acuvity logs -f ds/apex-apex-agent --all-containers=true
+
+Specific Apex pod:
+kubectl -n acuvity logs apex-apex-agent-<pod-suffix> --tail=300
+kubectl -n acuvity logs -f apex-apex-agent-<pod-suffix>
+
+Find the right Apex pod for the backend
+---------------------------------------
+Backend node:
+kubectl -n langgraph-demo get pods -o wide
+
+Apex pod on same node:
+kubectl -n acuvity get pods -o wide
+
+Useful Apex log filters
+-----------------------
+kubectl -n acuvity logs apex-apex-agent-<pod> --tail=400 | \
+rg "workloads|reconciling apps|attached to cgroup|attached to netns|started otel receiver|appreports|context deadline exceeded|Permission Denied|proxied by ingress listener|reporter:"
+
+What the important Apex lines mean
+----------------------------------
+workloads: 1
+- Apex has associated a workload
+
+workloads: 0
+- Apex is not attached to the app workload
+
+started otel receiver for workload
+- OTLP receiver created for that workload
+
+attached to cgroup
+- traffic interception is attached
+
+attached to netns
+- network namespace attachment is active
+
+reporter: sent all DNS reports, connection reports, and trace reports
+- Apex is sending generic reports upstream
+
+appreports ... context deadline exceeded
+- Apex is observing locally but failing to upload
+
+In-cluster test without port-forward
+------------------------------------
+Health:
+kubectl -n acuvity run lg-health-check \
+  --image=curlimages/curl:8.7.1 \
+  --restart=Never --rm -i \
+  --command -- sh -lc 'curl -sS -D - http://langgraph-demo-svc.langgraph-demo.svc.cluster.local/health'
+
+Send:
+kubectl -n acuvity run lg-send-check \
+  --image=curlimages/curl:8.7.1 \
+  --restart=Never --rm -i \
+  --command -- sh -lc 'curl -sS -D - -X POST http://langgraph-demo-svc.langgraph-demo.svc.cluster.local/send -H "Content-Type: application/json" -d "{\"message\":\"hello\"}"'
+
+Helm
+----
+helm list -A
+helm list -n langgraph-demo
+helm list -n acuvity
+helm get values langgraph-demo -n langgraph-demo -a
+helm get values apex -n acuvity -a
+
+Redeploy
+--------
+LangGraph:
+helm upgrade langgraph-demo ~/demo-agents/agents/langgraph/deploy/k8s/charts/langgraph-demo -n langgraph-demo --wait --timeout 10m
+
+Apex:
+helm upgrade apex <chart> -n acuvity --wait --timeout 10m
+
+Rollout status
+--------------
+kubectl -n langgraph-demo rollout status deploy/langgraph-demo
+kubectl -n langgraph-demo rollout status deploy/langgraph-demo-ui
+kubectl -n acuvity rollout status ds/apex-apex-agent
+
+Image/debug checks
+------------------
+kubectl -n langgraph-demo get pod <pod> -o jsonpath='{.spec.containers[0].image}{"\n"}{.status.containerStatuses[0].imageID}{"\n"}'
+sudo k3s crictl images | grep -E 'langgraph-demo|apex-agent'   # k3s uses containerd, not docker
+
+Manifest / import
+-----------------
+acuctl login --check -A https://api.acuvity.us -n /orgs/automated.acuvity.qa/apps/Devyansh
+acuctl import -A https://api.acuvity.us -n /orgs/automated.acuvity.qa/apps/Devyansh ~/demo-agents/agents/langgraph/deploy/config/manifest.yaml
+
+Most useful quick workflow
+--------------------------
+1. Check pods:
+kubectl -n langgraph-demo get pods -o wide
+kubectl -n acuvity get pods -o wide
+
+2. Send request:
+kubectl -n langgraph-demo port-forward svc/langgraph-demo-svc 8300:80
+curl http://127.0.0.1:8300/health
+curl -X POST http://127.0.0.1:8300/send -H "Content-Type: application/json" -d '{"message":"hello"}'
+
+3. Watch logs:
+kubectl -n langgraph-demo logs -f deploy/langgraph-demo
+kubectl -n acuvity logs -f apex-apex-agent-<same-node-pod>

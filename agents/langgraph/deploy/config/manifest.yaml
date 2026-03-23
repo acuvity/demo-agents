@@ -6,9 +6,9 @@ apps:
       - - "@source:namespace=/"
         - "@source:type=mtls"
         - "@source:name=app-tokens"
-        - "@org=acuvity.ai"
-        - "@scope:project=demo-agents"
-        - "@apptoken:name=demo-agents"
+        - "@org=automated.acuvity.qa"
+        - "@scope:project=Devyansh"
+        - "@apptoken:name=test"
     tracing: Recording
     otelReceivers:
       - endpoint: "127.0.0.1:4317"
@@ -60,9 +60,11 @@ apps:
               description: "Allow all external requests"
               action: Allow
           listeners:
-            - port: 8300
+            - port: 8301
               mode: Proxy
               hosts:
+                - 127.0.0.1
+                - localhost
                 - langgraph-demo-svc
                 - langgraph-demo-svc.langgraph-demo
                 - langgraph-demo-svc.langgraph-demo.svc.cluster.local
@@ -77,18 +79,6 @@ apps:
                         body = json.decode(input.body())
                         return {
                           extractions = { content = body.message },
-                        }
-                      end
-                - def:
-                    name: chat/response/message
-                    type: Output
-                    path: "/send"
-                    method: Post
-                    script: |-
-                      function extract()
-                        body = json.decode(input.body())
-                        return {
-                          extractions = { content = body.output },
                         }
                       end
               proxy:
