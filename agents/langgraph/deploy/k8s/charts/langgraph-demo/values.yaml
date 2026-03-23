@@ -4,7 +4,7 @@ agent:
     tag: latest
     pullPolicy: IfNotPresent
   replicas: 1
-  port: 8301
+  port: 8300
   serviceType: ClusterIP
   corsOrigins: "*"
   config:
