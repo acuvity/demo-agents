@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config-file
+data:
+  config.yaml: |
+    model_list:
+      - model_name: {{ .Values.litellm.modelName }}
+        litellm_params:
+          model: {{ .Values.litellm.model }}
+          api_key: os.environ/ANTHROPIC_API_KEY
+    litellm_settings:
+      callbacks: ["otel"]
+      forward_client_headers:
+        - traceparent
+      forward_traceparent_to_llm_provider: true
+    general_settings:
+      forward_client_headers_to_llm_api: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  labels:
+    app: litellm
+spec:
+  selector:
+    matchLabels:
+      app: litellm
+  template:
+    metadata:
+      labels:
+        app: litellm
+    spec:
+      containers:
+        - name: litellm
+          image: "{{ .Values.litellm.image }}"
+          args:
+            - "--config"
+            - "/app/proxy_server_config.yaml"
+          ports:
+            - containerPort: 4500
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/proxy_server_config.yaml
+              subPath: config.yaml
+            - name: custom-ca
+              mountPath: "/etc/ssl/certs/custom"
+              readOnly: true
+          env:
+            - name: PORT
+              value: "4500"
+            - name: REQUESTS_CA_BUNDLE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            - name: SSL_CERT_FILE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+          envFrom:
+            - secretRef:
+                name: agent-secrets
+      volumes:
+        - name: config-volume
+          configMap:
+            name: litellm-config-file
+        - name: custom-ca
+          configMap:
+            name: acuvity-ca-bundle
+            optional: false

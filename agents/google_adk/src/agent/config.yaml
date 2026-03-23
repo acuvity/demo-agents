@@ -10,6 +10,11 @@ mcp_servers:
   # - name: mcp-server-sequential-thinking
   #   description: Read from a database
   #   url: http://mcp-server-sequential-thinking:8000/sse
+  - name: arcade-mcp-gateway
+    url: https://api.arcade.dev/mcp/acuvity
+litellm:
+  api_base: "http://localhost:4500"
+  api_key: ""
 otel:
   enabled: true
   service_name: google-adk-demo-tracer
@@ -19,4 +24,6 @@ otel:
   file: trace.log
   otlp_endpoint: http://127.0.0.1:4317
   insecure: true
+arcade:
+  user_id: ""
 

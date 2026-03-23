@@ -145,8 +145,11 @@ apps:
                 - mcp-server-sequential-thinking.openai-sdk-demo
                 - mcp-server-sequential-thinking
               extractors:
-                - ref: mcp/input
-                - ref: mcp/output
+                - ref: mcp/input-sse
+                - ref: mcp/output-sse
+                - ref: mcp/input-http
+                - ref: mcp/output-http
+                - ref: mcp/output-http-get
               proxy:
                 listenTLS: Disabled
                 dialTLS: Disabled
@@ -179,8 +182,11 @@ apps:
                 - mcp-server-brave-search.openai-sdk-demo
                 - mcp-server-brave-search
               extractors:
-                - ref: mcp/input
-                - ref: mcp/output
+                - ref: mcp/input-sse
+                - ref: mcp/output-sse
+                - ref: mcp/input-http
+                - ref: mcp/output-http
+                - ref: mcp/output-http-get
               proxy:
                 listenTLS: Disabled
                 dialTLS: Disabled

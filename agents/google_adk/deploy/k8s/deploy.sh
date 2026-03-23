@@ -2,7 +2,7 @@
 # deploy.sh — Deploy the Google ADK demo and its MCP server dependencies to Kubernetes.
 #
 # Usage:
-#   ANTHROPIC_API_KEY=<key> BRAVE_API_KEY=<key> ./deploy.sh
+#   ANTHROPIC_API_KEY=<key> BRAVE_API_KEY=<key> [ARCADE_API_KEY=<key>] ./deploy.sh
 #
 # Prerequisites: kubectl and helm must be available on PATH and pointing at the target cluster.
 
@@ -86,7 +86,8 @@ helm upgrade google-adk-demo "$CHART_DIR" \
   --install \
   --namespace "$NAMESPACE" \
   --set secrets.anthropicApiKey="$ANTHROPIC_API_KEY" \
-  --set secrets.braveApiKey="$BRAVE_API_KEY"
+  --set secrets.braveApiKey="$BRAVE_API_KEY" \
+  --set secrets.arcadeApiKey="${ARCADE_API_KEY:-}"
 log "google-adk-demo installed."
 
 # ---------------------------------------------------------------------------
