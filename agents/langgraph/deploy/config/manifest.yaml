@@ -81,8 +81,20 @@ apps:
                           extractions = { content = body.message },
                         }
                       end
+                - def:
+                    name: chat/response/message
+                    type: Output
+                    path: "/send"
+                    method: Post
+                    script: |-
+                      function extract()
+                        body = json.decode(input.body())
+                        return {
+                          extractions = { content = body.output },
+                        }
+                      end
               proxy:
-                listenTLS: Disabled
+                listenTLS: Enabled
                 dialTLS: Disabled
                 defaultPolicyAction: Allow
                 policies:
