@@ -22,7 +22,21 @@ class OtelConfig(TypedDict):
 class McpServerConfig(TypedDict):
     """MCP server connection configuration."""
 
+    name: str
     url: str
+
+
+class LiteLlmConfig(TypedDict):
+    """LiteLLM proxy configuration."""
+
+    api_base: str | None
+    api_key: str | None
+
+
+class ArcadeConfig(TypedDict):
+    """Arcade integration configuration."""
+
+    user_id: str | None
 
 
 class AgentConfig(TypedDict):
@@ -34,6 +48,8 @@ class AgentConfig(TypedDict):
     instruction: str
     mcp_servers: list[McpServerConfig] | None
     otel: OtelConfig
+    litellm: LiteLlmConfig
+    arcade: ArcadeConfig
 
 
 def load_config_yaml() -> AgentConfig:

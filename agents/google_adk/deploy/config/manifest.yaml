@@ -120,6 +120,13 @@ apps:
                   appComponents:
                     - "google-adk-demo/mcp-sequential-thinking"
                     - "google-adk-demo/mcp-brave-search"
+            - name: allow-litellm
+              description: "Allow requests to LiteLLM proxy"
+              rules:
+                - mode: Proxy
+                  proxyAction: Allow
+                  appComponents:
+                    - "google-adk-demo/litellm"
             - name: allow-anthropic
               description: "Allow requests to Anthropic API"
               rules:
@@ -127,6 +134,13 @@ apps:
                   proxyAction: Allow
                   providers:
                   - anthropic-api
+            - name: allow-arcade-dev
+              description: "Allow requests to Arcade Dev"
+              rules:
+                - mode: Proxy
+                  proxyAction: Allow
+                  providers:
+                    - arcade-dev
       - name: mcp-sequential-thinking
         description: "MCP Server: Sequential Thinking"
         kind: Tool
@@ -145,8 +159,11 @@ apps:
                 - mcp-server-sequential-thinking.google-adk-demo
                 - mcp-server-sequential-thinking
               extractors:
-                - ref: mcp/input
-                - ref: mcp/output
+                - ref: mcp/input-http
+                - ref: mcp/output-http
+                - ref: mcp/output-http-get
+                - ref: mcp/input-sse
+                - ref: mcp/output-sse
               proxy:
                 listenTLS: Disabled
                 dialTLS: Disabled
@@ -179,8 +196,11 @@ apps:
                 - mcp-server-brave-search.google-adk-demo
                 - mcp-server-brave-search
               extractors:
-                - ref: mcp/input
-                - ref: mcp/output
+                - ref: mcp/input-http
+                - ref: mcp/output-http
+                - ref: mcp/output-http-get
+                - ref: mcp/input-sse
+                - ref: mcp/output-sse
               proxy:
                 listenTLS: Disabled
                 dialTLS: Disabled
@@ -202,3 +222,67 @@ apps:
                 - action: Allow
                   hostnames:
                     - "api.search.brave.com"
+      - name: litellm
+        description: "LiteLLM proxy for model routing"
+        kind: Other
+        selector:
+          type: Kubernetes
+          kubernetes:
+            name: litellm
+            kubernetesNamespace: google-adk-demo
+            type: Deployment
+        ingress:
+          listeners:
+            - port: 4500
+              mode: Proxy
+              hosts:
+                - litellm.google-adk-demo.svc.cluster.local
+                - litellm.google-adk-demo
+                - litellm
+              extractors:
+                - ref: oaiapi/responses/input
+                - ref: oaiapi/responses/output
+                - ref: oaiapi/responses/output/get
+                - ref: oaiapi/responses/ws/input
+                - ref: oaiapi/responses/ws/output
+                - ref: oaiapi/text/completions/input
+                - ref: oaiapi/text/completions/output
+                - ref: oaiapi/audio/generation/input
+                - ref: oaiapi/audio/transcriptions/input
+                - ref: oaiapi/audio/translations/input
+                - ref: oaiapi/text/embeddings/input
+                - ref: oaiapi/file/upload/input
+                - ref: oaiapi/image/generations/input
+                - ref: oaiapi/image/edits/input
+                - ref: oaiapi/image/variations/input
+                - ref: oaiapi/audio/speech/output
+                - ref: oaiapi/audio/transcriptions/output
+                - ref: oaiapi/audio/translations/output
+                - ref: oaiapi/text/embeddings/output
+                - ref: oaiapi/image/generations/output
+                - ref: oaiapi/image/edits/output
+                - ref: oaiapi/image/variations/output
+                - ref: anth/v1/messages/input
+                - ref: anth/v1/messages/output
+              proxy:
+                listenTLS: Disabled
+                dialTLS: Disabled
+                defaultPolicyAction: Allow
+                policies:
+                  - name: allow-agent
+                    description: "Allow requests from the agent"
+                    rules:
+                      - action: Allow
+                        appComponents:
+                          - "google-adk-demo/agent"
+        egress:
+          defaultPolicy:
+            ACLAction: Allow
+          policies:
+            - name: allow-anthropic
+              description: "Allow requests to Anthropic API"
+              rules:
+                - mode: Proxy
+                  proxyAction: Allow
+                  providers:
+                  - anthropic-api

@@ -3,6 +3,7 @@
 import logging
 import sys
 from typing import Any, cast
+import os
 
 from dotenv import load_dotenv
 from google.adk.agents import LlmAgent  # pylint: disable=import-error,no-name-in-module
@@ -38,8 +39,21 @@ class GoogleADKRuntime:
         self.mcp_toolsets = self.setup_mcp_toolsets()
         self.app_name: str = cfg["app_name"]
 
+        litellm_api_base: str | None = cfg["litellm"]["api_base"]
+        litellm_api_key: str | None = cfg["litellm"]["api_key"]
+
+        if litellm_api_base:
+            logger.info("Using litellm proxy config")
+            model = LiteLlm(
+                model="claude-sonnet-4-6",
+                api_key=litellm_api_key if litellm_api_key else None,
+                api_base=litellm_api_base,  # pyright: ignore[reportUnknownArgumentType]
+            )
+        else:
+            model = LiteLlm(model="anthropic/claude-sonnet-4-6")
+
         self.root_agent = LlmAgent(
-            model=LiteLlm(model="anthropic/claude-sonnet-4-6"),
+            model=model,
             name="research_assistant",
             description="A research assistant that can search the web and sequential thinking",
             instruction=self.cfg["instruction"],
@@ -57,6 +71,17 @@ class GoogleADKRuntime:
         if not self.cfg["mcp_servers"]:
             return toolsets
         for server in self.cfg["mcp_servers"]:
+
+            headers: dict[str, str] = {}
+            if server["name"] == "arcade-mcp-gateway":
+                arcade_user_id: str | None = self.cfg["arcade"]["user_id"]
+                if os.environ.get("ARCADE_API_KEY") and arcade_user_id:
+                    headers["Authorization"] = f"Bearer {os.environ['ARCADE_API_KEY']}"
+                    headers["Arcade-User-ID"] = arcade_user_id
+                else:
+                    logger.debug("No Aracde credentials set, skipping arcade mcp url")
+                    continue
+
             url: str = server["url"]
             connection_params: SseConnectionParams | StreamableHTTPConnectionParams
             if url.rstrip("/").endswith("/sse"):
@@ -64,12 +89,14 @@ class GoogleADKRuntime:
                     url=url,
                     timeout=60,
                     sse_read_timeout=6500,
+                    headers=headers if headers else None,
                 )
             else:
                 connection_params = StreamableHTTPConnectionParams(
                     url=url,
                     timeout=60,
                     sse_read_timeout=6500,
+                    headers=headers if headers else None,
                 )
             toolsets.append(McpToolset(connection_params=connection_params))
         return toolsets

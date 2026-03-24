@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=../../../pkgs/api/backend/jsonschema/import.json
+# yaml-language-server: $schema=https://api.acuvity.us/api/v1/jsonschema/import.json
 
 label: apps-v2/openai-mcp-demo
 
@@ -179,8 +179,11 @@ apps:
                 - mcp-server-brave-search.mcp-demo
                 - mcp-server-brave-search
               extractors:
-                - ref: mcp/input
-                - ref: mcp/output
+                - ref: mcp/input-sse
+                - ref: mcp/output-sse
+                - ref: mcp/input-http
+                - ref: mcp/output-http
+                - ref: mcp/output-http-get
               proxy:
                 listenTLS: Disabled
                 dialTLS: Disabled
@@ -220,8 +223,11 @@ apps:
                 - mcp-server-fetch.mcp-demo
                 - mcp-server-fetch
               extractors:
-                - ref: mcp/input
-                - ref: mcp/output
+                - ref: mcp/input-sse
+                - ref: mcp/output-sse
+                - ref: mcp/input-http
+                - ref: mcp/output-http
+                - ref: mcp/output-http-get
               proxy:
                 listenTLS: Disabled
                 dialTLS: Disabled
@@ -261,8 +267,11 @@ apps:
                 - mcp-server-memory.mcp-demo
                 - mcp-server-memory
               extractors:
-                - ref: mcp/input
-                - ref: mcp/output
+                - ref: mcp/input-sse
+                - ref: mcp/output-sse
+                - ref: mcp/input-http
+                - ref: mcp/output-http
+                - ref: mcp/output-http-get
               proxy:
                 listenTLS: Disabled
                 dialTLS: Disabled
@@ -295,8 +304,11 @@ apps:
                 - mcp-server-sequential-thinking.mcp-demo
                 - mcp-server-sequential-thinking
               extractors:
-                - ref: mcp/input
-                - ref: mcp/output
+                - ref: mcp/input-sse
+                - ref: mcp/output-sse
+                - ref: mcp/input-http
+                - ref: mcp/output-http
+                - ref: mcp/output-http-get
               proxy:
                 listenTLS: Disabled
                 dialTLS: Disabled

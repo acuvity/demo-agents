@@ -12,10 +12,13 @@ agent:
   mcpServers:
     - name: mcp-server-sequential-thinking
       description: Sequential thinking MCP server
-      url: "http://mcp-server-sequential-thinking:8000/sse"
+      url: "http://mcp-server-sequential-thinking:8000/mcp"
     - name: mcp-server-brave-search
       description: Brave search MCP server
-      url: "http://mcp-server-brave-search:8000/sse"
+      url: "http://mcp-server-brave-search:8000/mcp"
+    - name: arcade-mcp-gateway
+      url: https://api.arcade.dev/mcp/acuvity
+
   otel:
     enabled: true
     serviceName: "google-adk-demo-tracer"
@@ -36,8 +39,20 @@ ui:
   serviceType: ClusterIP
   backendUrl: "http://google-adk-demo-svc"
 
+litellm:
+  apiKey: ""
+  apiBase: "http://litellm:4500"
+  image: "docker.litellm.ai/berriai/litellm:main-stable"
+  modelName: "claude-sonnet-4-6"
+  model: "anthropic/claude-sonnet-4-6"
+
+
+arcade:
+  userId: ""
+
 secrets:
   anthropicApiKey: ""
   braveApiKey: ""
+  arcadeApiKey: ""
 
 
