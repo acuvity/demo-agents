@@ -94,7 +94,7 @@ apps:
                         }
                       end
               proxy:
-                listenTLS: Enabled
+                listenTLS: Disabled
                 dialTLS: Disabled
                 defaultPolicyAction: Allow
                 policies:
