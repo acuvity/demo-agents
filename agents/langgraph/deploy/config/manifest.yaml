@@ -88,7 +88,7 @@ apps:
                     method: Post
                     script: |-
                       function extract()
-                        body = json.decode(output.body())
+                        body = json.decode(response.body())
                         return {
                           extractions = { content = body.output },
                         }
