@@ -24,6 +24,17 @@ A minimal LangGraph agent that uses the Acuvity AI Security Gateway.
 | `ARCADE_USER_ID` | Arcade user ID |
 | `ARCADE_MCP_URL` | Arcade MCP server URL |
 
+## Getting Acuvity App Token
+
+ - Access your [Acuvity](https://console.acuvity.ai) account
+ - Navigate to `Access > App Tokens`
+ - Create a token with an appropriate name and description.
+
+## Getting you AI Security Gateway (Apex) URL
+
+ - Goto [https://console.acuvity.ai/me](https://console.acuvity.ai/me) information page
+ - Copy the `Apex` URL under `General` section
+
 ## Run
 
 ```bash
