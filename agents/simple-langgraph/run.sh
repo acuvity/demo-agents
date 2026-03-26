@@ -30,7 +30,7 @@ export ARCADE_MCP_URL="${ARCADE_MCP_URL:?ARCADE_MCP_URL is not set}"
 CA_PATH="$(dirname "$0")/ca.pem"
 
 if [ ! -f "$CA_PATH" ]; then
-  curl -s -o "$CA_PATH" "${apex_url}_acuvity/ca.pem"
+  curl -s -o "$CA_PATH" "${APEX_URL}/_acuvity/ca.pem"
 fi
 
 # https://token:[TOKEN]@[APEX-URL]
