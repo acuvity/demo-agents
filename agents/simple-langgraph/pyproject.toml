@@ -9,5 +9,7 @@ dependencies = [
     "langchain-anthropic>=1.4.0",
     "langchain-mcp-adapters>=0.2.2",
     "langchain-core>=1.2.21",
+    "langchain-openrouter>=0.0.1",
+    "fastmcp>=2.0.0",
 ]
 pythonVersion = "3.12"

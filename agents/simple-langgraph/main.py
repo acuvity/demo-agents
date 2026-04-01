@@ -1,4 +1,4 @@
-"""Simple LangGraph agent using Arcade MCP tools."""
+"""Simple LangGraph agent with configurable LLM provider and MCP server."""
 import asyncio
 import logging
 import os
@@ -10,25 +10,46 @@ from langgraph.prebuilt import ToolNode, tools_condition
 
 logging.getLogger("mcp.client.streamable_http").setLevel(logging.ERROR)
 
-ARCADE_MCP_URL = os.environ["ARCADE_MCP_URL"]
-ARCADE_API_KEY = os.environ["ARCADE_API_KEY"]
-ARCADE_USER_ID = os.environ["ARCADE_USER_ID"]
+
+def build_llm(tools):
+    """Build the LLM based on LLM_PROVIDER env var (anthropic or openrouter)."""
+    provider = os.environ.get("LLM_PROVIDER", "anthropic")
+    if provider == "openrouter":
+        from langchain_openrouter import ChatOpenRouter  # type: ignore[import]
+        model_name = os.environ.get("OPENROUTER_MODEL", "qwen3.6-plus-preview")
+        return ChatOpenRouter(
+            model=model_name,
+            api_key=os.environ["OPENROUTER_API_KEY"],
+            temperature=0,
+        ).bind_tools(tools)
+    model_name = os.environ.get("LLM_MODEL", "claude-opus-4-6")
+    return ChatAnthropic(model_name=model_name).bind_tools(tools)  # type: ignore[call-arg]
+
+
+def build_mcp_config() -> dict:
+    """Build the MCP client config based on MCP_SERVER env var (arcade or local)."""
+    server = os.environ.get("MCP_SERVER", "arcade")
+    if server == "local":
+        return {"local": {
+            "command": "uv",
+            "args": ["run", "python3", "tools/local_tools.py"],
+            "transport": "stdio",
+        }}
+    return {"arcade": {
+        "url": os.environ["ARCADE_MCP_URL"],
+        "transport": "streamable_http",
+        "headers": {
+            "Authorization": f"Bearer {os.environ['ARCADE_API_KEY']}",
+            "Arcade-User-Id": os.environ["ARCADE_USER_ID"],
+        },
+    }}
 
 
 async def main():
     """Run the agent."""
-    mcp_client = MultiServerMCPClient(
-        {"arcade": {
-            "url": f"{ARCADE_MCP_URL}",
-            "transport": "streamable_http",
-            "headers": {
-                "Authorization": f"Bearer {ARCADE_API_KEY}",
-                "Arcade-User-Id": f"{ARCADE_USER_ID}",
-            },
-        }}
-    )
+    mcp_client = MultiServerMCPClient(build_mcp_config())
     tools = await mcp_client.get_tools()
-    model = ChatAnthropic(model_name="claude-opus-4-6").bind_tools(tools)  # type: ignore[call-arg]
+    model = build_llm(tools)
 
     def call_model(state: MessagesState):
         return {"messages": [model.invoke(state["messages"])]}
