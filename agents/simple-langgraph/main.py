@@ -16,7 +16,7 @@ def build_llm(tools):
     provider = os.environ.get("LLM_PROVIDER", "anthropic")
     if provider == "openrouter":
         from langchain_openrouter import ChatOpenRouter  # type: ignore[import]
-        model_name = os.environ.get("OPENROUTER_MODEL", "qwen3.6-plus-preview")
+        model_name = os.environ.get("OPENROUTER_MODEL", "qwen/qwen3.6-plus-preview:free")
         return ChatOpenRouter(
             model=model_name,
             api_key=os.environ["OPENROUTER_API_KEY"],

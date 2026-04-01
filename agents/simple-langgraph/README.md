@@ -30,7 +30,7 @@ A minimal LangGraph agent that uses the Acuvity AI Security Gateway.
 | `LLM_MODEL` | Model name override. Defaults: `claude-opus-4-6` (Anthropic), ignored for OpenRouter |
 | `ANTHROPIC_API_KEY` | Anthropic API key - required when `LLM_PROVIDER=anthropic` |
 | `OPENROUTER_API_KEY` | OpenRouter API key - required when `LLM_PROVIDER=openrouter` |
-| `OPENROUTER_MODEL` | OpenRouter model name (default: `qwen3.6-plus-preview`) |
+| `OPENROUTER_MODEL` | OpenRouter model name (default: `qwen/qwen3.6-plus-preview:free`) |
 
 ### MCP server selection
 
@@ -80,7 +80,7 @@ export APEX_URL=https://...
 
 export LLM_PROVIDER=openrouter
 export OPENROUTER_API_KEY=...
-export OPENROUTER_MODEL=qwen3.6-plus-preview  # optional, this is the default
+export OPENROUTER_MODEL=qwen/qwen3.6-plus-preview:free  # optional, this is the default
 
 export MCP_SERVER=local
 
