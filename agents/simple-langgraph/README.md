@@ -80,7 +80,7 @@ export APEX_URL=https://...
 
 export LLM_PROVIDER=openrouter
 export OPENROUTER_API_KEY=...
-export OPENROUTER_MODEL=qwen/qwen3.6-plus-preview:free  # optional, this is the default
+export OPENROUTER_MODEL=stepfun/step-3.5-flash:free  # optional, this is the default
 
 export MCP_SERVER=local
 

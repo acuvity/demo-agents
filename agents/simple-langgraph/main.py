@@ -22,7 +22,7 @@ def build_llm(tools):
 
         model_name = os.environ.get(
             "OPENROUTER_MODEL",
-            "qwen/qwen3.6-plus-preview:free",
+            "stepfun/step-3.5-flash:free",
         )
         return ChatOpenRouter(
             model=model_name,
@@ -126,7 +126,7 @@ async def main():
                 "You are an AI assistant that uses tools.\n\n"
                 "CRITICAL RULE:\n"
                 "- You MUST base your answer ONLY on tool output.\n"
-                "- Do NOT invent, assume, or hallucinate information.\n"
+                "- Your answer MUST be SOLELY based on the tool output.\n"
             )
         )
         return {"messages": [model.invoke([system_instruction] + messages)]}
