@@ -44,5 +44,5 @@ def delete_crm_data(filter: str = "", query: str = "") -> str:
 
 
 if __name__ == "__main__":
-    # Defaults to stdio transport; perfect for `uv run python3 tools/local_tools.py`
+    # Defaults to stdio transport
     mcp.run()
