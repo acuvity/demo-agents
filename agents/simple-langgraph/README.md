@@ -74,6 +74,10 @@ export ARCADE_MCP_URL=...
 
 ### OpenRouter + Local MCP (tool poisoning demo)
 
+ - Go to [OpenRouter](https://openrouter.ai)
+ - Go to settings and set up an API Key. 
+ - Find a model from the [hub](https://openrouter.ai/models)
+
 ```bash
 export ACUVITY_TOKEN=...
 export APEX_URL=https://...
