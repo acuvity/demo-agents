@@ -25,7 +25,7 @@ def render_content(message: Any) -> str:
 
 
 def debug_messages(messages: list[Any]) -> None:
-    """Print only tool calls and tool results from the message trace."""
+    """"Print only tool calls and tool results from message trace"""
     tool_lines: list[str] = []
 
     for msg in messages:
@@ -34,7 +34,7 @@ def debug_messages(messages: list[Any]) -> None:
         tool_calls = getattr(msg, "tool_calls", None)
         if tool_calls:
             for tc in tool_calls:
-                tool_lines.append(f"  [tool_call]  {tc.get('name', '?')}  args={tc.get('args', {})}")
+                tool_lines.append(f"  [tool_call] {tc.get('name', '?')} args {tc.get('args', {})}")
 
         if cls == "ToolMessage":
             name = getattr(msg, "name", "?")
@@ -42,9 +42,7 @@ def debug_messages(messages: list[Any]) -> None:
             tool_lines.append(f"  [tool_result] {name} -> {content[:300]}{'...' if len(content) > 300 else ''}")
 
     if tool_lines:
-        print("\n--- Tool Calls ---")
+        print("\n------------ Tool Calls Begin: ------------")
         for line in tool_lines:
             print(line)
-        print("--- End Tool Calls ---\n")
-    else:
-        print("\n[debug] no tool calls in this run\n")
+        print("------------ Tool Calls End ------------\n")

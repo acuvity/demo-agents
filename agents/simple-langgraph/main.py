@@ -51,15 +51,15 @@ async def main():
 
     for item_type, content in load_prompts(prompts_file):
         if item_type == "header":
-            print("===============================")
+            print("\n===============================\n")
             print(f"Currently Testing - {content}\n")
             continue
 
         result = await app.ainvoke({"messages": [HumanMessage(content=content)]})
-        print("...............................")
-        print("Human:", content[:120], "..." if len(content) > 120 else "")
+        print("\n...............................\n")
+        print("HUMAN:\n", content[:120], "..." if len(content) > 120 else "")
         debug_messages(result["messages"])
-        print("Final answer:")
+        print("FINAL ANSWER:\n")
         print(render_content(result["messages"][-1]))
         print()
 
