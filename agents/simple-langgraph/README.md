@@ -94,24 +94,18 @@ export ARCADE_USER_ID=...
 export ARCADE_MCP_URL=...
 ```
 
-### Step 4 - Run
+### Step 4 - Pick your prompts (optional, default: simple)
 
 ```bash
-./run.sh
+export PROMPTS_TYPE=simple      # basic queries, tool usage, simple injection examples (default)
+
+# OR
+
+export PROMPTS_TYPE=scenario    # detailed multi-step attack scenarios (see docs/test-scenarios.md)
 ```
 
----
-
-### Attack Scenario Testing
-
-Runs the scenarios from `docs/test-scenarios.md` one at a time. Add scenarios to
-`prompt-scenarios/scenario-prompts.txt` as they are validated.
-
-Use `PROMPTS_TYPE=scenario` alongside any LLM provider from Step 2 above:
+### Step 5 - Run
 
 ```bash
-export MCP_SERVER=local
-export PROMPTS_TYPE=scenario
-
 ./run.sh
 ```
