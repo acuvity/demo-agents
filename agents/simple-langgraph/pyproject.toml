@@ -11,5 +11,6 @@ dependencies = [
     "langchain-core>=1.2.21",
     "langchain-openrouter>=0.2.1",
     "fastmcp>=2.0.0",
+    "langchain-openai>=1.1.12",
 ]
 pythonVersion = "3.12"

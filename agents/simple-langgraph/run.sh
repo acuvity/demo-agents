@@ -16,17 +16,19 @@ if [[ "$APEX_URL" != https://* ]]; then
   exit 1
 fi
 
-# LLM provider selection: anthropic (default) or openrouter
+# LLM provider selection: anthropic (default), openai, or openrouter
 LLM_PROVIDER="${LLM_PROVIDER:-anthropic}"
 export LLM_PROVIDER
 
-if [[ "$LLM_PROVIDER" == "openrouter" ]]; then
-  export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:?OPENROUTER_API_KEY is not set (required when LLM_PROVIDER=openrouter)}"
-elif [[ -n "$LLM_API_KEY" ]]; then
-  # Custom Anthropic-compatible endpoint - LLM_API_KEY provided directly
+if [[ -n "$LLM_API_KEY" ]]; then
+  # LLM_API_KEY overrides the provider-specific key for any provider
   export LLM_API_KEY
+elif [[ "$LLM_PROVIDER" == "openrouter" ]]; then
+  export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:?OPENROUTER_API_KEY is not set (required when LLM_PROVIDER=openrouter)}"
+elif [[ "$LLM_PROVIDER" == "openai" ]]; then
+  export OPENAI_API_KEY="${OPENAI_API_KEY:?OPENAI_API_KEY is not set (required when LLM_PROVIDER=openai)}"
 else
-  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY is not set (required when LLM_PROVIDER=anthropic, or set LLM_API_KEY for a custom endpoint)}"
+  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY is not set (required when LLM_PROVIDER=anthropic)}"
 fi
 
 # MCP server selection: arcade (default) or local
