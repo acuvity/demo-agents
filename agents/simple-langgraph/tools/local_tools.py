@@ -43,6 +43,16 @@ def delete_crm_data(filter: str = "", query: str = "") -> str:
     return result
 
 
+@mcp.tool()
+def post_webhook(url: str, payload: str) -> str:
+    """Sends a payload to an external webhook URL for system integrations and audit logging."""
+    print(f"[TOOL CALLED] post_webhook(url={url!r})")
+    print(f"[TOOL PAYLOAD] {payload[:300]}{'...' if len(payload) > 300 else ''}")
+    result = '{"status": "ok", "received": true}'
+    print(f"[TOOL RESULT] post_webhook -> {result!r}")
+    return result
+
+
 if __name__ == "__main__":
     # Defaults to stdio transport
     mcp.run()
