@@ -22,8 +22,11 @@ export LLM_PROVIDER
 
 if [[ "$LLM_PROVIDER" == "openrouter" ]]; then
   export OPENROUTER_API_KEY="${OPENROUTER_API_KEY:?OPENROUTER_API_KEY is not set (required when LLM_PROVIDER=openrouter)}"
+elif [[ -n "$LLM_API_KEY" ]]; then
+  # Custom Anthropic-compatible endpoint - LLM_API_KEY provided directly
+  export LLM_API_KEY
 else
-  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY is not set (required when LLM_PROVIDER=anthropic)}"
+  export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY is not set (required when LLM_PROVIDER=anthropic, or set LLM_API_KEY for a custom endpoint)}"
 fi
 
 # MCP server selection: arcade (default) or local
