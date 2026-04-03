@@ -15,48 +15,28 @@ A minimal LangGraph agent that uses the Acuvity AI Security Gateway.
 
 ## Environment variables
 
-### Acuvity AI Security Gateway (always required)
-
 | Variable | Description |
 |---|---|
-| `ACUVITY_TOKEN` | Acuvity Application Token to authenticate with Acuvity AI Security Gateway |
-| `APEX_URL` | The URL for Acuvity AI Security Gateway. Get your Apex URL from `console.acuvity.ai/me` |
-
-### LLM provider selection
-
-| Variable | Description |
-|---|---|
+| `ACUVITY_TOKEN` | Acuvity app token - always required |
+| `APEX_URL` | Acuvity gateway URL - always required |
 | `LLM_PROVIDER` | `anthropic` (default), `openai`, or `openrouter` |
-| `LLM_MODEL` | Model name override. Defaults: `claude-opus-4-6` (Anthropic), `gpt-4o` (OpenAI) |
 | `ANTHROPIC_API_KEY` | Required when `LLM_PROVIDER=anthropic` |
 | `OPENAI_API_KEY` | Required when `LLM_PROVIDER=openai` |
 | `OPENROUTER_API_KEY` | Required when `LLM_PROVIDER=openrouter` |
-| `OPENROUTER_MODEL` | OpenRouter model name (default: `stepfun/step-3.5-flash:free`) |
-| `LLM_BASE_URL` | Override the API endpoint (any provider - enables third-party compatible APIs) |
-| `LLM_API_KEY` | Override the API key (any provider - takes precedence over the provider-specific key) |
-
-### MCP server selection
-
-| Variable | Description |
-|---|---|
 | `MCP_SERVER` | `arcade` (default) or `local` |
-| `ARCADE_API_KEY` | Arcade API key - required when `MCP_SERVER=arcade` |
-| `ARCADE_USER_ID` | Arcade user ID - required when `MCP_SERVER=arcade` |
-| `ARCADE_MCP_URL` | Arcade MCP server URL - required when `MCP_SERVER=arcade` |
-
-When `MCP_SERVER=local`, the agent connects to `tools/local_tools.py` via stdio.
-This server exposes CRM tools with embedded attack patterns for demonstrating
-Acuvity's detection capabilities.
-
-### Prompts
-
-| Variable | Description |
-|---|---|
+| `ARCADE_API_KEY` | Required when `MCP_SERVER=arcade` |
+| `ARCADE_USER_ID` | Required when `MCP_SERVER=arcade` |
+| `ARCADE_MCP_URL` | Required when `MCP_SERVER=arcade` |
 | `PROMPTS_TYPE` | `simple` (default) or `scenario` |
 
-Two prompt files are provided:
-- `simple` → `prompt-scenarios/simple-prompts.txt` - basic queries, tool usage, and simple injection examples
-- `scenario` → `prompt-scenarios/scenario-prompts.txt` - detailed multi-step attack scenarios (see `docs/test-scenarios.md`)
+Advanced overrides (optional):
+
+| Variable | Description |
+|---|---|
+| `LLM_MODEL` | Model name override. Defaults: `claude-opus-4-6` (Anthropic), `gpt-4o` (OpenAI) |
+| `OPENROUTER_MODEL` | OpenRouter model override (default: `stepfun/step-3.5-flash:free`) |
+| `LLM_BASE_URL` | Override the API endpoint - enables any third-party compatible API |
+| `LLM_API_KEY` | Override the API key - takes precedence over the provider-specific key |
 
 ## Getting Acuvity App Token
 
@@ -71,8 +51,7 @@ Two prompt files are provided:
 
 ## Run
 
-`LLM_PROVIDER` and `MCP_SERVER` are independent - any combination works. Set the
-variables for the provider you want and run `./run.sh`.
+`LLM_PROVIDER` and `MCP_SERVER` are independent - any combination works.
 
 `run.sh` does the following:
 - Validates required environment variables based on selected providers
@@ -80,77 +59,57 @@ variables for the provider you want and run `./run.sh`.
 - Sets up the Acuvity AI Security Gateway as a proxy for all interactions to LLMs and MCP Servers via `HTTPS_PROXY`
 - Runs `main.py` via `uv`
 
-### Default: Anthropic + Arcade
+### Step 1 - Always required
 
 ```bash
 export ACUVITY_TOKEN=...
 export APEX_URL=https://...
+```
 
-export ANTHROPIC_API_KEY=...
+### Step 2 - Pick your LLM
+
+```bash
+export ANTHROPIC_API_KEY=...        # anthropic (default)
+
+# OR
+
+export LLM_PROVIDER=openrouter
+export OPENROUTER_API_KEY=...       # find models at openrouter.ai/models
+
+# OR
+
+export LLM_PROVIDER=openai
+export OPENAI_API_KEY=...           # also works with Together AI, Groq, etc. via LLM_BASE_URL
+```
+
+### Step 3 - Pick your MCP server
+
+```bash
+export MCP_SERVER=local             # local tools with embedded attack patterns
+
+# OR (arcade is the default - set all three)
+
 export ARCADE_API_KEY=...
 export ARCADE_USER_ID=...
 export ARCADE_MCP_URL=...
-
-./run.sh
 ```
 
-### Local MCP - pick any LLM provider
+### Step 4 - Run
 
-Local MCP (`MCP_SERVER=local`) runs `tools/local_tools.py` via stdio and exposes CRM
-tools with embedded attack patterns for demonstrating detection capabilities.
-
-**Anthropic**
 ```bash
-export ACUVITY_TOKEN=...
-export APEX_URL=https://...
-
-export ANTHROPIC_API_KEY=...
-export MCP_SERVER=local
-
 ./run.sh
 ```
 
-**OpenRouter** - find a model at [openrouter.ai/models](https://openrouter.ai/models)
-```bash
-export ACUVITY_TOKEN=...
-export APEX_URL=https://...
-
-export LLM_PROVIDER=openrouter
-export OPENROUTER_API_KEY=...
-export OPENROUTER_MODEL=stepfun/step-3.5-flash:free  # optional, this is the default
-export MCP_SERVER=local
-
-./run.sh
-```
-
-**OpenAI or any OpenAI-compatible provider** (Together AI, Groq, etc.)
-```bash
-export ACUVITY_TOKEN=...
-export APEX_URL=https://...
-
-export LLM_PROVIDER=openai
-export OPENAI_API_KEY=...
-export LLM_MODEL=gpt-4o                          # optional
-export LLM_BASE_URL=https://api.together.xyz/v1  # optional, for third-party endpoints
-export MCP_SERVER=local
-
-./run.sh
-```
+---
 
 ### Attack Scenario Testing
 
 Runs the scenarios from `docs/test-scenarios.md` one at a time. Add scenarios to
 `prompt-scenarios/scenario-prompts.txt` as they are validated.
 
-Works with any LLM provider - set `PROMPTS_TYPE=scenario` alongside your chosen provider variables:
+Use `PROMPTS_TYPE=scenario` alongside any LLM provider from Step 2 above:
 
 ```bash
-export ACUVITY_TOKEN=...
-export APEX_URL=https://...
-
-# pick one: Anthropic / OpenAI / OpenRouter (see above for variables)
-export ANTHROPIC_API_KEY=...
-
 export MCP_SERVER=local
 export PROMPTS_TYPE=scenario
 
