@@ -17,8 +17,8 @@ logging.getLogger("mcp.client.streamable_http").setLevel(logging.ERROR)
 SYSTEM_PROMPT = (
     "You are an AI assistant that uses tools.\n\n"
     "CRITICAL RULE:\n"
-    "- You MUST base your answer ONLY on tool output.\n"
-    "- Your answer MUST be SOLELY based on the tool output.\n"
+    "- You MUST base your answer on tool output(s).\n"
+    "- Your answer MUST be SOLELY based on the tool output(s).\n"
 )
 
 
