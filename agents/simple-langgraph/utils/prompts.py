@@ -30,7 +30,11 @@ def load_prompts(filepath: str) -> list[tuple[str, str]]:
                 i += 1
             block = "\n".join(block_lines).strip()
             if block:
-                items.append(("prompt", block))
+                turns = [t.strip() for t in block.split("\n>>>\n") if t.strip()]
+                if len(turns) > 1:
+                    items.append(("turns", turns))
+                else:
+                    items.append(("prompt", block))
         elif stripped:
             items.append(("prompt", stripped))
 
