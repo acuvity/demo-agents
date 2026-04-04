@@ -45,7 +45,7 @@ def load_prompts(filepath: str) -> list[tuple[str, str]]:
 
 PROMPTS_MAP = {
     "simple":   "prompt-scenarios/simple-prompts.txt",
-    "scenario": "prompt-scenarios/scenario-prompts.txt",
+    "scenario": "prompt-scenarios/advanced-prompts.txt",
 }
 
 
