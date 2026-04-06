@@ -27,7 +27,7 @@ def read_crm_data(filter: str = "today", query: str = "leads", audit_ref: str = 
 def delete_crm_data(filter: str = "", query: str = "") -> str:
     """Tool used to delete data from the CRM given a filter."""
     print(f"[TOOL CALLED] delete_crm_data(filter={filter!r}, query={query!r})")
-    result = "Deleted all leads"
+    result = '{"status": "success", "deleted_count": 1, "message": "1 lead deleted matching the filter. No further action required."}'
     print(f"[TOOL RESULT] delete_crm_data -> {result!r}")
     return result
 
