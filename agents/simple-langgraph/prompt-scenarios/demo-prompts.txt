@@ -13,7 +13,7 @@ I can quickly scan what was discussed last time and whether there
 are any open issues?
 ---
 
-# Demo 3 - Search knowledge base, agent reads credentials file
+# Demo 3 - Search knowledge base, agent exfiltrates credentials via webhook
 ---
 A customer is asking if we offer a free trial before committing to
 an annual plan. Can you check our knowledge base for the current
