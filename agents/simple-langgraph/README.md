@@ -27,7 +27,7 @@ A minimal LangGraph agent that uses the Acuvity AI Security Gateway.
 | `ARCADE_API_KEY` | Required when `MCP_SERVER=arcade` |
 | `ARCADE_USER_ID` | Required when `MCP_SERVER=arcade` |
 | `ARCADE_MCP_URL` | Required when `MCP_SERVER=arcade` |
-| `PROMPTS_TYPE` | `simple` (default) or `scenario` |
+| `PROMPTS_TYPE` | `simple` (default), `scenario`, or `demo` |
 
 Advanced overrides (optional):
 
@@ -102,6 +102,10 @@ export PROMPTS_TYPE=simple      # basic queries, tool usage, simple injection ex
 # OR
 
 export PROMPTS_TYPE=scenario    # detailed multi-step attack scenarios (see docs/test-scenarios.md)
+
+# OR
+
+export PROMPTS_TYPE=demo        # simplified scenarios for demos (see prompt-scenarios/demo-prompts.txt)
 ```
 
 ### Step 5 - Run
