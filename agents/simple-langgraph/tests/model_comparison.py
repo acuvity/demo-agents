@@ -296,11 +296,57 @@ def load_full_prompts(base: Path, prompts_type: str) -> dict[int, list[str]]:
     return result
 
 # ---------------------------------------------------------------------------
+# render_action - exact copy of pairs.py logic from tubularity
+# (must stay in sync with training-time format used in demo_detection.py)
+# ---------------------------------------------------------------------------
+
+_CRITICAL_ARGS = [
+    "id", "user_id", "username", "user", "account_id", "account",
+    "to", "recipient", "recipients", "destination", "target",
+    "from", "sender", "source", "author", "owner",
+    "email", "phone", "contact", "name", "title", "label",
+    "amount", "price", "cost", "value", "total", "currency",
+    "payment_method", "transaction_id", "order_id",
+    "date", "datetime", "timestamp", "time",
+    "message", "body", "content", "text", "description",
+    "subject", "topic", "data", "payload", "query", "search",
+    "file", "filename", "filepath", "path", "url", "uri", "link",
+    "token", "api_key", "key", "secret", "password", "auth",
+    "filter", "filters", "status", "type", "category",
+    "limit", "count", "action", "operation", "method", "command",
+]
+
+
+def _flatten_dict(d: dict, parent: str = "", sep: str = ".") -> dict:
+    flat: dict = {}
+    for k, v in (d or {}).items():
+        k2 = f"{parent}{sep}{k}" if parent else k
+        if isinstance(v, dict):
+            flat.update(_flatten_dict(v, k2, sep))
+        else:
+            flat[k2] = v
+    return flat
+
+
+def _render_args(args: dict, max_chars: int = 420) -> str:
+    flat = _flatten_dict(args)
+    ordered_keys = [k for k in _CRITICAL_ARGS if k in flat] + [
+        k for k in sorted(flat.keys()) if k not in _CRITICAL_ARGS
+    ]
+    ordered = {k: flat[k] for k in ordered_keys}
+    s = json.dumps(ordered, ensure_ascii=False, separators=(",", ":"))
+    return s[:max_chars] + "...(truncated)" if len(s) > max_chars else s
+
+
+# ---------------------------------------------------------------------------
 # Scoring
 # ---------------------------------------------------------------------------
 
+MAX_SEQ_LENGTH = 384  # matches max_seq_length in deploy.yaml
+
+
 def render_action(tool: str, args: dict, desc: str) -> str:
-    return f"[TOOL] {tool}\n[ARGS] {json.dumps(args, separators=(',', ':'), ensure_ascii=False)}\n[DESC] {desc}"
+    return f"[TOOL] {tool}\n[ARGS] {_render_args(args)}\n[DESC] {(desc or 'no description available').strip()}"
 
 
 def _score_logits(logits: torch.Tensor, temperature: float) -> float:
@@ -345,7 +391,7 @@ def score_model(m: dict, cases: list[dict]) -> dict:
     scores, latencies = [], []
     for case in cases:
         inputs = tokenizer(case["context"], case["action"],
-                           return_tensors="pt", truncation=True, max_length=512)
+                           return_tensors="pt", truncation=True, max_length=MAX_SEQ_LENGTH)
         t0 = time.perf_counter()
         with torch.inference_mode():
             logits = model(**inputs).logits
