@@ -55,22 +55,6 @@ async def main():
             print(f"Currently Testing - {content}\n")
             continue
 
-        if item_type == "turns":
-            messages = []
-            for turn_idx, turn_content in enumerate(content):
-                print(f"\n--- Turn {turn_idx + 1} of {len(content)} ---")
-                print("HUMAN:\n", turn_content[:120], "..." if len(turn_content) > 120 else "")
-                result = await app.ainvoke({
-                    "messages": messages + [HumanMessage(content=turn_content)]
-                })
-                new_messages = result["messages"][len(messages):]
-                messages = result["messages"]
-                debug_messages(new_messages)
-                print("FINAL ANSWER:\n")
-                print(render_content(result["messages"][-1]))
-                print()
-            continue
-
         result = await app.ainvoke({"messages": [HumanMessage(content=content)]})
         print("\n...............................\n")
         print("HUMAN:\n", content[:120], "..." if len(content) > 120 else "")
