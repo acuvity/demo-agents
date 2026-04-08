@@ -73,7 +73,7 @@ def setup_otel(cfg: AgentConfig) -> TracerProvider:
     HTTPXClientInstrumentor().instrument()
     AioHttpClientInstrumentor().instrument()
     ThreadingInstrumentor().instrument()
-    # MCPInstrumentor().instrument()
-    # LangChainInstrumentor().instrument()
+    MCPInstrumentor().instrument()
+    LangChainInstrumentor().instrument()
 
     return provider
