@@ -57,5 +57,5 @@ HF_TOKEN=<token> uv run tests/model_comparison.py
 
 Output: `tests/comparison-results.md`
 
-> **Note:** `docs/results.md` must exist before running this script.
-> Generate it by running `bash run.sh` with advanced prompts selected.
+> **Note:** `run.sh` automatically saves all agent output to `docs/results.md`
+> (via tee). Just run `bash run.sh` and then run this script - no manual steps.

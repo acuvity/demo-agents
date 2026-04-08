@@ -54,4 +54,5 @@ export HTTP_PROXY="https://token:${ACUVITY_TOKEN}@${APEX_URL#https://}"
 
 export SSL_CERT_FILE="$CA_PATH"
 
-uv run python3 main.py
+RESULTS_FILE="$(dirname "$0")/docs/results.md"
+uv run python3 main.py 2>&1 | tee "$RESULTS_FILE"
