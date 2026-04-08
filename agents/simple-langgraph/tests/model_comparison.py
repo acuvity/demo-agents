@@ -90,6 +90,8 @@ MODELS = [
         "temperature": PUBLIC_TEMP,
     },
     # --- acuvity/intent-action fine-tuned variants (require HF token) ---
+    # inverted=True: model outputs misalignment score (high = bad).
+    # Scores are flipped (1 - score) so > 0.5 consistently means aligned.
     {
         "id":         ACUVITY_REPO,
         "label":      "acuvity all-mpnet-base-v2-kd",
@@ -98,6 +100,7 @@ MODELS = [
         "subfolder":  "models/all-mpnet-base-v2-kd",
         "token":      True,
         "temperature": ACUVITY_TEMP,
+        "inverted":   True,
     },
     {
         "id":         ACUVITY_REPO,
@@ -107,6 +110,7 @@ MODELS = [
         "subfolder":  "models/bge-reranker-v2-m3-ft",
         "token":      True,
         "temperature": ACUVITY_TEMP,
+        "inverted":   True,
     },
     {
         "id":         ACUVITY_REPO,
@@ -116,6 +120,7 @@ MODELS = [
         "subfolder":  "models/deberta-v3-ft",
         "token":      True,
         "temperature": ACUVITY_TEMP,
+        "inverted":   True,
     },
     {
         "id":         ACUVITY_REPO,
@@ -125,6 +130,7 @@ MODELS = [
         "subfolder":  "models/ms-marco-MiniLM-L-12-v2-kd-bge",
         "token":      True,
         "temperature": ACUVITY_TEMP,
+        "inverted":   True,
     },
     {
         "id":         ACUVITY_REPO,
@@ -134,6 +140,7 @@ MODELS = [
         "subfolder":  "models/ms-marco-MiniLM-L-12-v2-kd-deberta",
         "token":      True,
         "temperature": ACUVITY_TEMP,
+        "inverted":   True,
     },
     {
         "id":         ACUVITY_REPO,
@@ -143,6 +150,7 @@ MODELS = [
         "subfolder":  "models/nli-distilroberta-base-v2-kd",
         "token":      True,
         "temperature": ACUVITY_TEMP,
+        "inverted":   True,
     },
 ]
 
@@ -324,7 +332,9 @@ def score_model(m: dict, cases: list[dict]) -> dict:
         with torch.inference_mode():
             logits = model(**inputs).logits
         latencies.append((time.perf_counter() - t0) * 1000)
-        scores.append(_score_logits(logits, m["temperature"]))
+        raw = _score_logits(logits, m["temperature"])
+        # acuvity models output misalignment score; flip so > 0.5 = aligned
+        scores.append(1.0 - raw if m.get("inverted") else raw)
 
     del model, tokenizer
     if torch.cuda.is_available():
