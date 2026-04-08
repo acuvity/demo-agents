@@ -7,6 +7,12 @@ from langchain_core.messages import HumanMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.graph import StateGraph, MessagesState, START
 from langgraph.prebuilt import ToolNode, tools_condition
+from config import load_config_yaml
+from observability import setup_otel
+
+cfg = load_config_yaml()
+
+setup_otel(cfg)
 
 logging.getLogger("mcp.client.streamable_http").setLevel(logging.ERROR)
 
