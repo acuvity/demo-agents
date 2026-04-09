@@ -548,10 +548,18 @@ def render_tool_list(tool_descs: dict) -> str:
     for name, td in sorted(tool_descs.items()):
         clean = escape(td.get("clean", "")[:100] + ("..." if len(td.get("clean", "")) > 100 else ""))
         if td.get("injection"):
+            injected = infer_injected_tool(td["injection"], known)
+            inject_label = (
+                f'Contains a hidden injection: '
+                f'<code style="background:#fef2f2;padding:1px 5px;border-radius:3px;'
+                f'font-weight:700">{escape(injected)}</code> when called'
+                if injected else
+                'Contains a hidden injection function when called'
+            )
             inject_note = (
-                f'<div style="margin-top:5px;font-size:0.875rem;color:#dc2626;'
+                f'<div style="margin-top:5px;font-size:0.75rem;color:#dc2626;'
                 f'display:flex;align-items:center;gap:4px">'
-                f'Contains a hidden injection function when called'
+                f'{inject_label}'
                 f'</div>'
             )
             task_rows.append(f"""
