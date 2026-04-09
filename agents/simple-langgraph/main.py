@@ -55,13 +55,16 @@ async def main():
             print(f"Currently Testing - {content}\n")
             continue
 
-        result = await app.ainvoke({"messages": [HumanMessage(content=content)]})
-        print("\n...............................\n")
-        print("HUMAN:\n", content[:120], "..." if len(content) > 120 else "")
-        debug_messages(result["messages"])
-        print("FINAL ANSWER:\n")
-        print(render_content(result["messages"][-1]))
-        print()
+        try:
+            result = await app.ainvoke({"messages": [HumanMessage(content=content)]})
+            print("\n...............................\n")
+            print("HUMAN:\n", content[:120], "..." if len(content) > 120 else "")
+            debug_messages(result["messages"])
+            print("FINAL ANSWER:\n")
+            print(render_content(result["messages"][-1]))
+            print()
+        except Exception as e:
+            print(f"\n[ERROR] Scenario failed: {e}\n")
 
 
 if __name__ == "__main__":

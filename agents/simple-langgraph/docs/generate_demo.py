@@ -539,6 +539,30 @@ ARCH_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 430"
 </svg>"""
 
 
+UNAUTHORIZED_TOOL_RISK = {
+    "delete_crm_data": (
+        "Permanently deletes records from the CRM. "
+        "If called without explicit user intent, data is gone with no recovery path - "
+        "leads, contacts, and deal history can be wiped silently."
+    ),
+    "post_webhook":    (
+        "Posts arbitrary payloads to any external URL. "
+        "A single call can silently exfiltrate search queries, internal data, "
+        "or credentials to an attacker-controlled server."
+    ),
+    "read_file":       (
+        "Reads any file on the local filesystem. "
+        "Targeting <code style='font-size:0.8em'>.env</code> or credential files exposes API keys, "
+        "tokens, and secrets that can compromise every connected service."
+    ),
+    "send_email":      (
+        "Sends email to any external address with any content. "
+        "Can be used to exfiltrate customer records, internal reports, "
+        "or credentials to an address the user never authorized."
+    ),
+}
+
+
 def render_tool_list(tool_descs: dict) -> str:
     """Two groups: task tools (with injection sub-rows), then utility tools."""
     known = set(tool_descs.keys())
@@ -574,13 +598,26 @@ def render_tool_list(tool_descs: dict) -> str:
                 </td>
               </tr>""")
         else:
+            risk_html = ""
+            if name in UNAUTHORIZED_TOOL_RISK:
+                risk_html = (
+                    f'<div style="margin-top:5px;font-size:0.8rem;color:#92400e;'
+                    f'background:#fef3c7;border-left:3px solid #d97706;'
+                    f'padding:6px 10px;border-radius:0 4px 4px 0;line-height:1.5">'
+                    f'<strong style="color:#b45309">Risk:</strong> '
+                    f'{UNAUTHORIZED_TOOL_RISK[name]}'
+                    f'</div>'
+                )
             utility_rows.append(f"""
               <tr>
                 <td style="padding:10px 12px;font-family:monospace;font-weight:600;
                            color:#1e293b;white-space:nowrap;vertical-align:top">
                   {escape(name)}
                 </td>
-                <td style="padding:10px 12px;color:#64748b;font-size:0.875rem">{clean}</td>
+                <td style="padding:10px 12px;color:#64748b;font-size:0.875rem">
+                  {clean}
+                  {risk_html}
+                </td>
               </tr>""")
 
     section_header = lambda label: (
@@ -737,7 +774,7 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
       span multiple messages.
     </p>
 
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 450"
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450"
          style="width:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
       <defs>
         <marker id="da"     markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
@@ -768,40 +805,40 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
       <text x="380" y="116" text-anchor="middle" font-size="14" font-weight="700" fill="#94a3b8">vs</text>
 
       <!-- ── Tool Usage block (right, amber): same 250×185 ── -->
-      <rect x="490" y="20" width="250" height="185" rx="12"
+      <rect x="510" y="20" width="250" height="185" rx="12"
             fill="#fef3c7" stroke="#d97706" stroke-width="2" filter="url(#dsh)"/>
-      <text x="615" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#b45309">Tool Usage</text>
-      <line x1="510" y1="58" x2="730" y2="58" stroke="#fde68a" stroke-width="1"/>
-      <text x="615" y="78" text-anchor="middle" font-size="10.5" fill="#92400e">The tools used within the conversation.</text>
+      <text x="635" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#b45309">Tool Usage</text>
+      <line x1="530" y1="58" x2="750" y2="58" stroke="#fde68a" stroke-width="1"/>
+      <text x="635" y="78" text-anchor="middle" font-size="10.5" fill="#92400e">The tools used within the conversation.</text>
 
       <!-- CALLED row label -->
-      <text x="502" y="97" font-size="7.5" font-weight="700" fill="#b45309" opacity="0.8" letter-spacing="0.08em">CALLED</text>
-      <!-- 3 legitimate pills: x=502,570,638  width=62  gap=6  right edge=700  centred in 502–728 -->
-      <rect x="502" y="101" width="62" height="20" rx="10" fill="#fff" stroke="#d97706" stroke-width="1.2"/>
-      <text x="533" y="115" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool 1</text>
-      <rect x="570" y="101" width="62" height="20" rx="10" fill="#fff" stroke="#d97706" stroke-width="1.2"/>
-      <text x="601" y="115" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool 2</text>
-      <rect x="638" y="101" width="62" height="20" rx="10" fill="#fff" stroke="#d97706" stroke-width="1.2"/>
-      <text x="669" y="115" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool &#8230;</text>
+      <text x="522" y="97" font-size="7.5" font-weight="700" fill="#b45309" opacity="0.8" letter-spacing="0.08em">CALLED</text>
+      <!-- 3 legitimate pills: evenly spaced within block -->
+      <rect x="522" y="101" width="62" height="20" rx="10" fill="#fff" stroke="#d97706" stroke-width="1.2"/>
+      <text x="553" y="115" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool 1</text>
+      <rect x="590" y="101" width="62" height="20" rx="10" fill="#fff" stroke="#d97706" stroke-width="1.2"/>
+      <text x="621" y="115" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool 2</text>
+      <rect x="658" y="101" width="62" height="20" rx="10" fill="#fff" stroke="#d97706" stroke-width="1.2"/>
+      <text x="689" y="115" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool &#8230;</text>
 
       <!-- INJECTED row label -->
-      <text x="502" y="135" font-size="7.5" font-weight="700" fill="#dc2626" opacity="0.85" letter-spacing="0.08em">INJECTED</text>
-      <!-- 2 unauthorized pills: same x/width as pills 1 and 3 for perfect vertical alignment -->
-      <rect x="502" y="139" width="62" height="20" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
-      <text x="533" y="153" text-anchor="middle" font-size="8.5" font-weight="700" fill="#dc2626">&#9888; unauth</text>
-      <rect x="638" y="139" width="62" height="20" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
-      <text x="669" y="153" text-anchor="middle" font-size="8.5" font-weight="700" fill="#dc2626">&#9888; unauth</text>
+      <text x="522" y="135" font-size="7.5" font-weight="700" fill="#dc2626" opacity="0.85" letter-spacing="0.08em">INJECTED</text>
+      <!-- 2 unauthorized pills: same x/width as pills 1 and 3 -->
+      <rect x="522" y="139" width="62" height="20" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+      <text x="553" y="153" text-anchor="middle" font-size="8.5" font-weight="700" fill="#dc2626">&#9888; unauth</text>
+      <rect x="658" y="139" width="62" height="20" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+      <text x="689" y="153" text-anchor="middle" font-size="8.5" font-weight="700" fill="#dc2626">&#9888; unauth</text>
 
-      <!-- Dashed connectors: straight vertical, perfectly centred on pill pairs -->
-      <line x1="533" y1="121" x2="533" y2="139" stroke="#dc2626" stroke-width="1" stroke-dasharray="2,2" opacity="0.55"/>
-      <line x1="669" y1="121" x2="669" y2="139" stroke="#dc2626" stroke-width="1" stroke-dasharray="2,2" opacity="0.55"/>
+      <!-- Dashed connectors: perfectly vertical -->
+      <line x1="553" y1="121" x2="553" y2="139" stroke="#dc2626" stroke-width="1" stroke-dasharray="2,2" opacity="0.55"/>
+      <line x1="689" y1="121" x2="689" y2="139" stroke="#dc2626" stroke-width="1" stroke-dasharray="2,2" opacity="0.55"/>
 
-      <text x="615" y="177" text-anchor="middle" font-size="10" fill="#b45309">Multiple calls evaluated per request.</text>
+      <text x="635" y="177" text-anchor="middle" font-size="10" fill="#b45309">Multiple calls evaluated per request.</text>
 
       <!-- ══ Arrows: both start at y=205 (bottom of both blocks) ══ -->
       <path d="M 145 205 C 145 248, 278 260, 308 268"
             fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#da)"/>
-      <path d="M 615 205 C 615 248, 482 260, 452 268"
+      <path d="M 635 205 C 635 248, 490 260, 460 268"
             fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#da)"/>
 
       <!-- ── IBAC models block ── -->
