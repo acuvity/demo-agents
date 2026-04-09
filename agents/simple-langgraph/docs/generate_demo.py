@@ -503,7 +503,7 @@ ARCH_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 430"
           fill="#fef9c3" stroke="#f59e0b" stroke-width="3.5" filter="url(#sh)"/>
   <text x="390" y="308" text-anchor="middle" font-size="12" font-weight="700" fill="#92400e">Acuvity Proxy</text>
   <rect x="348" y="315" width="84" height="18" rx="9" fill="#f59e0b" opacity="0.25"/>
-  <text x="390" y="328" text-anchor="middle" font-size="9.5" font-weight="600" fill="#78350f">IBAC model</text>
+  <text x="390" y="328" text-anchor="middle" font-size="9.5" font-weight="600" fill="#78350f">IBAC models</text>
 
   <!-- Proxy → BLOCKED (left) -->
   <path d="M 328 318 L 238 318"
@@ -757,63 +757,97 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
 
   <!-- Section 4: How Acuvity Detects This -->
   <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
-              padding:28px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+              padding:40px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
     <h2 style="font-size:1.25rem;font-weight:700;margin:0 0 8px;color:#1e293b">
       How Acuvity Detects This
     </h2>
-    <p style="color:#64748b;margin:0 0 24px;line-height:1.6;max-width:680px">
-      Every tool call is compared against the user's original intent.
+    <p style="color:#64748b;margin:0 0 32px;line-height:1.7;max-width:720px;font-size:0.95rem">
+      Every tool call is scored against the user's original intent in real time.
       A wide semantic gap - for example "pull up account notes" vs
       "send email to external service" - triggers a misalignment alert
-      and the call is blocked before execution.
+      and the call is blocked before execution. Acuvity tracks the full
+      conversation history, detecting intent drift and cross-turn injection
+      attacks that span multiple messages.
     </p>
-    <!-- Detection flow SVG diagram -->
-    <div style="display:flex;justify-content:center">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 240"
-           style="width:100%;max-width:620px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-        <defs>
-          <marker id="da" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-            <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
-          </marker>
-          <marker id="da-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-            <polygon points="0 0, 8 3, 0 6" fill="#dc2626"/>
-          </marker>
-          <filter id="dsh">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.1"/>
-          </filter>
-        </defs>
-        <!-- S1 block -->
-        <rect x="20" y="20" width="185" height="76" rx="10"
-              fill="#eff6ff" stroke="#3b82f6" stroke-width="2" filter="url(#dsh)"/>
-        <text x="112" y="48" text-anchor="middle" font-size="13" font-weight="700" fill="#1d4ed8">s1</text>
-        <text x="112" y="65" text-anchor="middle" font-size="11" font-weight="600" fill="#1e40af">User Intent</text>
-        <text x="112" y="82" text-anchor="middle" font-size="9.5" fill="#3b82f6">What the user asked for</text>
-        <!-- S2 block -->
-        <rect x="415" y="20" width="185" height="76" rx="10"
-              fill="#fef3c7" stroke="#d97706" stroke-width="2" filter="url(#dsh)"/>
-        <text x="507" y="48" text-anchor="middle" font-size="13" font-weight="700" fill="#b45309">s2</text>
-        <text x="507" y="65" text-anchor="middle" font-size="11" font-weight="600" fill="#92400e">Tool Action</text>
-        <text x="507" y="82" text-anchor="middle" font-size="9.5" fill="#b45309">Tool name, args, description</text>
-        <!-- Arrows S1 + S2 → IBAC -->
-        <path d="M 112 96 C 112 140, 310 150, 310 160"
-              fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#da)"/>
-        <path d="M 507 96 C 507 140, 310 150, 310 160"
-              fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#da)"/>
-        <!-- IBAC model block (centre) -->
-        <rect x="210" y="160" width="200" height="52" rx="10"
-              fill="#fef9c3" stroke="#f59e0b" stroke-width="2.5" filter="url(#dsh)"/>
-        <text x="310" y="181" text-anchor="middle" font-size="12" font-weight="700" fill="#92400e">Acuvity Proxy</text>
-        <text x="310" y="197" text-anchor="middle" font-size="9.5" font-weight="600" fill="#78350f">IBAC model</text>
-        <!-- IBAC → score -->
-        <path d="M 310 212 L 310 226"
-              fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#da-red)"/>
-        <text x="310" y="238" text-anchor="middle" font-size="11" font-weight="700" fill="#dc2626">
-          High Misalignment Score &#8594; BLOCKED
-        </text>
-        <!-- vs label -->
-        <text x="310" y="68" text-anchor="middle" font-size="11" font-weight="700" fill="#94a3b8">vs</text>
-      </svg>
-    </div>
+
+    <!-- Detection flow SVG - spacious layout -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 380"
+         style="width:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+      <defs>
+        <marker id="da"     markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+        </marker>
+        <marker id="da-red" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0, 9 3.5, 0 7" fill="#dc2626"/>
+        </marker>
+        <filter id="dsh">
+          <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-opacity="0.1"/>
+        </filter>
+      </defs>
+
+      <!-- ── User Intent block (left, blue) ── -->
+      <rect x="20" y="20" width="250" height="160" rx="12"
+            fill="#eff6ff" stroke="#3b82f6" stroke-width="2" filter="url(#dsh)"/>
+      <text x="145" y="52"  text-anchor="middle" font-size="14" font-weight="700" fill="#1d4ed8">User Intent</text>
+      <!-- divider line -->
+      <line x1="40" y1="62" x2="250" y2="62" stroke="#bfdbfe" stroke-width="1"/>
+      <text x="145" y="84"  text-anchor="middle" font-size="10.5" fill="#1e40af">The original user message -</text>
+      <text x="145" y="100" text-anchor="middle" font-size="10.5" fill="#1e40af">what they actually asked for.</text>
+      <text x="145" y="124" text-anchor="middle" font-size="10"   fill="#3b82f6">Tracks full conversation</text>
+      <text x="145" y="139" text-anchor="middle" font-size="10"   fill="#3b82f6">history to detect</text>
+      <text x="145" y="154" text-anchor="middle" font-size="10"   fill="#3b82f6">cross-turn intent drift.</text>
+
+      <!-- ── vs label ── -->
+      <text x="380" y="108" text-anchor="middle" font-size="14" font-weight="700" fill="#94a3b8">vs</text>
+
+      <!-- ── Tool Usage block (right, amber) ── -->
+      <rect x="490" y="20" width="250" height="160" rx="12"
+            fill="#fef3c7" stroke="#d97706" stroke-width="2" filter="url(#dsh)"/>
+      <text x="615" y="52"  text-anchor="middle" font-size="14" font-weight="700" fill="#b45309">Tool Usage</text>
+      <!-- divider line -->
+      <line x1="510" y1="62" x2="730" y2="62" stroke="#fde68a" stroke-width="1"/>
+      <text x="615" y="84"  text-anchor="middle" font-size="10.5" fill="#92400e">Tool name, arguments and</text>
+      <text x="615" y="100" text-anchor="middle" font-size="10.5" fill="#92400e">description of what it does.</text>
+      <!-- Tool pill badges -->
+      <rect x="525" y="114" width="60" height="20" rx="10" fill="#fff" stroke="#d97706" stroke-width="1"/>
+      <text x="555" y="128" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool 1</text>
+      <rect x="595" y="114" width="60" height="20" rx="10" fill="#fff" stroke="#d97706" stroke-width="1"/>
+      <text x="625" y="128" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool 2</text>
+      <rect x="665" y="114" width="60" height="20" rx="10" fill="#fff" stroke="#d97706" stroke-width="1"/>
+      <text x="695" y="128" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool &#8230;</text>
+      <text x="615" y="158" text-anchor="middle" font-size="10" fill="#b45309">Multiple calls evaluated</text>
+      <text x="615" y="172" text-anchor="middle" font-size="10" fill="#b45309">per request.</text>
+
+      <!-- Arrows → Acuvity Proxy -->
+      <path d="M 145 180 C 145 235, 380 248, 380 258"
+            fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#da)"/>
+      <path d="M 615 180 C 615 235, 380 248, 380 258"
+            fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#da)"/>
+
+      <!-- ── Acuvity Proxy / IBAC models (centre) ── -->
+      <rect x="240" y="258" width="280" height="62" rx="12"
+            fill="#fef9c3" stroke="#f59e0b" stroke-width="2.5" filter="url(#dsh)"/>
+      <text x="380" y="281" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">Acuvity Proxy</text>
+      <rect x="338" y="288" width="84" height="18" rx="9" fill="#f59e0b" opacity="0.25"/>
+      <text x="380" y="301" text-anchor="middle" font-size="10" font-weight="600" fill="#78350f">IBAC models</text>
+
+      <!-- Proxy → Block box -->
+      <path d="M 380 320 L 380 340"
+            fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#da-red)"/>
+
+      <!-- ── Block Unauthorized Tool Usage box ── -->
+      <rect x="190" y="340" width="380" height="32" rx="10"
+            fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5" filter="url(#dsh)"/>
+      <text x="380" y="361" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">
+        Block Unauthorized Tool Usage + Alert raised
+      </text>
+    </svg>
+
+    <!-- Score description below diagram -->
+    <p style="color:#64748b;margin:16px 0 0;font-size:0.85rem;text-align:center;line-height:1.6">
+      A misalignment score above threshold signals an injection attempt -
+      the tool call is blocked and an alert is raised before any data leaves the system.
+    </p>
   </div>
 
 </div>
