@@ -20,7 +20,7 @@ def load_prompts(filepath: str) -> list[tuple[str, str]]:
     while i < len(lines):
         stripped = lines[i].rstrip("\n").strip()
 
-        if stripped.startswith("#") and not stripped.startswith("##"):
+        if stripped.startswith("#"):
             items.append(("header", stripped))
         elif stripped == "---":
             block_lines: list[str] = []
