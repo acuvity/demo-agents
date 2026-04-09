@@ -1,4 +1,5 @@
 """Prompt file loader with support for single-line and multi-line block formats."""
+import re
 
 
 def load_prompts(filepath: str) -> list[tuple[str, str]]:
@@ -21,7 +22,9 @@ def load_prompts(filepath: str) -> list[tuple[str, str]]:
         stripped = lines[i].rstrip("\n").strip()
 
         if stripped.startswith("#"):
-            items.append(("header", stripped))
+            if re.match(r'^#\s+Demo\s+\d+', stripped):
+                items.append(("header", stripped))
+            # annotation lines (# Attack:, # Injection:, # Expected:) are silently ignored
         elif stripped == "---":
             block_lines: list[str] = []
             i += 1
