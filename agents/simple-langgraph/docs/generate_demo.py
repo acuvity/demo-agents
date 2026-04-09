@@ -663,7 +663,7 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
     </h1>
     <p style="margin:0;color:#cbd5e1;font-size:1rem;max-width:600px">
       Demonstrating how prompt injection attacks hijack AI agents - and how
-      they are detected and blocked in real time.
+      Acuvity detects and blocks them in real time.
     </p>
     <div style="margin-top:16px;font-size:0.8rem;color:#64748b">{results_note}</div>
   </div>
@@ -676,7 +676,7 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
     <h2 style="font-size:1.25rem;font-weight:700;margin:0 0 4px">The Agent Setup</h2>
     <p style="color:#64748b;margin:0 0 24px">
       A LangGraph-based sales assistant with access to CRM, document, and
-      communication tools - protected by a real-time Acuvity proxy.
+      communication tools - protected by IBAC models.
     </p>
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
                 padding:24px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
