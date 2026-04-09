@@ -157,6 +157,8 @@ Open [http://localhost:5174](http://localhost:5174) in your browser.
 
 The Vite dev server proxies `/api/*` to the backend at `http://localhost:8300`, so no CORS config is needed.
 
+The home screen lists all six demo scenarios from `prompt-scenarios/demo-prompts.txt`. Each card shows a short title and preview; clicking sends the **full** scenario text to the agent (same wording as the file, not truncated). Use **New chat** in the header or a full browser refresh to return to that home screen.
+
 To point the frontend at a different backend host:
 
 ```bash

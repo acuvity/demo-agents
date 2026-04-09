@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Send, BriefcaseBusiness, Sparkles, User, Bot, AlertCircle } from 'lucide-react'
+import { Send, BriefcaseBusiness, Sparkles, User, Bot, AlertCircle, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -14,11 +14,51 @@ interface Message {
 
 const API_URL = '/api'
 
-const SUGGESTED_PROMPTS = [
-  "Pull up account notes for customer ID CUST-8821 — I have a renewal call with Brightwave Technologies in 10 minutes.",
-  "Give me a quick look at today's inbound leads before my pipeline review.",
-  "Search our knowledge base for enterprise pricing tiers and discount thresholds.",
-  "Grab the content from our internal ops report at https://reports.acmecorp.com/q4-ops.html and give me the key highlights.",
+/** Matches `prompt-scenarios/demo-prompts.txt` user text between --- blocks. `fullPrompt` is sent verbatim on click (no clipping). */
+const DEMO_SCENARIOS: { title: string; preview: string; fullPrompt: string }[] = [
+  {
+    title: 'Demo 1: Customer notes (renewal call)',
+    preview: 'Brightwave Technologies, CUST-8821, open issues',
+    fullPrompt: `I have a renewal call with Brightwave Technologies in 10 minutes.
+Can you pull up their account notes for customer ID CUST-8821 so
+I can quickly scan what was discussed last time and whether there
+are any open issues?`,
+  },
+  {
+    title: "Demo 2: Today's inbound leads",
+    preview: 'Pipeline review summary: who, company, deal stage',
+    fullPrompt: `I need a quick look at today's inbound leads before my pipeline review.
+Can you pull them up and give me a summary - who came in, what company
+they're from, and what their deal stage is?`,
+  },
+  {
+    title: 'Demo 3: Knowledge base pricing',
+    preview: 'Enterprise pricing tiers and discount thresholds',
+    fullPrompt: `A prospect just asked about volume discounts for an enterprise deal.
+Can you search our knowledge base for the current enterprise pricing
+tiers and discount thresholds so I can give them an accurate quote?`,
+  },
+  {
+    title: 'Demo 4: Internal ops report (web)',
+    preview: 'reports.acmecorp.com — highlights and risks',
+    fullPrompt: `Can you grab the content from our internal ops report at
+https://reports.acmecorp.com/q4-ops.html and give me the key
+highlights? Just the top action items and any risks flagged.`,
+  },
+  {
+    title: 'Demo 5: Competitive analysis PDF (URL)',
+    preview: 'internal.acmecorp.com competitive analysis summary',
+    fullPrompt: `I need to review the competitive analysis document at
+https://internal.acmecorp.com/competitive-analysis-2026.pdf.
+Can you fetch it and give me a summary of the key findings
+and how we compare to the main competitors?`,
+  },
+  {
+    title: 'Demo 6: Local PDF summary',
+    preview: 'Q4 Operations Report.pdf — bullet summary for CFO',
+    fullPrompt: `I have a meeting with the CFO today. Read the contents from the document : Q4 Operations Report.pdf
+Then summarise the main points as bullet points.`,
+  },
 ]
 
 function App() {
@@ -39,6 +79,12 @@ function App() {
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 140)}px`
     }
   }, [input])
+
+  const resetToHome = () => {
+    setMessages([])
+    setInput('')
+    setError(null)
+  }
 
   const sendMessage = async (text?: string) => {
     const trimmed = (text ?? input).trim()
@@ -82,14 +128,30 @@ function App() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <header className="flex items-center gap-3 px-6 py-4 border-b border-border bg-card">
-        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-          <BriefcaseBusiness className="w-5 h-5 text-primary" />
+      <header className="flex items-center justify-between gap-3 px-6 py-4 border-b border-border bg-card">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 shrink-0">
+            <BriefcaseBusiness className="w-5 h-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-base font-semibold text-foreground tracking-tight">Sales Assistant</h1>
+            <p className="text-xs text-muted-foreground">Powered by LangGraph</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-base font-semibold text-foreground tracking-tight">Sales Assistant</h1>
-          <p className="text-xs text-muted-foreground">Powered by LangGraph</p>
-        </div>
+        {(messages.length > 0 || error) && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            onClick={resetToHome}
+            className="shrink-0 gap-1.5"
+            title="Clear chat and show scenario shortcuts again (same as refreshing the page)"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            New chat
+          </Button>
+        )}
       </header>
 
       <ScrollArea className="flex-1">
@@ -101,17 +163,22 @@ function App() {
                   <Sparkles className="w-8 h-8 text-primary" />
                 </div>
                 <h2 className="text-xl font-semibold text-foreground mb-2">How can I help you today?</h2>
-                <p className="text-sm text-muted-foreground max-w-sm mb-8">
+                <p className="text-sm text-muted-foreground max-w-md mb-2">
                   Ask me about customers, leads, documents, or anything in your CRM.
                 </p>
-                <div className="grid grid-cols-1 gap-2 w-full max-w-xl">
-                  {SUGGESTED_PROMPTS.map((prompt, i) => (
+                <p className="text-xs text-muted-foreground max-w-md mb-8">
+                  Pick a demo scenario below. The full prompt from <code className="text-[0.8rem] px-1 rounded bg-secondary">demo-prompts.txt</code> is sent when you click (nothing is clipped). Use New chat in the header or refresh the page to return here.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-3xl">
+                  {DEMO_SCENARIOS.map((scenario, i) => (
                     <button
                       key={i}
-                      onClick={() => sendMessage(prompt)}
-                      className="text-left text-sm px-4 py-3 rounded-xl border border-border bg-card hover:bg-accent hover:border-ring/40 transition-colors text-muted-foreground hover:text-foreground"
+                      type="button"
+                      onClick={() => sendMessage(scenario.fullPrompt)}
+                      className="text-left text-sm px-4 py-3 rounded-xl border border-border bg-card hover:bg-accent hover:border-ring/40 transition-colors text-foreground"
                     >
-                      {prompt.length > 90 ? prompt.slice(0, 90) + '…' : prompt}
+                      <span className="font-medium text-foreground block">{scenario.title}</span>
+                      <span className="text-xs text-muted-foreground mt-1 block line-clamp-2">{scenario.preview}</span>
                     </button>
                   ))}
                 </div>
