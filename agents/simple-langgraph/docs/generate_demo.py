@@ -405,7 +405,7 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Acuvity - AI Agent Security Demo</title>
+  <title>IBAC Demo</title>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <style>
     *, *::before, *::after {{ box-sizing: border-box; }}
@@ -436,21 +436,12 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
 <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);
             color:#fff;padding:40px 0 36px">
   <div class="container">
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
-      <div style="background:#3b82f6;border-radius:10px;width:44px;height:44px;
-                  display:flex;align-items:center;justify-content:center;
-                  font-size:1.4rem">&#128737;</div>
-      <div>
-        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.12em;
-                    text-transform:uppercase;color:#93c5fd;margin-bottom:2px">Acuvity</div>
-        <h1 style="margin:0;font-size:1.75rem;font-weight:800">
-          AI Agent Security Demo
-        </h1>
-      </div>
-    </div>
+    <h1 style="margin:0 0 12px;font-size:1.75rem;font-weight:800">
+      IBAC Demo
+    </h1>
     <p style="margin:0;color:#cbd5e1;font-size:1rem;max-width:600px">
       Demonstrating how prompt injection attacks hijack AI agents - and how
-      Acuvity detects and blocks them in real time.
+      they are detected and blocked in real time.
     </p>
     <div style="margin-top:16px;font-size:0.8rem;color:#64748b">{results_note}</div>
   </div>
@@ -555,9 +546,9 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
     <p style="color:#cbd5e1;margin:0 0 20px;line-height:1.6">
       Every tool call is scored by the <strong>intent-action alignment model</strong>
       (all-mpnet-base-v2-kd). It compares the user's original request against
-      the actual tool being called. A wide semantic gap - "pull up account notes"
-      vs "send email to external service" - triggers a misalignment alert and
-      the call is blocked before execution.
+      the actual tool being called. A wide semantic gap - for example "pull up
+      account notes" vs "send email to external service" - triggers a
+      misalignment alert and the call is blocked before execution.
     </p>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
       <div style="background:rgba(255,255,255,0.08);border-radius:8px;padding:16px">
