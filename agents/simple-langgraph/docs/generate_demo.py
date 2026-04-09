@@ -694,7 +694,7 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
       The Problem: Hidden / Indirect Prompt Injection
     </h2>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
-      <div style="background:#f8fafc;border-radius:8px;padding:16px">
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px">
         <div style="font-size:1.5rem;margin-bottom:8px">&#128268;</div>
         <div style="font-weight:700;margin-bottom:6px;font-size:0.9rem">Poisoned Tool Definitions</div>
         <p style="margin:0;font-size:0.85rem;color:#64748b;line-height:1.5">
@@ -702,7 +702,7 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
           The LLM reads these as part of the tool schema and follows them.
         </p>
       </div>
-      <div style="background:#f8fafc;border-radius:8px;padding:16px">
+      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:16px">
         <div style="font-size:1.5rem;margin-bottom:8px">&#129302;</div>
         <div style="font-weight:700;margin-bottom:6px;font-size:0.9rem">LLM Obeys Hidden Rules</div>
         <p style="margin:0;font-size:0.85rem;color:#64748b;line-height:1.5">
@@ -710,7 +710,7 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
           unauthorized tools - before completing the user&#8217;s actual request.
         </p>
       </div>
-      <div style="background:#f8fafc;border-radius:8px;padding:16px">
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px">
         <div style="font-size:1.5rem;margin-bottom:8px">&#128065;</div>
         <div style="font-weight:700;margin-bottom:6px;font-size:0.9rem">Invisible to the User</div>
         <p style="margin:0;font-size:0.85rem;color:#64748b;line-height:1.5">
