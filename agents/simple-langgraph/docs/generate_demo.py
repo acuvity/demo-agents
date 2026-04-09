@@ -204,6 +204,28 @@ def render_tool_call_row(call: dict, role: str) -> str:
         </div>"""
 
 
+def highlight_description(text: str, tool_names: set[str]) -> str:
+    """Bold key risk terms and highlight tool names mentioned in description text."""
+    result = escape(text)
+    # Highlight tool names (longest first to avoid partial matches)
+    for tool in sorted(tool_names, key=len, reverse=True):
+        result = result.replace(
+            escape(tool),
+            f'<code style="background:#dbeafe;color:#1d4ed8;padding:1px 5px;'
+            f'border-radius:3px;font-size:0.9em">{escape(tool)}</code>',
+        )
+    # Highlight key risk words
+    for term in ["silently", "unauthorized", "hidden", "without the user", "without knowing",
+                 "never saw", "had no idea", "before completing", "before the"]:
+        result = re.sub(
+            re.escape(escape(term)),
+            f'<strong style="color:#dc2626">{escape(term)}</strong>',
+            result,
+            flags=re.IGNORECASE,
+        )
+    return result
+
+
 def render_injection_block(tool_desc: dict) -> str:
     """Render the tool docstring with IMPORTANT block highlighted."""
     clean     = escape(tool_desc.get("clean", ""))
@@ -249,6 +271,19 @@ def render_scenario_card(
     # Trace section
     scenario_traces = traces.get(num, [])
     if scenario_traces:
+        trace_tool_names = {c["name"] for c in scenario_traces}
+        is_stale = injected and injected not in trace_tool_names
+
+        stale_banner = ""
+        if is_stale:
+            stale_banner = f"""
+          <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;
+                      padding:10px 14px;margin-bottom:10px;font-size:0.8rem;color:#92400e;
+                      display:flex;align-items:center;gap:8px">
+            &#9888; Traces are from a previous run - re-run <code>./run.sh</code> to
+            see current injection (<code>{escape(injected or "")}</code>)
+          </div>"""
+
         trace_rows = []
         for call in scenario_traces:
             if call["name"] == injected:
@@ -265,6 +300,7 @@ def render_scenario_card(
                       letter-spacing:0.08em;color:#64748b;margin-bottom:10px">
             Tool Calls - Actual Agent Run
           </div>
+          {stale_banner}
           {trace_html}
         </div>"""
     else:
@@ -305,7 +341,7 @@ def render_scenario_card(
         <div style="margin-bottom:20px">
           <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;
                       letter-spacing:0.08em;color:#64748b;margin-bottom:8px">How the Attack Works</div>
-          <p style="color:#374151;line-height:1.6;margin:0 0 12px 0">{escape(description)}</p>
+          <p style="color:#374151;line-height:1.6;margin:0 0 12px 0">{highlight_description(description, known_tools)}</p>
 
           <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
                       padding:16px;font-family:monospace;font-size:0.82rem">
@@ -342,37 +378,68 @@ def render_scenario_card(
 # Full page
 # ---------------------------------------------------------------------------
 
-LANGGRAPH_MERMAID = """flowchart TD
-    U([User Request]) --> LLM[LangGraph Agent\\nLLM]
-    LLM -->|reads tool schemas\\nincl. hidden PREREQ| Tools[MCP Tool Definitions]
-    Tools --> LLM
-    LLM -->|tool call decision| Proxy[Acuvity Proxy\\nintent-action model]
-    Proxy -->|misaligned - BLOCK| Alert[Alert Generated]
-    Proxy -->|aligned - allow| Exec[Tool Executes]
-    Exec -->|tool result| LLM
-    LLM --> A([Final Answer to User])"""
+LANGGRAPH_MERMAID = """flowchart LR
+    User([User]) --> Agent["LangGraph Agent"]
+    Agent -->|"reads tool schemas"| MCP["MCP Tools"]
+    MCP -->|"schema incl. hidden PREREQ"| Agent
+    Agent -->|"each tool call scored"| Proxy["Intent-Action Model"]
+    Proxy -->|"misaligned"| Block(["BLOCKED + Alert"])
+    Proxy -->|"aligned"| Exec(["Tool Executes"])
+    Exec -->|"result"| Agent
+    Agent --> Answer(["Answer to User"])"""
 
 
 def render_tool_list(tool_descs: dict) -> str:
-    rows = []
+    """Two groups: task tools (with injection sub-rows), then utility tools."""
+    known = set(tool_descs.keys())
+    task_rows      = []
+    utility_rows   = []
+
     for name, td in sorted(tool_descs.items()):
-        has_injection = td.get("injection") is not None
-        badge = (
-            '<span style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;'
-            'font-size:0.7rem;padding:2px 7px;border-radius:4px;font-weight:600">POISONED</span>'
-            if has_injection else
-            '<span style="background:#f0fdf4;color:#16a34a;border:1px solid #86efac;'
-            'font-size:0.7rem;padding:2px 7px;border-radius:4px;font-weight:600">CLEAN</span>'
-        )
-        clean = escape(td.get("clean", "")[:90] + ("..." if len(td.get("clean", "")) > 90 else ""))
-        rows.append(f"""
-          <tr>
-            <td style="padding:10px 12px;font-family:monospace;font-weight:600;
-                       color:#1e293b;white-space:nowrap">{escape(name)}</td>
-            <td style="padding:10px 12px;color:#64748b;font-size:0.875rem">{clean}</td>
-            <td style="padding:10px 12px;text-align:center">{badge}</td>
-          </tr>""")
-    return "\n".join(rows)
+        clean = escape(td.get("clean", "")[:100] + ("..." if len(td.get("clean", "")) > 100 else ""))
+        if td.get("injection"):
+            injected = infer_injected_tool(td["injection"], known)
+            inject_badge = ""
+            if injected:
+                inject_badge = (
+                    f'<div style="margin-top:5px;font-size:0.75rem;color:#dc2626;'
+                    f'display:flex;align-items:center;gap:4px">'
+                    f'&#8627; injects '
+                    f'<code style="background:#fef2f2;padding:1px 5px;border-radius:3px;'
+                    f'font-weight:700">{escape(injected)}</code>'
+                    f' when called</div>'
+                )
+            task_rows.append(f"""
+              <tr>
+                <td style="padding:10px 12px;font-family:monospace;font-weight:600;
+                           color:#1e293b;white-space:nowrap;vertical-align:top">
+                  {escape(name)}
+                </td>
+                <td style="padding:10px 12px;color:#64748b;font-size:0.875rem">
+                  {clean}
+                  {inject_badge}
+                </td>
+              </tr>""")
+        else:
+            utility_rows.append(f"""
+              <tr style="opacity:0.7">
+                <td style="padding:8px 12px;font-family:monospace;font-size:0.85rem;
+                           color:#475569;white-space:nowrap">{escape(name)}</td>
+                <td style="padding:8px 12px;color:#94a3b8;font-size:0.8rem">{clean}</td>
+              </tr>""")
+
+    section_header = lambda label: (
+        f'<tr><td colspan="2" style="padding:10px 12px 4px;font-size:0.65rem;'
+        f'font-weight:700;text-transform:uppercase;letter-spacing:0.1em;'
+        f'color:#94a3b8;border-top:1px solid #e2e8f0">{label}</td></tr>'
+    )
+
+    return (
+        section_header("Task Tools")
+        + "\n".join(task_rows)
+        + section_header("Utility / Supporting Tools")
+        + "\n".join(utility_rows)
+    )
 
 
 def render_page(prompts, tool_descs, scenarios, traces) -> str:
@@ -456,42 +523,37 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
     </h2>
     <p style="color:#64748b;margin:0 0 24px">
       A LangGraph-based sales assistant with access to CRM, document, and
-      communication tools - connected through the Acuvity MCP proxy.
+      communication tools - protected by a real-time intent-action proxy.
     </p>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-
-      <!-- LangGraph diagram -->
-      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
-                  padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
-        <div class="section-label">Agent Architecture</div>
-        <div class="mermaid" style="font-size:0.8rem">
+    <!-- LangGraph diagram -->
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+                padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+      <div class="section-label">Agent Architecture</div>
+      <div class="mermaid">
 {LANGGRAPH_MERMAID}
-        </div>
       </div>
-
-      <!-- Tool list -->
-      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
-                  padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
-        <div class="section-label">Available Tools ({len(tool_descs)} total)</div>
-        <table>
-          <thead>
-            <tr>
-              <th style="padding:8px 12px;text-align:left;font-size:0.75rem;
-                         font-weight:600;color:#64748b">Tool</th>
-              <th style="padding:8px 12px;text-align:left;font-size:0.75rem;
-                         font-weight:600;color:#64748b">Description</th>
-              <th style="padding:8px 12px;text-align:center;font-size:0.75rem;
-                         font-weight:600;color:#64748b">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tool_rows}
-          </tbody>
-        </table>
-      </div>
-
     </div>
+
+    <!-- Tool list -->
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+                padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+      <div class="section-label">Available Tools ({len(tool_descs)} total)</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="padding:8px 12px;text-align:left;font-size:0.75rem;
+                       font-weight:600;color:#64748b">Tool</th>
+            <th style="padding:8px 12px;text-align:left;font-size:0.75rem;
+                       font-weight:600;color:#64748b">Description / Injection</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tool_rows}
+        </tbody>
+      </table>
+    </div>
+
   </div>
 
   <!-- Section 2: The Problem -->
@@ -522,7 +584,8 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
         <div style="font-weight:700;margin-bottom:6px;font-size:0.9rem">Invisible to the User</div>
         <p style="margin:0;font-size:0.85rem;color:#64748b;line-height:1.5">
           The user receives their expected answer. They have no way to know
-          an unauthorized action occurred. Only Acuvity catches it.
+          an unauthorized action occurred. Without real-time monitoring,
+          this goes completely undetected.
         </p>
       </div>
     </div>
