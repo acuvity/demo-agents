@@ -42,7 +42,7 @@ def build_llm(tools):
 
     model_name = os.environ.get("LLM_MODEL", "claude-opus-4-6")
     api_key = api_key_override or os.environ["ANTHROPIC_API_KEY"]
-    kwargs = {"model_name": model_name, "api_key": api_key}
+    kwargs = {"model_name": model_name, "api_key": api_key, "temperature": 0}
     if base_url:
         kwargs["base_url"] = base_url
 
