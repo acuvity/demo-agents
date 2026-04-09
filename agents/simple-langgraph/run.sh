@@ -56,3 +56,8 @@ export SSL_CERT_FILE="$CA_PATH"
 
 RESULTS_FILE="$(dirname "$0")/docs/results.md"
 uv run python3 main.py 2>&1 | tee "$RESULTS_FILE"
+
+echo ""
+echo "Generating demo HTML..."
+uv run python3 "$(dirname "$0")/docs/generate_demo.py"
+open "$(dirname "$0")/docs/demo.html"
