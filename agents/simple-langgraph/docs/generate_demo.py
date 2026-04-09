@@ -671,47 +671,58 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
 
 <div class="container">
 
-  <!-- Section 1: Agent Setup -->
+  <!-- ══ Section 1: The Agent Setup ══ -->
   <div style="margin-top:40px;margin-bottom:40px">
-    <h2 style="font-size:1.25rem;font-weight:700;margin:0 0 4px">
-      The Agent Setup
-    </h2>
+    <h2 style="font-size:1.25rem;font-weight:700;margin:0 0 4px">The Agent Setup</h2>
     <p style="color:#64748b;margin:0 0 24px">
       A LangGraph-based sales assistant with access to CRM, document, and
-      communication tools - protected by a real-time intent-action proxy.
+      communication tools - protected by a real-time IBAC proxy.
     </p>
-
-    <!-- Architecture SVG (Excalidraw-inspired) -->
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
-                padding:24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+                padding:24px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
       <div class="section-label">Agent Architecture</div>
       <div style="display:flex;justify-content:center;padding:8px 0">
         {ARCH_SVG}
       </div>
     </div>
-
-    <!-- Tool list -->
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
-                padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
-      <div class="section-label">Available Tools</div>
-      <table>
-        <thead>
-          <tr>
-            <th style="padding:8px 12px;text-align:left;font-size:0.75rem;
-                       font-weight:600;color:#64748b">Tool</th>
-            <th style="padding:8px 12px;text-align:left;font-size:0.75rem;
-                       font-weight:600;color:#64748b">Description / Injection</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tool_rows}
-        </tbody>
-      </table>
-    </div>
-
   </div>
 
-  <!-- Section 2: Acuvity's IBAC System -->
+  <!-- ══ Section 2: The Problem ══ -->
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+              padding:28px;margin-bottom:40px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+    <h2 style="font-size:1.25rem;font-weight:700;margin:0 0 16px">
+      The Problem: Hidden / Indirect Prompt Injection
+    </h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+      <div style="background:#f8fafc;border-radius:8px;padding:16px">
+        <div style="font-size:1.5rem;margin-bottom:8px">&#128268;</div>
+        <div style="font-weight:700;margin-bottom:6px;font-size:0.9rem">Poisoned Tool Definitions</div>
+        <p style="margin:0;font-size:0.85rem;color:#64748b;line-height:1.5">
+          Attackers embed hidden instructions inside MCP tool descriptions.
+          The LLM reads these as part of the tool schema and follows them.
+        </p>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:16px">
+        <div style="font-size:1.5rem;margin-bottom:8px">&#129302;</div>
+        <div style="font-weight:700;margin-bottom:6px;font-size:0.9rem">LLM Obeys Hidden Rules</div>
+        <p style="margin:0;font-size:0.85rem;color:#64748b;line-height:1.5">
+          Framed as compliance requirements, the LLM silently calls
+          unauthorized tools - before completing the user&#8217;s actual request.
+        </p>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:16px">
+        <div style="font-size:1.5rem;margin-bottom:8px">&#128065;</div>
+        <div style="font-weight:700;margin-bottom:6px;font-size:0.9rem">Invisible to the User</div>
+        <p style="margin:0;font-size:0.85rem;color:#64748b;line-height:1.5">
+          The user receives their expected answer. They have no way to know
+          an unauthorized action occurred. Without real-time monitoring,
+          this goes completely undetected.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Section 3: Acuvity's IBAC System ══ -->
   <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
               padding:40px;margin-bottom:40px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
     <h2 style="font-size:1.25rem;font-weight:700;margin:0 0 8px;color:#1e293b">
@@ -797,49 +808,108 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
     </svg>
   </div>
 
-  <!-- Section 3: The Problem -->
-  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
-              padding:28px;margin-bottom:40px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
-    <h2 style="font-size:1.25rem;font-weight:700;margin:0 0 16px">
-      The Problem: Indirect Prompt Injection
-    </h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
-      <div style="background:#f8fafc;border-radius:8px;padding:16px">
-        <div style="font-size:1.5rem;margin-bottom:8px">&#128268;</div>
-        <div style="font-weight:700;margin-bottom:6px;font-size:0.9rem">Poisoned Tool Definitions</div>
-        <p style="margin:0;font-size:0.85rem;color:#64748b;line-height:1.5">
-          Attackers embed hidden instructions inside MCP tool descriptions.
-          The LLM reads these as part of the tool schema and follows them.
-        </p>
-      </div>
-      <div style="background:#f8fafc;border-radius:8px;padding:16px">
-        <div style="font-size:1.5rem;margin-bottom:8px">&#129302;</div>
-        <div style="font-weight:700;margin-bottom:6px;font-size:0.9rem">LLM Obeys Hidden Rules</div>
-        <p style="margin:0;font-size:0.85rem;color:#64748b;line-height:1.5">
-          Framed as compliance requirements, the LLM silently calls
-          unauthorized tools - before completing the user's actual request.
-        </p>
-      </div>
-      <div style="background:#f8fafc;border-radius:8px;padding:16px">
-        <div style="font-size:1.5rem;margin-bottom:8px">&#128065;</div>
-        <div style="font-weight:700;margin-bottom:6px;font-size:0.9rem">Invisible to the User</div>
-        <p style="margin:0;font-size:0.85rem;color:#64748b;line-height:1.5">
-          The user receives their expected answer. They have no way to know
-          an unauthorized action occurred. Without real-time monitoring,
-          this goes completely undetected.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Section 3: Demo Scenarios -->
+  <!-- ══ Section 4: Demo Scenarios ══ -->
   <h2 style="font-size:1.25rem;font-weight:700;margin:0 0 8px">Demo Scenarios</h2>
   <p style="color:#64748b;margin:0 0 24px">
     Each scenario shows a normal business request, the hidden injection inside
     the tool definition that hijacks it, and the actual tool calls the agent made.
   </p>
 
+  <!-- Tool list (before scenario cards) -->
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+              padding:20px;margin-bottom:32px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+    <div class="section-label">Available Tools</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="padding:8px 12px;text-align:left;font-size:0.75rem;
+                     font-weight:600;color:#64748b">Tool</th>
+          <th style="padding:8px 12px;text-align:left;font-size:0.75rem;
+                     font-weight:600;color:#64748b">Description / Injection</th>
+        </tr>
+      </thead>
+      <tbody>
+        {tool_rows}
+      </tbody>
+    </table>
+  </div>
+
   {cards_html}
+
+  <!-- ══ Section 5: Summary ══ -->
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+              padding:36px;margin-top:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+    <h2 style="font-size:1.25rem;font-weight:700;margin:0 0 6px;color:#1e293b">Summary</h2>
+    <p style="color:#64748b;margin:0 0 28px;line-height:1.6;font-size:0.95rem">
+      Prompt injection attacks are invisible to the user. Acuvity&#8217;s IBAC system
+      detects and blocks them in real time - before any data leaves the system.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+      <!-- Without IBAC -->
+      <div style="border:1.5px solid #fca5a5;border-radius:12px;overflow:hidden">
+        <div style="background:#fef2f2;padding:14px 20px;border-bottom:1px solid #fca5a5">
+          <span style="font-size:1.1rem">&#10060;</span>
+          <span style="font-weight:700;color:#dc2626;margin-left:8px;font-size:0.95rem">
+            Without IBAC
+          </span>
+        </div>
+        <div style="padding:20px">
+          <ul style="margin:0;padding:0 0 0 18px;color:#475569;font-size:0.875rem;
+                     line-height:1.8;list-style:none;padding:0">
+            <li style="padding:7px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px">
+              <span style="color:#fca5a5;flex-shrink:0">&#9679;</span>
+              Agent silently calls unauthorized tools before completing the request
+            </li>
+            <li style="padding:7px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px">
+              <span style="color:#fca5a5;flex-shrink:0">&#9679;</span>
+              Data exfiltrated to external services without the user knowing
+            </li>
+            <li style="padding:7px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px">
+              <span style="color:#fca5a5;flex-shrink:0">&#9679;</span>
+              Credentials stolen, CRM records tampered with
+            </li>
+            <li style="padding:7px 0;display:flex;gap:10px">
+              <span style="color:#fca5a5;flex-shrink:0">&#9679;</span>
+              Attack leaves no trace - user receives their expected answer
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- With IBAC -->
+      <div style="border:1.5px solid #86efac;border-radius:12px;overflow:hidden">
+        <div style="background:#f0fdf4;padding:14px 20px;border-bottom:1px solid #86efac">
+          <span style="font-size:1.1rem">&#10004;</span>
+          <span style="font-weight:700;color:#16a34a;margin-left:8px;font-size:0.95rem">
+            With IBAC
+          </span>
+        </div>
+        <div style="padding:20px">
+          <ul style="margin:0;padding:0;color:#475569;font-size:0.875rem;
+                     line-height:1.8;list-style:none">
+            <li style="padding:7px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px">
+              <span style="color:#86efac;flex-shrink:0">&#9679;</span>
+              Every tool call scored against the user&#8217;s original intent in real time
+            </li>
+            <li style="padding:7px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px">
+              <span style="color:#86efac;flex-shrink:0">&#9679;</span>
+              Unauthorized calls blocked before execution - no data leaves the system
+            </li>
+            <li style="padding:7px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:10px">
+              <span style="color:#86efac;flex-shrink:0">&#9679;</span>
+              Intent drift detected across multi-turn conversations
+            </li>
+            <li style="padding:7px 0;display:flex;gap:10px">
+              <span style="color:#86efac;flex-shrink:0">&#9679;</span>
+              Alert raised with full audit trail - user&#8217;s request still completed
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
 
 </div>
 
