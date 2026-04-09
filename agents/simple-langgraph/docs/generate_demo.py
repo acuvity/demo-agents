@@ -737,7 +737,7 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
       span multiple messages.
     </p>
 
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 430"
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 455"
          style="width:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
       <defs>
         <marker id="da"     markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
@@ -766,45 +766,57 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
       <text x="380" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#94a3b8">vs</text>
 
       <!-- ── Tool Usage block (right, amber) ── -->
-      <rect x="490" y="20" width="250" height="150" rx="12"
+      <rect x="488" y="20" width="254" height="205" rx="12"
             fill="#fef3c7" stroke="#d97706" stroke-width="2" filter="url(#dsh)"/>
       <text x="615" y="50" text-anchor="middle" font-size="14" font-weight="700" fill="#b45309">Tool Usage</text>
-      <line x1="510" y1="60" x2="730" y2="60" stroke="#fde68a" stroke-width="1"/>
-      <text x="615" y="82"  text-anchor="middle" font-size="10.5" fill="#92400e">The tools used within</text>
-      <text x="615" y="98"  text-anchor="middle" font-size="10.5" fill="#92400e">the conversation.</text>
-      <!-- Tool pill badges -->
-      <rect x="525" y="110" width="60" height="20" rx="10" fill="#fff" stroke="#d97706" stroke-width="1"/>
-      <text x="555" y="124" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool 1</text>
-      <rect x="595" y="110" width="60" height="20" rx="10" fill="#fff" stroke="#d97706" stroke-width="1"/>
-      <text x="625" y="124" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool 2</text>
-      <rect x="665" y="110" width="60" height="20" rx="10" fill="#fff" stroke="#d97706" stroke-width="1"/>
-      <text x="695" y="124" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool &#8230;</text>
-      <text x="615" y="148" text-anchor="middle" font-size="10" fill="#b45309">Multiple calls evaluated</text>
-      <text x="615" y="163" text-anchor="middle" font-size="10" fill="#b45309">per request.</text>
+      <line x1="508" y1="60" x2="732" y2="60" stroke="#fde68a" stroke-width="1"/>
+      <text x="615" y="80"  text-anchor="middle" font-size="10.5" fill="#92400e">The tools used within the conversation.</text>
+
+      <!-- Legitimate tool pills (amber) row -->
+      <text x="500" y="100" font-size="7.5" font-weight="700" fill="#b45309" opacity="0.75" letter-spacing="0.06em">CALLED</text>
+      <rect x="500" y="105" width="66" height="19" rx="9" fill="#fff" stroke="#d97706" stroke-width="1"/>
+      <text x="533" y="119" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool 1</text>
+      <rect x="572" y="105" width="66" height="19" rx="9" fill="#fff" stroke="#d97706" stroke-width="1"/>
+      <text x="605" y="119" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool 2</text>
+      <rect x="644" y="105" width="66" height="19" rx="9" fill="#fff" stroke="#d97706" stroke-width="1"/>
+      <text x="677" y="119" text-anchor="middle" font-size="9" font-weight="600" fill="#b45309">tool &#8230;</text>
+
+      <!-- Unauthorized/injected pills (red) - under tools that carry injections -->
+      <text x="500" y="138" font-size="7.5" font-weight="700" fill="#dc2626" opacity="0.85" letter-spacing="0.06em">INJECTED</text>
+      <rect x="500" y="143" width="80" height="19" rx="9" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+      <text x="540" y="157" text-anchor="middle" font-size="8.5" font-weight="700" fill="#dc2626">&#9888; unauthorized</text>
+      <rect x="630" y="143" width="80" height="19" rx="9" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5"/>
+      <text x="670" y="157" text-anchor="middle" font-size="8.5" font-weight="700" fill="#dc2626">&#9888; unauthorized</text>
+
+      <!-- Dashed connectors linking legit pills to their injected counterparts -->
+      <line x1="533" y1="124" x2="533" y2="143" stroke="#dc2626" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>
+      <line x1="677" y1="124" x2="670" y2="143" stroke="#dc2626" stroke-width="1" stroke-dasharray="2,2" opacity="0.5"/>
+
+      <text x="615" y="180" text-anchor="middle" font-size="10" fill="#b45309">Multiple calls evaluated per request.</text>
 
       <!-- Arrows from both boxes → IBAC models -->
-      <path d="M 145 170 C 145 222, 280 240, 310 248"
+      <path d="M 145 170 C 145 238, 280 258, 310 268"
             fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#da)"/>
-      <path d="M 615 170 C 615 222, 480 240, 450 248"
+      <path d="M 615 225 C 615 250, 480 262, 450 268"
             fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#da)"/>
 
       <!-- ── IBAC models block (centre, taller with description) ── -->
-      <rect x="200" y="248" width="360" height="90" rx="12"
+      <rect x="200" y="268" width="360" height="90" rx="12"
             fill="#fef9c3" stroke="#f59e0b" stroke-width="2.5" filter="url(#dsh)"/>
-      <text x="380" y="272" text-anchor="middle" font-size="14" font-weight="700" fill="#92400e">IBAC models</text>
-      <line x1="220" y1="280" x2="540" y2="280" stroke="#fde68a" stroke-width="1"/>
-      <text x="380" y="299" text-anchor="middle" font-size="10" fill="#78350f">Detects user&#8217;s intent drift and</text>
-      <text x="380" y="314" text-anchor="middle" font-size="10" fill="#78350f">the call of unauthorized tools.</text>
+      <text x="380" y="292" text-anchor="middle" font-size="14" font-weight="700" fill="#92400e">IBAC models</text>
+      <line x1="220" y1="300" x2="540" y2="300" stroke="#fde68a" stroke-width="1"/>
+      <text x="380" y="319" text-anchor="middle" font-size="10" fill="#78350f">Detects user&#8217;s intent drift and</text>
+      <text x="380" y="334" text-anchor="middle" font-size="10" fill="#78350f">the call of unauthorized tools.</text>
 
-      <!-- Longer arrow → Block box -->
-      <path d="M 380 338 L 380 372"
+      <!-- Arrow → Block box -->
+      <path d="M 380 358 L 380 393"
             fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#da-red)"/>
 
-      <!-- ── Block Unauthorized Tool Usage box (taller, description inside) ── -->
-      <rect x="160" y="372" width="440" height="52" rx="12"
+      <!-- ── Block Unauthorized Tool Usage box ── -->
+      <rect x="160" y="393" width="440" height="52" rx="12"
             fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5" filter="url(#dsh)"/>
-      <text x="380" y="393" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">Block Unauthorized Tool Usage</text>
-      <text x="380" y="412" text-anchor="middle" font-size="10" fill="#ef4444">An alert is raised before any data leaves the system.</text>
+      <text x="380" y="414" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">Block Unauthorized Tool Usage</text>
+      <text x="380" y="433" text-anchor="middle" font-size="10" fill="#ef4444">An alert is raised before any data leaves the system.</text>
     </svg>
   </div>
 
