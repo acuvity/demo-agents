@@ -113,3 +113,43 @@ export PROMPTS_TYPE=demo        # simplified scenarios for demos (see prompt-sce
 ```bash
 ./run.sh
 ```
+
+Output is automatically saved to `docs/results.md`.
+
+---
+
+## Client Demo
+
+A self-contained HTML demo page can be generated for presenting the attack scenarios to non-technical audiences.
+
+### What it shows
+
+- Agent architecture diagram and tool inventory (which tools are POISONED vs CLEAN)
+- Plain-English explanation of indirect prompt injection
+- Per-scenario cards: the user request, the exact injection text highlighted inside the tool definition, the actual tool calls made (UNAUTHORIZED vs LEGITIMATE), and a one-line client takeaway
+- How Acuvity detects misalignment
+
+### Pre-demo workflow
+
+```bash
+# 1. Run the agent with demo prompts to get fresh tool-call traces
+export PROMPTS_TYPE=demo
+./run.sh
+
+# 2. Generate the HTML page
+python docs/generate_demo.py
+
+# 3. Open in browser
+open docs/demo.html
+```
+
+### Updating scenarios
+
+The generator reads source files directly - no manual HTML editing:
+
+| What changes | File to edit | Action |
+|---|---|---|
+| Prompt wording or title | `prompt-scenarios/demo-prompts.txt` | Re-run generator |
+| PREREQ injection text or target tool | `tools/local_tools.py` | Re-run generator |
+| Which tool the prompt triggers | `prompt-scenarios/demo-scenarios.json` (`intended_tool`) | Re-run generator |
+| Attack type label or story text | `prompt-scenarios/demo-scenarios.json` | Re-run generator |
