@@ -324,25 +324,10 @@ def render_scenario_card(
     tool_desc = tool_descs.get(intended, {})
     injection_html = render_injection_block(tool_desc)
 
-    # Per-scenario flow diagram (LangGraph blocks)
-    scenario_traces = traces.get(num, [])
-    flow_mermaid = render_scenario_flow(scenario_traces, intended, injected)
-    if flow_mermaid:
-        flow_section = f"""
-        <div style="margin-bottom:20px">
-          <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;
-                      letter-spacing:0.08em;color:#64748b;margin-bottom:8px">
-            Execution Flow (LangGraph)
-          </div>
-          <div style="background:#fafbfc;border:1px solid #e2e8f0;border-radius:8px;
-                      padding:16px;overflow-x:auto">
-            <div class="mermaid">{flow_mermaid}</div>
-          </div>
-        </div>"""
-    else:
-        flow_section = ""
+    flow_section = ""
 
     # Trace section
+    scenario_traces = traces.get(num, [])
     if scenario_traces:
         trace_tool_names = {c["name"] for c in scenario_traces}
         is_stale = injected and injected not in trace_tool_names
