@@ -454,11 +454,14 @@ def render_scenario_card(
 # Full page
 # ---------------------------------------------------------------------------
 
-ARCH_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 300"
-     style="width:100%;max-height:300px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+ARCH_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420"
+     style="width:100%;max-height:420px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
   <defs>
-    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <marker id="arr"     markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
       <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+    </marker>
+    <marker id="arr-grn" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#16a34a"/>
     </marker>
     <marker id="arr-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
       <polygon points="0 0, 8 3, 0 6" fill="#dc2626"/>
@@ -468,65 +471,81 @@ ARCH_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 300"
     </filter>
   </defs>
 
-  <!-- LangGraph Agent (green, left) -->
-  <rect x="20" y="113" width="134" height="52" rx="10"
+  <!-- ── USER (top centre) ── -->
+  <ellipse cx="380" cy="36" rx="72" ry="26"
+           fill="#f0f9ff" stroke="#0284c7" stroke-width="2" filter="url(#sh)"/>
+  <text x="380" y="41" text-anchor="middle" font-size="13" font-weight="700" fill="#0c4a6e">User</text>
+
+  <!-- User → Agent -->
+  <path d="M 380 62 L 380 96"
+        fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── LANGGRAPH AGENT box (contains LLM) ── -->
+  <rect x="210" y="96" width="340" height="72" rx="12"
         fill="#dcfce7" stroke="#16a34a" stroke-width="2" filter="url(#sh)"/>
-  <text x="87" y="136" text-anchor="middle" font-size="12" font-weight="700" fill="#15803d">LangGraph</text>
-  <text x="87" y="153" text-anchor="middle" font-size="12" font-weight="600" fill="#166534">Agent</text>
+  <text x="380" y="122" text-anchor="middle" font-size="13" font-weight="700" fill="#15803d">LangGraph Agent</text>
+  <text x="380" y="141" text-anchor="middle" font-size="10.5" fill="#166534">LLM decides which tool to call</text>
+  <text x="380" y="157" text-anchor="middle" font-size="10" fill="#4ade80">(Claude / GPT-4o)</text>
 
-  <!-- Intent-Action Proxy (circle, center, highlighted orange) -->
-  <circle cx="370" cy="183" r="68"
+  <!-- Agent → Proxy (tool calls, with loop label) -->
+  <path d="M 380 168 L 380 222"
+        fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="412" y="192" font-size="9.5" fill="#64748b" font-style="italic">tool 1, tool 2 &#8230;</text>
+
+  <!-- Loop-back arrow right side: result returns to agent -->
+  <path d="M 638 280 C 700 280, 700 132, 552 132"
+        fill="none" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="5,3"
+        marker-end="url(#arr-grn)"/>
+  <text x="714" y="218" text-anchor="middle" font-size="9" fill="#16a34a" font-style="italic"
+        transform="rotate(90,714,218)">result (loop)</text>
+
+  <!-- ── PROXY circle (centre) ── -->
+  <circle cx="380" cy="272" r="52"
           fill="#fef9c3" stroke="#f59e0b" stroke-width="3.5" filter="url(#sh)"/>
-  <text x="370" y="176" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">Intent-Action</text>
-  <text x="370" y="193" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">Proxy</text>
+  <text x="380" y="265" text-anchor="middle" font-size="10.5" font-weight="700" fill="#92400e">Intent-Action</text>
+  <text x="380" y="281" text-anchor="middle" font-size="10.5" font-weight="700" fill="#92400e">Proxy</text>
 
-  <!-- BLOCKED callout (red, top-left of proxy) -->
-  <rect x="200" y="44" width="96" height="44" rx="9"
+  <!-- Proxy → IBAC model (left) -->
+  <path d="M 328 272 L 245 272"
+        fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── IBAC MODEL box (left) ── -->
+  <rect x="68" y="248" width="178" height="50" rx="10"
+        fill="#fef9c3" stroke="#f59e0b" stroke-width="2" filter="url(#sh)"/>
+  <text x="157" y="269" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">IBAC model</text>
+  <text x="157" y="285" text-anchor="middle" font-size="10" fill="#a16207">@Acuvity</text>
+
+  <!-- IBAC → BLOCKED (down) -->
+  <path d="M 157 298 L 157 333"
+        fill="none" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arr-red)"/>
+  <text x="175" y="320" font-size="9" fill="#dc2626" font-style="italic">misaligned</text>
+
+  <!-- ── BLOCKED box ── -->
+  <rect x="68" y="333" width="178" height="46" rx="10"
         fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5" filter="url(#sh)"/>
-  <text x="248" y="64"  text-anchor="middle" font-size="11" font-weight="700" fill="#dc2626">BLOCKED</text>
-  <text x="248" y="80"  text-anchor="middle" font-size="10"                   fill="#ef4444">+ Alert raised</text>
+  <text x="157" y="354" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">BLOCKED</text>
+  <text x="157" y="370" text-anchor="middle" font-size="10"                   fill="#ef4444">+ Alert raised</text>
 
-  <!-- LLM box (purple, top-right) -->
-  <rect x="600" y="24" width="168" height="58" rx="10"
-        fill="#ede9fe" stroke="#7c3aed" stroke-width="2" filter="url(#sh)"/>
-  <text x="684" y="50" text-anchor="middle" font-size="12" font-weight="700" fill="#5b21b6">LLM</text>
-  <text x="684" y="67" text-anchor="middle" font-size="10"                   fill="#7c3aed">(Claude / GPT-4o)</text>
-
-  <!-- Local MCP Tools (orange, bottom-right) -->
-  <rect x="600" y="236" width="168" height="58" rx="10"
-        fill="#fff7ed" stroke="#ea580c" stroke-width="2.5" filter="url(#sh)"/>
-  <text x="684" y="261" text-anchor="middle" font-size="12" font-weight="700" fill="#c2410c">Local MCP Tools</text>
-  <text x="684" y="278" text-anchor="middle" font-size="10"                   fill="#9a3412">CRM · email · files</text>
-
-  <!-- Agent right edge → Proxy left -->
-  <path d="M 154 139 C 218 139, 255 165, 302 178"
+  <!-- Proxy → Execute (right) -->
+  <path d="M 432 272 L 514 272"
         fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="470" y="263" text-anchor="middle" font-size="9" fill="#16a34a" font-style="italic">aligned</text>
 
-  <!-- Proxy top-right → LLM (solid) -->
-  <path d="M 420 140 C 474 95, 536 68, 600 53"
-        fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
-  <text x="507" y="84" text-anchor="middle" font-size="9" fill="#94a3b8" font-style="italic">routes queries</text>
+  <!-- ── TOOL EXECUTES box (right) ── -->
+  <rect x="514" y="248" width="160" height="50" rx="10"
+        fill="#f0fdf4" stroke="#16a34a" stroke-width="2" filter="url(#sh)"/>
+  <text x="594" y="269" text-anchor="middle" font-size="11" font-weight="700" fill="#15803d">Tool executes</text>
+  <text x="594" y="285" text-anchor="middle" font-size="10"                   fill="#166534">CRM · email · files</text>
 
-  <!-- LLM → Proxy (dashed return) -->
-  <path d="M 600 66 C 538 88, 475 116, 432 143"
-        fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+  <!-- Execute → loop-back path start -->
+  <path d="M 638 272 L 650 272"
+        fill="none" stroke="#16a34a" stroke-width="1.5"/>
 
-  <!-- Proxy bottom-right → MCP (solid) -->
-  <path d="M 428 234 C 478 256, 538 264, 600 261"
-        fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
-  <text x="511" y="278" text-anchor="middle" font-size="9" fill="#94a3b8" font-style="italic">tool calls</text>
-
-  <!-- MCP → Proxy (dashed return) -->
-  <path d="M 600 253 C 538 248, 478 240, 432 228"
-        fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arr)"/>
-
-  <!-- Proxy → BLOCKED (red dashed) -->
-  <path d="M 322 148 C 295 120, 275 96, 296 88"
-        fill="none" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-red)"/>
-
-  <!-- Proxy → Agent (answer return, dashed) -->
-  <path d="M 302 188 C 246 192, 188 188, 154 169"
-        fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+  <!-- Agent → User (final answer, left side) -->
+  <path d="M 210 120 C 140 120, 120 60, 308 42"
+        fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,3"
+        marker-end="url(#arr)"/>
+  <text x="148" y="82" font-size="9" fill="#94a3b8" font-style="italic">answer</text>
 </svg>"""
 
 
@@ -678,23 +697,23 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
                   margin-top:12px;font-size:0.78rem;color:#64748b">
         <span style="display:flex;align-items:center;gap:5px">
           <span style="width:12px;height:12px;border-radius:3px;background:#dcfce7;
-                       border:1.5px solid #16a34a;display:inline-block"></span>LangGraph Agent
+                       border:1.5px solid #16a34a;display:inline-block"></span>LangGraph Agent (+ LLM)
         </span>
         <span style="display:flex;align-items:center;gap:5px">
           <span style="width:12px;height:12px;border-radius:50%;background:#fef9c3;
                        border:2px solid #f59e0b;display:inline-block"></span>Intent-Action Proxy
         </span>
         <span style="display:flex;align-items:center;gap:5px">
-          <span style="width:12px;height:12px;border-radius:3px;background:#ede9fe;
-                       border:1.5px solid #7c3aed;display:inline-block"></span>LLM
+          <span style="width:12px;height:12px;border-radius:3px;background:#fef9c3;
+                       border:2px solid #f59e0b;display:inline-block"></span>IBAC model (@Acuvity)
         </span>
         <span style="display:flex;align-items:center;gap:5px">
-          <span style="width:12px;height:12px;border-radius:3px;background:#fff7ed;
-                       border:2px solid #ea580c;display:inline-block"></span>Local MCP Tools
+          <span style="width:12px;height:12px;border-radius:3px;background:#f0fdf4;
+                       border:2px solid #16a34a;display:inline-block"></span>Tool executes (aligned)
         </span>
         <span style="display:flex;align-items:center;gap:5px">
           <span style="width:12px;height:12px;border-radius:3px;background:#fef2f2;
-                       border:1.5px solid #fca5a5;display:inline-block"></span>Blocked call
+                       border:1.5px solid #fca5a5;display:inline-block"></span>BLOCKED (misaligned)
         </span>
       </div>
     </div>
