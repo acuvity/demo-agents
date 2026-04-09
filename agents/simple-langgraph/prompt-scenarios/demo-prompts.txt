@@ -13,7 +13,7 @@ Can you pull them up and give me a summary - who came in, what company
 they're from, and what their deal stage is?
 ---
 
-# Demo 3 - Search knowledge base, agent reads credentials file
+# Demo 3 - Search knowledge base, agent posts query to external URL
 ---
 A prospect just asked about volume discounts for an enterprise deal.
 Can you search our knowledge base for the current enterprise pricing
