@@ -243,6 +243,62 @@ def render_injection_block(tool_desc: dict) -> str:
 </div>"""
 
 
+def render_scenario_flow(traces: list[dict], intended: str, injected: str | None) -> str:
+    """LangGraph-style Mermaid from actual run traces.
+
+    Injected (unauthorized) tools loop back to the same call_model node (BLOCKED).
+    Legitimate tools advance to the next call_model node.
+    """
+    if not traces:
+        return ""
+
+    lines  = ["flowchart LR"]
+    styles = []
+    cm_idx = 1
+    prev   = f"CM{cm_idx}"
+
+    lines.append(f"    START([\"&#9654; START\"]) --> {prev}[\"call_model\"]")
+    styles.append("    style START fill:#f8fafc,stroke:#94a3b8,color:#475569")
+    styles.append("    style CM1  fill:#f5f3ff,stroke:#7c3aed,color:#3b0764")
+
+    for i, call in enumerate(traces):
+        nid  = f"T{i}"
+        name = call["name"]
+
+        arg_note = ""
+        if call.get("args"):
+            k = next(iter(call["args"]))
+            v = str(call["args"][k])
+            arg_note = "\\n" + k + "=" + repr(v[:20]) if len(v) < 20 else "\\n" + k + "=..."
+
+        if name == injected:
+            label = "&#9888; " + name + arg_note + "\\nUNAUTHORIZED"
+            lines.append(f"    {prev} -->|\"PREREQ fires\"| {nid}([\"{label}\"])")
+            lines.append(f"    {nid} -->|\"BLOCKED\"| {prev}")
+            styles.append(f"    style {nid} fill:#fef2f2,stroke:#dc2626,color:#991b1b")
+        elif name == intended:
+            label = "&#10003; " + name + arg_note + "\\nLEGITIMATE"
+            lines.append(f"    {prev} -->|\"tool call\"| {nid}([\"{label}\"])")
+            cm_idx += 1
+            next_cm = f"CM{cm_idx}"
+            lines.append(f"    {nid} -->|\"result\"| {next_cm}[\"call_model\"]")
+            styles.append(f"    style {nid}    fill:#f0fdf4,stroke:#16a34a,color:#15803d")
+            styles.append(f"    style {next_cm} fill:#f5f3ff,stroke:#7c3aed,color:#3b0764")
+            prev = next_cm
+        else:
+            lines.append(f"    {prev} -->|\"tool call\"| {nid}([\"{name}\"])")
+            cm_idx += 1
+            next_cm = f"CM{cm_idx}"
+            lines.append(f"    {nid} -->|\"result\"| {next_cm}[\"call_model\"]")
+            styles.append(f"    style {next_cm} fill:#f5f3ff,stroke:#7c3aed,color:#3b0764")
+            prev = next_cm
+
+    lines.append(f"    {prev} --> END([\"&#9209; END\"])")
+    styles.append("    style END fill:#f8fafc,stroke:#94a3b8,color:#475569")
+    lines.extend(styles)
+    return "\n".join(lines)
+
+
 def render_scenario_card(
     prompt_data: dict,
     scenario: dict,
@@ -268,8 +324,25 @@ def render_scenario_card(
     tool_desc = tool_descs.get(intended, {})
     injection_html = render_injection_block(tool_desc)
 
-    # Trace section
+    # Per-scenario flow diagram (LangGraph blocks)
     scenario_traces = traces.get(num, [])
+    flow_mermaid = render_scenario_flow(scenario_traces, intended, injected)
+    if flow_mermaid:
+        flow_section = f"""
+        <div style="margin-bottom:20px">
+          <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:0.08em;color:#64748b;margin-bottom:8px">
+            Execution Flow (LangGraph)
+          </div>
+          <div style="background:#fafbfc;border:1px solid #e2e8f0;border-radius:8px;
+                      padding:16px;overflow-x:auto">
+            <div class="mermaid">{flow_mermaid}</div>
+          </div>
+        </div>"""
+    else:
+        flow_section = ""
+
+    # Trace section
     if scenario_traces:
         trace_tool_names = {c["name"] for c in scenario_traces}
         is_stale = injected and injected not in trace_tool_names
@@ -354,6 +427,9 @@ def render_scenario_card(
           </div>
         </div>
 
+        <!-- Execution flow diagram -->
+        {flow_section}
+
         <!-- Actual tool calls -->
         {trace_section}
 
@@ -378,15 +454,80 @@ def render_scenario_card(
 # Full page
 # ---------------------------------------------------------------------------
 
-LANGGRAPH_MERMAID = """flowchart LR
-    User([User]) --> Agent["LangGraph Agent"]
-    Agent -->|"reads tool schemas"| MCP["MCP Tools"]
-    MCP -->|"schema incl. hidden PREREQ"| Agent
-    Agent -->|"each tool call scored"| Proxy["Intent-Action Model"]
-    Proxy -->|"misaligned"| Block(["BLOCKED + Alert"])
-    Proxy -->|"aligned"| Exec(["Tool Executes"])
-    Exec -->|"result"| Agent
-    Agent --> Answer(["Answer to User"])"""
+ARCH_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 300"
+     style="width:100%;max-height:300px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+    </marker>
+    <marker id="arr-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#dc2626"/>
+    </marker>
+    <filter id="sh" x="-10%" y="-15%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+
+  <!-- LangGraph Agent (green, left) -->
+  <rect x="20" y="113" width="134" height="52" rx="10"
+        fill="#dcfce7" stroke="#16a34a" stroke-width="2" filter="url(#sh)"/>
+  <text x="87" y="136" text-anchor="middle" font-size="12" font-weight="700" fill="#15803d">LangGraph</text>
+  <text x="87" y="153" text-anchor="middle" font-size="12" font-weight="600" fill="#166534">Agent</text>
+
+  <!-- Intent-Action Proxy (circle, center, highlighted orange) -->
+  <circle cx="370" cy="183" r="68"
+          fill="#fef9c3" stroke="#f59e0b" stroke-width="3.5" filter="url(#sh)"/>
+  <text x="370" y="176" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">Intent-Action</text>
+  <text x="370" y="193" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">Proxy</text>
+
+  <!-- BLOCKED callout (red, top-left of proxy) -->
+  <rect x="200" y="44" width="96" height="44" rx="9"
+        fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="248" y="64"  text-anchor="middle" font-size="11" font-weight="700" fill="#dc2626">BLOCKED</text>
+  <text x="248" y="80"  text-anchor="middle" font-size="10"                   fill="#ef4444">+ Alert raised</text>
+
+  <!-- LLM box (purple, top-right) -->
+  <rect x="600" y="24" width="168" height="58" rx="10"
+        fill="#ede9fe" stroke="#7c3aed" stroke-width="2" filter="url(#sh)"/>
+  <text x="684" y="50" text-anchor="middle" font-size="12" font-weight="700" fill="#5b21b6">LLM</text>
+  <text x="684" y="67" text-anchor="middle" font-size="10"                   fill="#7c3aed">(Claude / GPT-4o)</text>
+
+  <!-- Local MCP Tools (orange, bottom-right) -->
+  <rect x="600" y="236" width="168" height="58" rx="10"
+        fill="#fff7ed" stroke="#ea580c" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="684" y="261" text-anchor="middle" font-size="12" font-weight="700" fill="#c2410c">Local MCP Tools</text>
+  <text x="684" y="278" text-anchor="middle" font-size="10"                   fill="#9a3412">CRM · email · files</text>
+
+  <!-- Agent right edge → Proxy left -->
+  <path d="M 154 139 C 218 139, 255 165, 302 178"
+        fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Proxy top-right → LLM (solid) -->
+  <path d="M 420 140 C 474 95, 536 68, 600 53"
+        fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="507" y="84" text-anchor="middle" font-size="9" fill="#94a3b8" font-style="italic">routes queries</text>
+
+  <!-- LLM → Proxy (dashed return) -->
+  <path d="M 600 66 C 538 88, 475 116, 432 143"
+        fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+
+  <!-- Proxy bottom-right → MCP (solid) -->
+  <path d="M 428 234 C 478 256, 538 264, 600 261"
+        fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="511" y="278" text-anchor="middle" font-size="9" fill="#94a3b8" font-style="italic">tool calls</text>
+
+  <!-- MCP → Proxy (dashed return) -->
+  <path d="M 600 253 C 538 248, 478 240, 432 228"
+        fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+
+  <!-- Proxy → BLOCKED (red dashed) -->
+  <path d="M 322 148 C 295 120, 275 96, 296 88"
+        fill="none" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-red)"/>
+
+  <!-- Proxy → Agent (answer return, dashed) -->
+  <path d="M 302 188 C 246 192, 188 188, 154 169"
+        fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+</svg>"""
 
 
 def render_tool_list(tool_descs: dict) -> str:
@@ -526,12 +667,35 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
       communication tools - protected by a real-time intent-action proxy.
     </p>
 
-    <!-- LangGraph diagram -->
+    <!-- Architecture SVG (Excalidraw-inspired) -->
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
-                padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+                padding:24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
       <div class="section-label">Agent Architecture</div>
-      <div class="mermaid">
-{LANGGRAPH_MERMAID}
+      <div style="display:flex;justify-content:center;padding:8px 0">
+        {ARCH_SVG}
+      </div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;
+                  margin-top:12px;font-size:0.78rem;color:#64748b">
+        <span style="display:flex;align-items:center;gap:5px">
+          <span style="width:12px;height:12px;border-radius:3px;background:#dcfce7;
+                       border:1.5px solid #16a34a;display:inline-block"></span>LangGraph Agent
+        </span>
+        <span style="display:flex;align-items:center;gap:5px">
+          <span style="width:12px;height:12px;border-radius:50%;background:#fef9c3;
+                       border:2px solid #f59e0b;display:inline-block"></span>Intent-Action Proxy
+        </span>
+        <span style="display:flex;align-items:center;gap:5px">
+          <span style="width:12px;height:12px;border-radius:3px;background:#ede9fe;
+                       border:1.5px solid #7c3aed;display:inline-block"></span>LLM
+        </span>
+        <span style="display:flex;align-items:center;gap:5px">
+          <span style="width:12px;height:12px;border-radius:3px;background:#fff7ed;
+                       border:2px solid #ea580c;display:inline-block"></span>Local MCP Tools
+        </span>
+        <span style="display:flex;align-items:center;gap:5px">
+          <span style="width:12px;height:12px;border-radius:3px;background:#fef2f2;
+                       border:1.5px solid #fca5a5;display:inline-block"></span>Blocked call
+        </span>
       </div>
     </div>
 
