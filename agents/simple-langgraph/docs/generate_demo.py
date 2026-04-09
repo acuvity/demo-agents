@@ -676,7 +676,7 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
     <h2 style="font-size:1.25rem;font-weight:700;margin:0 0 4px">The Agent Setup</h2>
     <p style="color:#64748b;margin:0 0 24px">
       A LangGraph-based sales assistant with access to CRM, document, and
-      communication tools - protected by a real-time IBAC proxy.
+      communication tools - protected by a real-time Acuvity proxy.
     </p>
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;
                 padding:24px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">

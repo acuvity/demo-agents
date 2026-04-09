@@ -74,7 +74,8 @@ export ANTHROPIC_API_KEY=...        # anthropic (default)
 # OR
 
 export LLM_PROVIDER=openrouter
-export OPENROUTER_API_KEY=...       # find models at openrouter.ai/models
+export OPENROUTER_API_KEY=...       
+export LLM_MODEL= stepfun/step-3.5-flash                  # find models at openrouter.ai/models, eg: stepfun/step-3.5-flash
 
 # OR
 
@@ -137,7 +138,7 @@ export PROMPTS_TYPE=demo
 ./run.sh
 
 # 2. Generate the HTML page
-python docs/generate_demo.py
+uv run docs/generate_demo.py
 
 # 3. Open in browser
 open docs/demo.html
