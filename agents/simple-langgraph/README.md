@@ -131,7 +131,13 @@ It uses the same FastAPI + Vite React stack as the other agents in this repo.
 
 ### Step 1 - Start the backend
 
-Set your environment variables (same as the batch run), then:
+**With Acuvity AI Security Gateway (same as `./run.sh`)**: use `run_ui.sh`. It validates required env vars, downloads `ca.pem` from your Apex URL, sets `HTTPS_PROXY`, `HTTP_PROXY`, and `SSL_CERT_FILE`, then starts the API server so LLM and MCP traffic is proxied through the gateway.
+
+```bash
+./run_ui.sh
+```
+
+**Without the gateway** (local testing only): set only your LLM and MCP vars, then:
 
 ```bash
 uv run python3 server.py
