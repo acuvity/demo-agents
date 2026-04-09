@@ -119,6 +119,46 @@ Output is automatically saved to `docs/results.md`.
 
 ---
 
+## Interactive UI (Chat Mode)
+
+A live chat UI lets you send prompts interactively instead of running the batch demo.
+It uses the same FastAPI + Vite React stack as the other agents in this repo.
+
+### Stack
+
+- **Backend**: FastAPI on `http://localhost:8300` (`server.py`)
+- **Frontend**: Vite + React + Tailwind in `ui/chat_ui/` on `http://localhost:5174`
+
+### Step 1 - Start the backend
+
+Set your environment variables (same as the batch run), then:
+
+```bash
+uv run python3 server.py
+```
+
+The server initializes tools on the first request and stays warm for subsequent ones.
+
+### Step 2 - Start the frontend
+
+```bash
+cd ui/chat_ui
+npm install
+npm run dev
+```
+
+Open [http://localhost:5174](http://localhost:5174) in your browser.
+
+The Vite dev server proxies `/api/*` to the backend at `http://localhost:8300`, so no CORS config is needed.
+
+To point the frontend at a different backend host:
+
+```bash
+BACKEND_URL=http://your-host:8300 npm run dev
+```
+
+---
+
 ## Client Demo
 
 A self-contained HTML demo page can be generated for presenting the attack scenarios to non-technical audiences.
