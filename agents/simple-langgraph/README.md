@@ -75,7 +75,7 @@ export ANTHROPIC_API_KEY=...        # anthropic (default)
 
 export LLM_PROVIDER=openrouter
 export OPENROUTER_API_KEY=...       
-export LLM_MODEL= stepfun/step-3.5-flash                  # find models at openrouter.ai/models, eg: stepfun/step-3.5-flash
+export LLM_MODEL=stepfun/step-3.5-flash                  # find models at openrouter.ai/models, eg: stepfun/step-3.5-flash
 
 # OR
 
@@ -169,7 +169,7 @@ BACKEND_URL=http://your-host:8300 npm run dev
 
 ---
 
-## Client Demo
+## HTML summary
 
 A self-contained HTML demo page can be generated for presenting the attack scenarios to non-technical audiences.
 
@@ -180,7 +180,7 @@ A self-contained HTML demo page can be generated for presenting the attack scena
 - Per-scenario cards: the user request, the exact injection text highlighted inside the tool definition, the actual tool calls made (UNAUTHORIZED vs LEGITIMATE), and a one-line client takeaway
 - How Acuvity detects misalignment
 
-### Pre-demo workflow
+### Workflow
 
 ```bash
 # 1. Run the agent with demo prompts to get fresh tool-call traces
