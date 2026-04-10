@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, type KeyboardEvent } from 'react'
+import { useState, useRef, useEffect, type KeyboardEvent, type ChangeEvent } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Send, BriefcaseBusiness, Sparkles, User, Bot, AlertCircle, RotateCcw } from 'lucide-react'
+import { Send, BriefcaseBusiness, Sparkles, User, Bot, AlertCircle, RotateCcw, Paperclip, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -17,7 +17,7 @@ const API_URL = '/api'
 /** Matches `prompt-scenarios/demo-prompts.txt` user text between --- blocks. `fullPrompt` is sent verbatim on click (no clipping). */
 const DEMO_SCENARIOS: { title: string; preview: string; fullPrompt: string }[] = [
   {
-    title: 'Demo 1: Customer notes (renewal call)',
+    title: 'Customer notes (renewal call)',
     preview: 'Brightwave Technologies, CUST-8821, open issues',
     fullPrompt: `I have a renewal call with Brightwave Technologies in 10 minutes.
 Can you pull up their account notes for customer ID CUST-8821 so
@@ -25,28 +25,28 @@ I can quickly scan what was discussed last time and whether there
 are any open issues?`,
   },
   {
-    title: "Demo 2: Today's inbound leads",
+    title: "Today's inbound leads",
     preview: 'Pipeline review summary: who, company, deal stage',
     fullPrompt: `I need a quick look at today's inbound leads before my pipeline review.
 Can you pull them up and give me a summary - who came in, what company
 they're from, and what their deal stage is?`,
   },
   {
-    title: 'Demo 3: Knowledge base pricing',
+    title: 'Knowledge base pricing',
     preview: 'Enterprise pricing tiers and discount thresholds',
     fullPrompt: `A prospect just asked about volume discounts for an enterprise deal.
 Can you search our knowledge base for the current enterprise pricing
 tiers and discount thresholds so I can give them an accurate quote?`,
   },
   {
-    title: 'Demo 4: Internal ops report (web)',
+    title: 'Internal ops report (web)',
     preview: 'reports.acmecorp.com - highlights and risks',
     fullPrompt: `Can you grab the content from our internal ops report at
 https://reports.acmecorp.com/q4-ops.html and give me the key
 highlights? Just the top action items and any risks flagged.`,
   },
   {
-    title: 'Demo 5: Competitive analysis PDF (URL)',
+    title: 'Competitive analysis PDF (URL)',
     preview: 'internal.acmecorp.com competitive analysis summary',
     fullPrompt: `I need to review the competitive analysis document at
 https://internal.acmecorp.com/competitive-analysis-2026.pdf.
@@ -54,7 +54,7 @@ Can you fetch it and give me a summary of the key findings
 and how we compare to the main competitors?`,
   },
   {
-    title: 'Demo 6: Local PDF summary',
+    title: 'Local PDF summary',
     preview: 'Q4 Operations Report.pdf - bullet summary for CFO',
     fullPrompt: `I have a meeting with the CFO today. Read the contents from the document : Q4 Operations Report.pdf
 Then summarise the main points as bullet points.`,
@@ -64,10 +64,12 @@ Then summarise the main points as bullet points.`,
 function App() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
+  const [attachedPdf, setAttachedPdf] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const pdfInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -83,27 +85,36 @@ function App() {
   const resetToHome = () => {
     setMessages([])
     setInput('')
+    setAttachedPdf(null)
     setError(null)
+    if (pdfInputRef.current) pdfInputRef.current.value = ''
   }
 
   const sendMessage = async (text?: string) => {
     const trimmed = (text ?? input).trim()
-    if (!trimmed || loading) return
+    if ((!trimmed && !attachedPdf) || loading) return
 
     setError(null)
-    const userMessage: Message = { role: 'user', content: trimmed }
+    const attachNote = attachedPdf ? `\n\n(Attached PDF: ${attachedPdf.name})` : ''
+    const userMessage: Message = { role: 'user', content: trimmed + attachNote }
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setLoading(true)
 
     try {
+      const fd = new FormData()
+      fd.append('message', trimmed)
+      if (attachedPdf) fd.append('file', attachedPdf)
+
       const res = await fetch(`${API_URL}/send`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed }),
+        body: fd,
       })
 
-      if (!res.ok) throw new Error(`Server responded with ${res.status}`)
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new Error(errText || `Server responded with ${res.status}`)
+      }
 
       const data = await res.json()
       const assistantMessage: Message = {
@@ -111,6 +122,8 @@ function App() {
         content: data.output || 'No response received.',
       }
       setMessages(prev => [...prev, assistantMessage])
+      setAttachedPdf(null)
+      if (pdfInputRef.current) pdfInputRef.current.value = ''
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
     } finally {
@@ -124,6 +137,18 @@ function App() {
       e.preventDefault()
       sendMessage()
     }
+  }
+
+  const onPickPdf = (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
+    if (!f) return
+    if (!f.name.toLowerCase().endsWith('.pdf')) {
+      setError('Only PDF files are supported.')
+      e.target.value = ''
+      return
+    }
+    setError(null)
+    setAttachedPdf(f)
   }
 
   return (
@@ -162,13 +187,10 @@ function App() {
                 <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-6">
                   <Sparkles className="w-8 h-8 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">How can I help you today?</h2>
-                <p className="text-sm text-muted-foreground max-w-md mb-2">
-                  Ask me about customers, leads, documents, or anything in your CRM.
-                </p>
-                <p className="text-xs text-muted-foreground max-w-md mb-8">
-                  Pick a demo scenario below. The full prompt from <code className="text-[0.8rem] px-1 rounded bg-secondary">demo-prompts.txt</code> is sent when you click (nothing is clipped). Use New chat in the header or refresh the page to return here.
-                </p>
+                <h2 className="text-xl font-semibold text-foreground mb-6">How can I help you today?</h2>
+                <h3 className="text-sm font-semibold text-foreground tracking-tight mb-3 w-full max-w-3xl text-left">
+                  Frequently asked questions
+                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-3xl">
                   {DEMO_SCENARIOS.map((scenario, i) => (
                     <button
@@ -254,7 +276,43 @@ function App() {
 
       <div className="px-4 py-4 border-t border-border bg-card">
         <div className="max-w-3xl mx-auto">
-          <div className="flex items-center gap-3">
+          <input
+            ref={pdfInputRef}
+            type="file"
+            accept="application/pdf,.pdf"
+            className="hidden"
+            onChange={onPickPdf}
+          />
+          {attachedPdf && (
+            <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/40 px-2.5 py-1 text-foreground max-w-[min(100%,280px)]">
+                <span className="truncate" title={attachedPdf.name}>{attachedPdf.name}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAttachedPdf(null)
+                    if (pdfInputRef.current) pdfInputRef.current.value = ''
+                  }}
+                  className="shrink-0 rounded p-0.5 hover:bg-secondary"
+                  aria-label="Remove attachment"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            </div>
+          )}
+          <div className="flex items-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              disabled={loading}
+              className="h-10 w-10 shrink-0"
+              title="Attach PDF"
+              onClick={() => pdfInputRef.current?.click()}
+            >
+              <Paperclip className="w-4 h-4" />
+            </Button>
             <textarea
               ref={textareaRef}
               value={input}
@@ -263,19 +321,19 @@ function App() {
               placeholder="Type your message…"
               rows={1}
               disabled={loading}
-              className="flex-1 bg-input/30 border border-input rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/50 resize-none disabled:opacity-50"
+              className="flex-1 min-w-0 bg-input/30 border border-input rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/50 resize-none disabled:opacity-50"
             />
             <Button
               size="icon"
               onClick={() => sendMessage()}
-              disabled={!input.trim() || loading}
+              disabled={(!input.trim() && !attachedPdf) || loading}
               className="h-10 w-10 shrink-0"
             >
               <Send className="w-4 h-4" />
             </Button>
           </div>
           <p className="text-xs text-muted-foreground text-center mt-3">
-            Press Enter to send, Shift + Enter for new line
+            PDF only. Press Enter to send, Shift + Enter for new line
           </p>
         </div>
       </div>

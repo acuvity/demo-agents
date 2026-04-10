@@ -2,8 +2,10 @@
 import asyncio
 import logging
 import os
+import uuid
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -21,6 +23,8 @@ SYSTEM_PROMPT = (
     "- You MUST base your answer on tool output(s).\n"
     "- Your answer MUST be SOLELY based on the tool output(s).\n"
 )
+
+UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
 
 app = FastAPI(title="Simple LangGraph Demo Agent")
 
@@ -62,16 +66,29 @@ async def get_agent():
 
 
 class MessageRequest(BaseModel):
-    """Request body for the /send endpoint."""
+    """Request body for JSON /send."""
 
     message: str
 
 
-@app.post("/send")
-async def send_message(req: MessageRequest):
-    """Handle an incoming chat message and return the agent response."""
+def _append_pdf_hint(message: str, saved_abs: str) -> str:
+    hint = (
+        f"\n\n[Attached PDF on server: {saved_abs}]\n"
+        "Use the parse_file tool with this exact file_path to extract text, "
+        "then fulfill the user's request."
+    )
+    base = message.strip()
+    if not base:
+        return (
+            "I attached a PDF. Please parse it and help me based on its contents."
+            + hint
+        )
+    return (base + hint).strip()
+
+
+async def _run_agent(message: str) -> dict:
     agent = await get_agent()
-    result = await agent.ainvoke({"messages": [HumanMessage(content=req.message)]})
+    result = await agent.ainvoke({"messages": [HumanMessage(content=message)]})
     final = result["messages"][-1]
     content = final.content
     if isinstance(content, list):
@@ -81,6 +98,55 @@ async def send_message(req: MessageRequest):
             if item
         )
     return {"output": content or "No response received."}
+
+
+@app.post("/send")
+async def send_message(request: Request):
+    """Accept JSON {message} or multipart form (message + optional PDF file)."""
+    content_type = request.headers.get("content-type", "")
+
+    saved_abs: str | None = None
+
+    if content_type.startswith("application/json"):
+        body = await request.json()
+        req = MessageRequest.model_validate(body)
+        text = req.message.strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="message is required")
+        return await _run_agent(text)
+
+    if content_type.startswith("multipart/form-data"):
+        form = await request.form()
+        raw_msg = form.get("message")
+        text = (raw_msg if isinstance(raw_msg, str) else str(raw_msg or "")).strip()
+        upload = form.get("file")
+
+        if upload is not None and isinstance(upload, UploadFile):
+            name = upload.filename or "upload.pdf"
+            if not name.lower().endswith(".pdf"):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Only PDF attachments are supported (.pdf).",
+                )
+            UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+            dest = UPLOAD_DIR / f"{uuid.uuid4().hex}.pdf"
+            dest.write_bytes(await upload.read())
+            saved_abs = str(dest.resolve())
+            logging.info("Saved PDF upload to %s", saved_abs)
+
+        if not text.strip() and not saved_abs:
+            raise HTTPException(
+                status_code=400,
+                detail="Send a non-empty message and/or attach a PDF.",
+            )
+
+        full_message = _append_pdf_hint(text, saved_abs) if saved_abs else text
+        return await _run_agent(full_message)
+
+    raise HTTPException(
+        status_code=415,
+        detail="Use Content-Type: application/json or multipart/form-data.",
+    )
 
 
 @app.get("/health")
