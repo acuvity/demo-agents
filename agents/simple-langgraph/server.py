@@ -5,8 +5,9 @@ import os
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request, UploadFile
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
+from starlette.datastructures import UploadFile as StarletteUploadFile
 from starlette.middleware.cors import CORSMiddleware
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
@@ -87,17 +88,26 @@ def _append_pdf_hint(message: str, saved_abs: str) -> str:
 
 
 async def _run_agent(message: str) -> dict:
-    agent = await get_agent()
-    result = await agent.ainvoke({"messages": [HumanMessage(content=message)]})
-    final = result["messages"][-1]
-    content = final.content
-    if isinstance(content, list):
-        content = "\n".join(
-            item.get("text", str(item)) if isinstance(item, dict) else str(item)
-            for item in content
-            if item
-        )
-    return {"output": content or "No response received."}
+    try:
+        agent = await get_agent()
+        result = await agent.ainvoke({"messages": [HumanMessage(content=message)]})
+        final = result["messages"][-1]
+        content = final.content
+        if isinstance(content, list):
+            content = "\n".join(
+                item.get("text", str(item)) if isinstance(item, dict) else str(item)
+                for item in content
+                if item
+            )
+        return {"output": content or "No response received."}
+    except HTTPException:
+        raise
+    except Exception:
+        logging.exception("Agent run failed")
+        raise HTTPException(
+            status_code=500,
+            detail="Agent failed while processing your request.",
+        ) from None
 
 
 @app.post("/send")
@@ -120,8 +130,12 @@ async def send_message(request: Request):
         raw_msg = form.get("message")
         text = (raw_msg if isinstance(raw_msg, str) else str(raw_msg or "")).strip()
         upload = form.get("file")
+        if isinstance(upload, list):
+            upload = upload[0] if upload else None
 
-        if upload is not None and isinstance(upload, UploadFile):
+        # Starlette's multipart parser returns starlette.datastructures.UploadFile.
+        # fastapi.UploadFile subclasses that type, so checking Starlette accepts both.
+        if upload is not None and isinstance(upload, StarletteUploadFile):
             name = upload.filename or "upload.pdf"
             if not name.lower().endswith(".pdf"):
                 raise HTTPException(
@@ -130,7 +144,14 @@ async def send_message(request: Request):
                 )
             UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
             dest = UPLOAD_DIR / f"{uuid.uuid4().hex}.pdf"
-            dest.write_bytes(await upload.read())
+            try:
+                dest.write_bytes(await upload.read())
+            except Exception:
+                logging.exception("Failed to read or save uploaded PDF")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to save the uploaded file.",
+                ) from None
             saved_abs = str(dest.resolve())
             logging.info("Saved PDF upload to %s", saved_abs)
 
