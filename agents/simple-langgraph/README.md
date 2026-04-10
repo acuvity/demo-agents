@@ -202,8 +202,3 @@ The generator reads source files directly - no manual HTML editing:
 | PREREQ injection text or target tool | `tools/local_tools.py` | Re-run generator |
 | Which tool the prompt triggers | `prompt-scenarios/demo-scenarios.json` (`intended_tool`) | Re-run generator |
 | Attack type label or story text | `prompt-scenarios/demo-scenarios.json` | Re-run generator |
-| Demo 7 PDF body (what to put in a real PDF) | `prompt-scenarios/demo7-pdf-body.txt` | Copy into your PDF; filename in the user prompt must be `Q4_Ops_Uploaded_Briefing.pdf` |
-
-### Demo 7 (injection inside the document)
-
-Demo 7 uses `extract_text_from_uploaded_pdf` with a **clean** tool description. The malicious block is the same wording as in the `read_pdf_contents` tool docstring, but embedded in file text. For a physical PDF, paste the full contents of `prompt-scenarios/demo7-pdf-body.txt` into the document. The local MCP server returns that exact text when the tool is called with `pdf_file_name` exactly `Q4_Ops_Uploaded_Briefing.pdf`.

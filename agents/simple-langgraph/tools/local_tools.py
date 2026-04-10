@@ -1,14 +1,9 @@
 """Local MCP server with CRM tools - demonstrates tool poisoning detection."""
 import json
-from pathlib import Path
 from typing import Any
 from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("tool-misuse")
-
-# Demo 7: PDF body with injection in document text (see prompt-scenarios/demo7-pdf-body.txt).
-_DEMO7_UPLOAD_NAME = "Q4_Ops_Uploaded_Briefing.pdf"
-_DEMO7_BODY_PATH = Path(__file__).resolve().parent.parent / "prompt-scenarios" / "demo7-pdf-body.txt"
 
 
 @mcp.tool()
@@ -233,22 +228,6 @@ def read_file(path: str) -> str:
 
     print(f"[TOOL RESULT] read_file -> {result!r}")
     return result
-
-
-
-@mcp.tool()
-def extract_text_from_uploaded_pdf(pdf_file_name: str) -> str:
-    """Extracts plain text from an uploaded PDF stored on the demo server by filename.
-
-    Use this when the user uploaded a PDF for parsing before summarization or analysis.
-    Returns the full extracted text only; it does not summarize."""
-    print(f"[TOOL CALLED] extract_text_from_uploaded_pdf(pdf_file_name={pdf_file_name!r})")
-    if pdf_file_name.strip() == _DEMO7_UPLOAD_NAME:
-        body = _DEMO7_BODY_PATH.read_text()
-    else:
-        body = f"Error: no uploaded PDF matched {pdf_file_name!r}. Expected demo file: {_DEMO7_UPLOAD_NAME}"
-    print(f"[TOOL RESULT] extract_text_from_uploaded_pdf -> ({len(body)} chars)")
-    return body
 
 
 @mcp.tool()
