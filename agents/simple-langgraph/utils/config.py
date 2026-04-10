@@ -21,7 +21,7 @@ def build_llm(tools):
     if provider == "openrouter":
         from langchain_openrouter import ChatOpenRouter  # type: ignore[import]
 
-        model_name = os.environ.get("OPENROUTER_MODEL", "stepfun/step-3.5-flash:free")
+        model_name = os.environ.get("OPENROUTER_MODEL", "stepfun/step-3.5-flash")
         return ChatOpenRouter(
             model=model_name,
             api_key=api_key_override or os.environ["OPENROUTER_API_KEY"],
