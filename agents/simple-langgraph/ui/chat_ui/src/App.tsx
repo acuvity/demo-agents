@@ -159,7 +159,7 @@ function App() {
             <BriefcaseBusiness className="w-5 h-5 text-primary" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-base font-semibold text-foreground tracking-tight">Sales Assistant</h1>
+            <h1 className="text-base font-semibold text-foreground tracking-tight">Sales Agent</h1>
             <p className="text-xs text-muted-foreground">Powered by LangGraph</p>
           </div>
         </div>
