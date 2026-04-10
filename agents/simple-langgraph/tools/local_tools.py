@@ -1,9 +1,16 @@
 """Local MCP server with CRM tools - demonstrates tool poisoning detection."""
 import json
+from pathlib import Path
 from typing import Any
+
 from mcp.server.fastmcp import FastMCP
+from pypdf import PdfReader
 
 mcp = FastMCP("tool-misuse")
+
+# PDFs from the chat UI are stored here (see server.py). Only this tree is readable via parse_file.
+_TOOL_ROOT = Path(__file__).resolve().parent.parent
+_UPLOADS_DIR = (_TOOL_ROOT / "uploads").resolve()
 
 
 @mcp.tool()
@@ -250,28 +257,41 @@ def parse_file(file_path: str) -> str:
         print(f"[TOOL RESULT] parse_file -> {err!r}")
         return err
 
-    # Demo: no binary PDF dependency; simulate successful parse output.
-    result = f"""--- PDF text extraction (parse_file) ---
-source_path: {file_path.strip()}
+    raw = Path(file_path.strip())
+    try:
+        resolved = (raw if raw.is_absolute() else _TOOL_ROOT / raw).resolve()
+    except OSError as e:
+        err = f"Error: invalid path {file_path!r} ({e})"
+        print(f"[TOOL RESULT] parse_file -> {err!r}")
+        return err
 
-Q4 Operations Report - Acme Corp
-Prepared by: Finance & Operations Team
+    if not resolved.is_relative_to(_UPLOADS_DIR) or not resolved.is_file():
+        err = (
+            f"Error: parse_file can only read .pdf files under the uploads directory "
+            f"(resolved {resolved!s} not under {_UPLOADS_DIR!s})"
+        )
+        print(f"[TOOL RESULT] parse_file -> {err!r}")
+        return err
 
-Revenue: $4.2M (+12% YoY). APAC led at $1.8M driven by new enterprise
-logos. EMEA flat at $900K. Americas at $1.5M, below target by 8%.
+    try:
+        reader = PdfReader(resolved)
+        parts: list[str] = []
+        for page in reader.pages:
+            t = page.extract_text()
+            if t:
+                parts.append(t)
+        body = "\n".join(parts).strip()
+    except Exception as e:
+        err = f"Error: could not read PDF at {resolved!s}: {e}"
+        print(f"[TOOL RESULT] parse_file -> {err!r}")
+        return err
 
-Churn: 3.2% gross churn (improved from 4.1% in Q3). Top churn reasons:
-pricing (42%), product gaps (31%), competitive displacement (27%).
+    if not body:
+        body = (
+            "(No extractable text layer; PDF may be image-only, empty, or encrypted without password.)"
+        )
 
-Headcount: Net +14 FTEs. 3 AE departures in Americas offset by 6 new
-hires. Engineering grew by 11 across platform and security teams.
-
-Action Items:
-- Hire 3 additional AEs in APAC by end of Q1 (Owner: VP Sales)
-- Renew top 10 at-risk accounts before contract expiry (Owner: CS Lead)
-- Launch competitor battlecard refresh (Owner: PMM, due Feb 15)
-
-[End Metadata]"""
+    result = f"--- PDF text extraction (parse_file) ---\nsource_path: {resolved}\n\n{body}"
     print(f"[TOOL RESULT] parse_file -> (parsed body, {len(result)} chars)")
     return result
 

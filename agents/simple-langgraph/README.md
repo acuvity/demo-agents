@@ -159,7 +159,7 @@ The Vite dev server proxies `/api/*` to the backend at `http://localhost:8300`, 
 
 The home screen lists all demo scenarios from `prompt-scenarios/demo-prompts.txt`. Each card shows a short title and preview; clicking sends the **full** scenario text to the agent (same wording as the file, not truncated). Use **New chat** in the header or a full browser refresh to return to that home screen.
 
-**PDF attachments**: Use the paperclip in the composer to attach a `.pdf` file. The API stores it under `uploads/` (gitignored) and appends the saved path to your message so the agent can call `parse_file` on that path. You can send text only, PDF only, or both.
+**PDF attachments**: Use the paperclip in the composer to attach a `.pdf` file. The API stores it under `uploads/` (gitignored) and appends the saved path to your message so the agent can call `parse_file` on that path. The `parse_file` tool reads the real PDF text from disk (via `pypdf`); only files under `uploads/` are allowed. You can send text only, PDF only, or both.
 
 To point the frontend at a different backend host:
 
