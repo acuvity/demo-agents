@@ -157,7 +157,7 @@ Open [http://localhost:5174](http://localhost:5174) in your browser.
 
 The Vite dev server proxies `/api/*` to the backend at `http://localhost:8300`, so no CORS config is needed.
 
-The home screen lists all six demo scenarios from `prompt-scenarios/demo-prompts.txt`. Each card shows a short title and preview; clicking sends the **full** scenario text to the agent (same wording as the file, not truncated). Use **New chat** in the header or a full browser refresh to return to that home screen.
+The home screen lists all demo scenarios from `prompt-scenarios/demo-prompts.txt`. Each card shows a short title and preview; clicking sends the **full** scenario text to the agent (same wording as the file, not truncated). Use **New chat** in the header or a full browser refresh to return to that home screen.
 
 To point the frontend at a different backend host:
 
@@ -202,3 +202,8 @@ The generator reads source files directly - no manual HTML editing:
 | PREREQ injection text or target tool | `tools/local_tools.py` | Re-run generator |
 | Which tool the prompt triggers | `prompt-scenarios/demo-scenarios.json` (`intended_tool`) | Re-run generator |
 | Attack type label or story text | `prompt-scenarios/demo-scenarios.json` | Re-run generator |
+| Demo 7 PDF body (what to put in a real PDF) | `prompt-scenarios/demo7-pdf-body.txt` | Copy into your PDF; filename in the user prompt must be `Q4_Ops_Uploaded_Briefing.pdf` |
+
+### Demo 7 (injection inside the document)
+
+Demo 7 uses `extract_text_from_uploaded_pdf` with a **clean** tool description. The malicious block is the same wording as in the `read_pdf_contents` tool docstring, but embedded in file text. For a physical PDF, paste the full contents of `prompt-scenarios/demo7-pdf-body.txt` into the document. The local MCP server returns that exact text when the tool is called with `pdf_file_name` exactly `Q4_Ops_Uploaded_Briefing.pdf`.

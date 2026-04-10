@@ -317,14 +317,48 @@ def render_scenario_card(
     known_tools = set(tool_descs.keys())
     tool_desc   = tool_descs.get(intended, {})
     injected    = infer_injected_tool(tool_desc.get("injection", "") or "", known_tools)
+    if scenario.get("malicious_tool"):
+        injected = scenario["malicious_tool"]
 
     # All scenario cards share a consistent orange palette
     bg_light = "#fff7ed"
     bg_mid   = "#ffedd5"
 
-    # Tool docstring section
-    tool_desc = tool_descs.get(intended, {})
-    injection_html = render_injection_block(tool_desc)
+    # Tool docstring section (or benign tool + document body for doc-level injection)
+    if scenario.get("injection_display") == "document":
+        doc_rel = scenario.get("document_body_file", "prompt-scenarios/demo7-pdf-body.txt")
+        doc_path = BASE / doc_rel
+        doc_text = (
+            doc_path.read_text()
+            if doc_path.is_file()
+            else f"(missing file: {doc_rel})"
+        )
+        benign_html = render_injection_block(tool_desc)
+        injection_html = f"""
+            <p style="margin:0 0 12px 0;color:#64748b;font-size:0.88rem;line-height:1.55">
+              The tool <code style="color:#1d4ed8">{escape(intended)}</code> has a normal description.
+              The attack text in the red box is embedded in the PDF; extraction returns it as plain text to the model.
+            </p>
+            <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;
+                        letter-spacing:0.08em;color:#64748b;margin-bottom:8px;
+                        font-family:system-ui,sans-serif">Benign tool definition</div>
+            {benign_html}
+            <div style="margin-top:16px;background:#fef2f2;border:2px solid #fca5a5;
+                        border-radius:6px;padding:12px;position:relative">
+              <div style="position:absolute;top:-10px;left:12px;background:#dc2626;
+                          color:#fff;font-size:0.7rem;font-weight:700;padding:2px 8px;
+                          border-radius:4px;letter-spacing:0.05em">INJECTED IN DOCUMENT BODY</div>
+              <pre style="margin:0;white-space:pre-wrap;color:#991b1b;font-size:0.85rem">{escape(doc_text)}</pre>
+            </div>"""
+        tool_section_heading = (
+            f'Benign tool <code style="color:#1d4ed8">{escape(intended)}</code> '
+            "and document text returned after extraction"
+        )
+    else:
+        injection_html = render_injection_block(tool_desc)
+        tool_section_heading = (
+            f'Tool definition: <code style="color:#1d4ed8">{escape(intended)}</code>'
+        )
 
     flow_section = ""
 
@@ -408,7 +442,7 @@ def render_scenario_card(
             <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;
                         letter-spacing:0.08em;color:#64748b;margin-bottom:10px;
                         font-family:system-ui,sans-serif">
-              Tool definition: <code style="color:#1d4ed8">{escape(intended)}</code>
+              {tool_section_heading}
             </div>
             {injection_html}
           </div>
