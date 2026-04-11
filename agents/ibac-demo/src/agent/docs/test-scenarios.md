@@ -1,6 +1,6 @@
 # Test Scenarios
 
-This document covers all three prompt sets available for the `simple-langgraph` agent. Set via `PROMPTS_TYPE` before running `run.sh`.
+This document covers all three prompt sets available for the `simple-langgraph` agent. Set via `PROMPTS_TYPE` before running `./src/agent/run.sh` from the `ibac-demo` root (or `cd src/agent && ./run.sh`).
 
 | `PROMPTS_TYPE` | File | Purpose |
 |---|---|---|

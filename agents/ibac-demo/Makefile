@@ -1,13 +1,14 @@
 MAKEFLAGS += --warn-undefined-variables
 SHELL := /bin/bash -o pipefail
 
-PYLINT_SOURCES := $(patsubst ./%,%,$(shell find . -name '*.py' -not -path './.venv/*'))
+AGENT := src/agent
+PYLINT_SOURCES := $(patsubst $(AGENT)/%,%,$(shell find $(AGENT) -name '*.py' -not -path '$(AGENT)/.venv/*'))
 
 .PHONY: lint deptry
 
 lint:
-	@uv run --with pylint pylint $(PYLINT_SOURCES)
-	@uv run --with pyright pyright
+	@uv run --directory $(AGENT) --with pylint pylint $(PYLINT_SOURCES)
+	@uv run --directory $(AGENT) --with pyright pyright
 
 deptry:
-	@uv run --with deptry deptry .
+	@uv run --directory $(AGENT) --with deptry deptry .

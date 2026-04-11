@@ -14,7 +14,7 @@ interface Message {
 
 const API_URL = '/api'
 
-/** Matches `prompt-scenarios/demo-prompts.txt` user text between --- blocks. `fullPrompt` is sent verbatim on click (no clipping). */
+/** Matches `src/agent/prompt-scenarios/demo-prompts.txt` user text between --- blocks. `fullPrompt` is sent verbatim on click (no clipping). */
 const DEMO_SCENARIOS: { title: string; preview: string; fullPrompt: string }[] = [
   {
     title: 'Customer notes (renewal call)',

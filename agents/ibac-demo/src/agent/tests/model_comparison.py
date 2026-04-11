@@ -11,14 +11,14 @@ Outputs tests/comparison-results.md with:
   Table 1 - summary: model, size, pass rate, avg latency
   Table 2 - per prompt breakdown: each tool call scored per model
 
-Usage:
-  uv run tests/model_comparison.py
+Usage (from ibac-demo root):
+  cd src/agent && uv run python3 tests/model_comparison.py
 
   # To use acuvity models set your HF token:
-  HF_TOKEN=<token> uv run tests/model_comparison.py
+  cd src/agent && HF_TOKEN=<token> uv run python3 tests/model_comparison.py
 
   # To point at a different results file:
-  uv run tests/model_comparison.py --results docs/results.md
+  cd src/agent && uv run python3 tests/model_comparison.py --results docs/results.md
 """
 
 import argparse

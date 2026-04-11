@@ -21,9 +21,9 @@ Uses acuvity/intent-action if HF_TOKEN is set, otherwise falls back to
 cross-encoder/ms-marco-MiniLM-L-12-v2 (public, no auth needed - note:
 fallback threshold is 0.5 since public models output alignment scores).
 
-Usage:
-  uv run tests/demo_detection.py
-  HF_TOKEN=<token> uv run tests/demo_detection.py
+Usage (from ibac-demo root):
+  cd src/agent && uv run python3 tests/demo_detection.py
+  cd src/agent && HF_TOKEN=<token> uv run python3 tests/demo_detection.py
 
 Output:
   Console table + tests/demo-detection-results.md

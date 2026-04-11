@@ -7,11 +7,11 @@ Reads (all auto-updated when source files change):
   - docs/results.md                         actual agent run output (optional)
 
 Usage:
-  # From the agents/simple-langgraph directory:
-  python docs/generate_demo.py
+  # From the ibac-demo directory (repo root for this agent):
+  cd src/agent && uv run python3 docs/generate_demo.py
 
   # Re-run the agent first to get fresh tool-call traces, then regenerate:
-  ./run.sh && python docs/generate_demo.py
+  ./src/agent/run.sh && cd src/agent && uv run python3 docs/generate_demo.py
 """
 
 import ast
@@ -339,7 +339,7 @@ def render_scenario_card(
           <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;
                       padding:10px 14px;margin-bottom:10px;font-size:0.8rem;color:#92400e;
                       display:flex;align-items:center;gap:8px">
-            &#9888; Traces are from a previous run - re-run <code>./run.sh</code> to
+            &#9888; Traces are from a previous run - re-run <code>./src/agent/run.sh</code> to
             see current injection (<code>{escape(injected or "")}</code>)
           </div>"""
 
@@ -367,7 +367,7 @@ def render_scenario_card(
         <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;
                     padding:16px;text-align:center;color:#94a3b8;font-size:0.875rem;
                     margin-bottom:20px">
-          No run data - execute <code>./run.sh</code> then re-run this generator
+          No run data - execute <code>./src/agent/run.sh</code> then re-run this generator
         </div>"""
 
     return f"""
@@ -655,7 +655,7 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
     results_note = (
         '<span style="color:#16a34a">&#10003; Showing traces from last agent run</span>'
         if has_results else
-        '<span style="color:#f59e0b">&#9888; No run data - execute <code>./run.sh</code> then re-run this generator</span>'
+        '<span style="color:#f59e0b">&#9888; No run data - execute <code>./src/agent/run.sh</code> then re-run this generator</span>'
     )
 
     return f"""<!DOCTYPE html>
@@ -988,7 +988,7 @@ def main():
         traces = parse_results(raw)
         print(f"  Parsed traces for scenarios: {sorted(traces.keys())}")
     else:
-        print("  No results.md found - run ./run.sh first for live traces")
+        print("  No results.md found - run ./src/agent/run.sh first for live traces")
 
     print(f"  {len(prompts)} prompts, {len(tool_descs)} tools, {len(scenarios)} scenarios")
 
