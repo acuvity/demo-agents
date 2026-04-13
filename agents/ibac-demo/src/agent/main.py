@@ -1,25 +1,17 @@
 """Simple LangGraph agent with configurable LLM provider and MCP server."""
 import asyncio
-import logging
 import os
+from typing import Any, cast
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from langgraph.graph import StateGraph, MessagesState, START
-from langgraph.prebuilt import ToolNode, tools_condition
 
+from utils.agent_graph import compile_tool_bound_graph, configure_mcp_http_logging
 from utils.config import build_llm, build_mcp_config
 from utils.debug import render_content, debug_messages
 from utils.prompts import load_prompts, resolve_prompts_file
 
-logging.getLogger("mcp.client.streamable_http").setLevel(logging.ERROR)
-
-SYSTEM_PROMPT = (
-    "You are an AI assistant that uses tools.\n\n"
-    "CRITICAL RULE:\n"
-    "- You MUST base your answer on tool output(s).\n"
-    "- Your answer MUST be SOLELY based on the tool output(s).\n"
-)
+configure_mcp_http_logging()
 
 
 async def main():
@@ -32,18 +24,7 @@ async def main():
     print(f"Using MCP_SERVER={os.environ.get('MCP_SERVER', 'arcade')}")
     print(f"Loaded {len(tools)} tools\n")
 
-    def call_model(state: MessagesState):
-        return {"messages": [model.invoke(
-            [SystemMessage(content=SYSTEM_PROMPT)] + state["messages"]
-        )]}
-
-    graph = StateGraph(MessagesState)
-    graph.add_node("call_model", call_model)
-    graph.add_node("tools", ToolNode(tools))
-    graph.add_edge(START, "call_model")
-    graph.add_conditional_edges("call_model", tools_condition)
-    graph.add_edge("tools", "call_model")
-    app = graph.compile()
+    app = compile_tool_bound_graph(model, tools)
 
     prompts_type = os.environ.get("PROMPTS_TYPE", "simple")
     prompts_file = resolve_prompts_file(prompts_type)
@@ -54,16 +35,20 @@ async def main():
             print("\n===============================\n")
             print(f"Currently Testing - {content}\n")
             continue
+        if item_type != "prompt":
+            continue
+        assert isinstance(content, str)
 
         try:
-            result = await app.ainvoke({"messages": [HumanMessage(content=content)]})
+            state = cast(Any, {"messages": [HumanMessage(content=content)]})
+            result = await app.ainvoke(state)
             print("\n...............................\n")
             print("HUMAN:\n", content[:120], "..." if len(content) > 120 else "")
             debug_messages(result["messages"])
             print("FINAL ANSWER:\n")
             print(render_content(result["messages"][-1]))
             print()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"\n[ERROR] Scenario failed: {e}\n")
 
 

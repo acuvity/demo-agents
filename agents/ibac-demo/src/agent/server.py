@@ -4,26 +4,19 @@ import logging
 import os
 import uuid
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from starlette.datastructures import UploadFile as StarletteUploadFile
 from starlette.middleware.cors import CORSMiddleware
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from langgraph.graph import StateGraph, MessagesState, START
-from langgraph.prebuilt import ToolNode, tools_condition
 
+from utils.agent_graph import compile_tool_bound_graph, configure_mcp_http_logging
 from utils.config import build_llm, build_mcp_config
 
-logging.getLogger("mcp.client.streamable_http").setLevel(logging.ERROR)
-
-SYSTEM_PROMPT = (
-    "You are an AI assistant that uses tools.\n\n"
-    "CRITICAL RULE:\n"
-    "- You MUST base your answer on tool output(s).\n"
-    "- Your answer MUST be SOLELY based on the tool output(s).\n"
-)
+configure_mcp_http_logging()
 
 UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
 
@@ -37,33 +30,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_agent = None
 _lock = asyncio.Lock()
+# Lazy singleton without `global` or pylint-unfriendly module-level reassignment.
+_agent_singleton: dict[str, Any] = {"graph": None}
 
 
-async def get_agent():
+async def get_agent() -> Any:
     """Lazily initialize and return the compiled LangGraph agent."""
-    global _agent
     async with _lock:
-        if _agent is None:
+        if _agent_singleton["graph"] is None:
             mcp_client = MultiServerMCPClient(build_mcp_config())
             tools = await mcp_client.get_tools()
             model = build_llm(tools)
-
-            def call_model(state: MessagesState):
-                return {"messages": [model.invoke(
-                    [SystemMessage(content=SYSTEM_PROMPT)] + state["messages"]
-                )]}
-
-            graph = StateGraph(MessagesState)
-            graph.add_node("call_model", call_model)
-            graph.add_node("tools", ToolNode(tools))
-            graph.add_edge(START, "call_model")
-            graph.add_conditional_edges("call_model", tools_condition)
-            graph.add_edge("tools", "call_model")
-            _agent = graph.compile()
+            _agent_singleton["graph"] = compile_tool_bound_graph(model, tools)
             logging.info("Agent initialized with %d tools", len(tools))
-    return _agent
+    return _agent_singleton["graph"]
 
 
 class MessageRequest(BaseModel):

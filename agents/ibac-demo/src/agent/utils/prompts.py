@@ -1,8 +1,11 @@
 """Prompt file loader with support for single-line and multi-line block formats."""
 import re
+from typing import Union
+
+PromptItem = Union[tuple[str, str], tuple[str, list[str]]]
 
 
-def load_prompts(filepath: str) -> list[tuple[str, str]]:
+def load_prompts(filepath: str) -> list[PromptItem]:
     """Load prompts from a file.
 
     Supports two formats:
@@ -16,7 +19,7 @@ def load_prompts(filepath: str) -> list[tuple[str, str]]:
     with open(filepath, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
-    items: list[tuple[str, str]] = []
+    items: list[PromptItem] = []
     i = 0
     while i < len(lines):
         stripped = lines[i].rstrip("\n").strip()

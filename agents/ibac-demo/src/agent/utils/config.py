@@ -1,4 +1,6 @@
 """LLM and MCP configuration builders."""
+# Imports are lazy per provider to avoid loading unused stacks.
+# pylint: disable=import-outside-toplevel
 import os
 import sys
 from typing import Any
@@ -40,7 +42,7 @@ def build_llm(tools):
         _debug_llm_fingerprint(key_src, api_key, f"OPENROUTER_MODEL={model_name}")
         return ChatOpenRouter(
             model=model_name,
-            api_key=api_key,
+            api_key=api_key,  # type: ignore[arg-type]
             temperature=0,
         ).bind_tools(tools)
 
@@ -66,7 +68,7 @@ def build_llm(tools):
     if base_url:
         kwargs["base_url"] = base_url
 
-    return ChatAnthropic(**kwargs).bind_tools(tools)  # type: ignore[call-arg]
+    return ChatAnthropic(**kwargs).bind_tools(tools)  # type: ignore[call-arg, arg-type]
 
 
 def build_mcp_config() -> dict:
