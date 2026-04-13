@@ -17,5 +17,6 @@ dependencies = [
     "fastapi>=0.115.0",
     "uvicorn>=0.30.0",
     "pypdf>=5.0.0",
+    "ruff>=0.15.10",
 ]
 pythonVersion = "3.12"
