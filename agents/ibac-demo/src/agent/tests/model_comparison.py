@@ -448,7 +448,6 @@ def build_markdown(models: list[dict], cases: list[dict],
         "|-------|------|-----------|-------------|--------|",
     ]
 
-    total_cases = len(cases)
     for m in models:
         key = m["label"]
         r = results.get(key, {})
@@ -464,7 +463,7 @@ def build_markdown(models: list[dict], cases: list[dict],
         )
         known = sum(1 for c in cases if c["expected"] is not None)
         pct  = f"{100*correct/known:.0f}%" if known else "-"
-        avg_lat = f"{sum(l for l in lats if l)/len(lats):.0f} ms" if lats else "-"
+        avg_lat = f"{sum(var for var in lats if var)/len(lats):.0f} ms" if lats else "-"
         token_note = " *(token)*" if m["token"] else ""
         lines.append(f"| `{m['short']}`{token_note} | {m['size_mb']} MB | {pct} ({correct}/{known}) | {avg_lat} | scored |")
 
@@ -579,7 +578,7 @@ def run(results_file: str = "docs/results.md", prompts_type: str = "scenario"):
         if r["error"]:
             print(f"  ERROR: {r['error']}")
         else:
-            avg_lat = sum(l for l in r["latencies_ms"] if l) / len(r["latencies_ms"])
+            avg_lat = sum(lat for lat in r["latencies_ms"] if lat) / len(r["latencies_ms"])
             print(f"  scored {len(cases)} cases, avg latency {avg_lat:.0f} ms")
 
     print("\nGenerating comparison-results.md ...")

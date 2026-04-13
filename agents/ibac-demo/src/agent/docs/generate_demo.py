@@ -619,11 +619,12 @@ def render_tool_list(tool_descs: dict) -> str:
                 </td>
               </tr>""")
 
-    section_header = lambda label: (
-        f'<tr><td colspan="2" style="padding:10px 12px 4px;font-size:0.65rem;'
-        f'font-weight:700;text-transform:uppercase;letter-spacing:0.1em;'
-        f'color:#94a3b8;border-top:1px solid #e2e8f0">{label}</td></tr>'
-    )
+    def section_header(label):
+      return (
+          f'<tr><td colspan="2" style="padding:10px 12px 4px;font-size:0.65rem;'
+          f'font-weight:700;text-transform:uppercase;letter-spacing:0.1em;'
+          f'color:#94a3b8;border-top:1px solid #e2e8f0">{label}</td></tr>'
+      )
 
     return (
         section_header("Legitimate Tools")
