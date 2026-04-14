@@ -3,8 +3,14 @@
 # pylint: disable=line-too-long,redefined-builtin,broad-exception-caught
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
+
+# When run as `python tools/local_tools.py`, sys.path[0] is tools/, not the agent root.
+_agent_root_for_imports = Path(__file__).resolve().parent.parent
+if str(_agent_root_for_imports) not in sys.path:
+    sys.path.insert(0, str(_agent_root_for_imports))
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
