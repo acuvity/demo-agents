@@ -6,9 +6,11 @@ This mirrors the Kubernetes layout on a single machine. You still need valid Acu
 
 ## Quick start
 
-1. Copy `.env.template` to `.env` and set variables (same ideas as [../../README.md](../../README.md) for `run_ui.sh`).
-2. Set `HTTPS_PROXY` and `HTTP_PROXY` like `run_ui.sh` does from `ACUVITY_TOKEN` and `APEX_URL`.
-3. If TLS to Apex fails inside containers, mount your `ca.pem` and set `SSL_CERT_FILE`, or bake the CA into a custom image.
+1. Create `deploy/compose/.env` (this path is gitignored) with at least:
+   - `ACUVITY_TOKEN`, `APEX_URL`, `LLM_PROVIDER`, and the matching LLM key (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `OPENROUTER_API_KEY`).
+   - `HTTPS_PROXY` and `HTTP_PROXY` built the same way as [../../README.md](../../README.md) for `run_ui.sh`.
+   - `SSL_CERT_FILE` pointing at your Apex CA (for example the same `ca.pem` you fetch for local runs).
+2. If TLS to Apex fails inside containers, mount your `ca.pem` and set `SSL_CERT_FILE`, or bake the CA into a custom image.
 
 ```bash
 docker compose --env-file .env up --build

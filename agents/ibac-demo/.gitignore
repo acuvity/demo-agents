@@ -1,2 +1,6 @@
 # PDF uploads from chat UI (server.py)
 src/agent/uploads/
+
+# Docker Compose local env (not committed)
+deploy/compose/.env
+deploy/compose/.env.template
