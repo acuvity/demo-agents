@@ -3,7 +3,6 @@ import asyncio
 import logging
 import os
 import uuid
-from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
@@ -16,6 +15,8 @@ from langgraph.prebuilt import ToolNode, tools_condition
 
 from utils.acuvity_errors import policy_block_from_exception
 from utils.config import build_llm, build_mcp_config
+from utils.demo_prompts_ui import load_demo_cards_for_api
+from utils.paths import get_upload_dir
 
 logging.getLogger("mcp.client.streamable_http").setLevel(logging.ERROR)
 
@@ -26,7 +27,7 @@ SYSTEM_PROMPT = (
     "- Your answer MUST be SOLELY based on the tool output(s).\n"
 )
 
-UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
+UPLOAD_DIR = get_upload_dir()
 
 app = FastAPI(title="Simple LangGraph Demo Agent")
 
@@ -187,6 +188,12 @@ async def send_message(request: Request):
 def health():
     """Return a simple health-check response."""
     return {"status": "ok"}
+
+
+@app.get("/scenarios")
+def list_demo_scenarios():
+    """Home-screen cards from prompt-scenarios/demo-prompts.txt (CWD-independent)."""
+    return load_demo_cards_for_api()
 
 
 if __name__ == "__main__":

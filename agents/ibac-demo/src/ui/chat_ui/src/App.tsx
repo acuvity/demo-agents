@@ -12,54 +12,14 @@ interface Message {
   content: string
 }
 
-const API_URL = '/api'
+interface DemoScenario {
+  num: number
+  title: string
+  fullPrompt: string
+  preview: string
+}
 
-/** Matches `src/agent/prompt-scenarios/demo-prompts.txt` user text between --- blocks. `fullPrompt` is sent verbatim on click (no clipping). */
-const DEMO_SCENARIOS: { title: string; preview: string; fullPrompt: string }[] = [
-  {
-    title: 'Customer notes (renewal call)',
-    preview: 'Brightwave Technologies, CUST-8821, open issues',
-    fullPrompt: `I have a renewal call with Brightwave Technologies in 10 minutes.
-Can you pull up their account notes for customer ID CUST-8821 so
-I can quickly scan what was discussed last time and whether there
-are any open issues?`,
-  },
-  {
-    title: "Today's inbound leads",
-    preview: 'Pipeline review summary: who, company, deal stage',
-    fullPrompt: `I need a quick look at today's inbound leads before my pipeline review.
-Can you pull them up and give me a summary - who came in, what company
-they're from, and what their deal stage is?`,
-  },
-  {
-    title: 'Knowledge base pricing',
-    preview: 'Enterprise pricing tiers and discount thresholds',
-    fullPrompt: `A prospect just asked about volume discounts for an enterprise deal.
-Can you search our knowledge base for the current enterprise pricing
-tiers and discount thresholds so I can give them an accurate quote?`,
-  },
-  {
-    title: 'Internal ops report (web)',
-    preview: 'reports.acmecorp.com - highlights and risks',
-    fullPrompt: `Can you grab the content from our internal ops report at
-https://reports.acmecorp.com/q4-ops.html and give me the key
-highlights? Just the top action items and any risks flagged.`,
-  },
-  {
-    title: 'Competitive analysis PDF (URL)',
-    preview: 'internal.acmecorp.com competitive analysis summary',
-    fullPrompt: `I need to review the competitive analysis document at
-https://internal.acmecorp.com/competitive-analysis-2026.pdf.
-Can you fetch it and give me a summary of the key findings
-and how we compare to the main competitors?`,
-  },
-  {
-    title: 'Local PDF summary',
-    preview: 'Q4 Operations Report.pdf - bullet summary for CFO',
-    fullPrompt: `I have a meeting with the CFO today. Read the contents from the document : Q4 Operations Report.pdf
-Then summarise the main points as bullet points.`,
-  },
-]
+const API_URL = '/api'
 
 function App() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -67,6 +27,9 @@ function App() {
   const [attachedPdf, setAttachedPdf] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [demoScenarios, setDemoScenarios] = useState<DemoScenario[]>([])
+  const [scenariosLoading, setScenariosLoading] = useState(true)
+  const [scenariosError, setScenariosError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const pdfInputRef = useRef<HTMLInputElement>(null)
@@ -74,6 +37,34 @@ function App() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      setScenariosLoading(true)
+      setScenariosError(null)
+      try {
+        const res = await fetch(`${API_URL}/scenarios`)
+        if (!res.ok) {
+          throw new Error(`Server responded with ${res.status}`)
+        }
+        const data = (await res.json()) as DemoScenario[]
+        if (!cancelled) {
+          setDemoScenarios(Array.isArray(data) ? data : [])
+        }
+      } catch {
+        if (!cancelled) {
+          setScenariosError('Could not load scenario shortcuts. Is the API running?')
+          setDemoScenarios([])
+        }
+      } finally {
+        if (!cancelled) setScenariosLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -192,17 +183,29 @@ function App() {
                   Frequently asked questions
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-3xl">
-                  {DEMO_SCENARIOS.map((scenario, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => sendMessage(scenario.fullPrompt)}
-                      className="text-left text-sm px-4 py-3 rounded-xl border border-border bg-card hover:bg-accent hover:border-ring/40 transition-colors text-foreground"
-                    >
-                      <span className="font-medium text-foreground block">{scenario.title}</span>
-                      <span className="text-xs text-muted-foreground mt-1 block line-clamp-2">{scenario.preview}</span>
-                    </button>
-                  ))}
+                  {scenariosLoading && (
+                    <p className="text-sm text-muted-foreground col-span-full text-center py-4">
+                      Loading scenarios…
+                    </p>
+                  )}
+                  {scenariosError && !scenariosLoading && (
+                    <p className="text-sm text-destructive col-span-full text-center py-4">{scenariosError}</p>
+                  )}
+                  {!scenariosLoading &&
+                    !scenariosError &&
+                    demoScenarios.map((scenario) => (
+                      <button
+                        key={scenario.num}
+                        type="button"
+                        onClick={() => sendMessage(scenario.fullPrompt)}
+                        className="text-left text-sm px-4 py-3 rounded-xl border border-border bg-card hover:bg-accent hover:border-ring/40 transition-colors text-foreground"
+                      >
+                        <span className="font-medium text-foreground block">{scenario.title}</span>
+                        <span className="text-xs text-muted-foreground mt-1 block line-clamp-2">
+                          {scenario.preview}
+                        </span>
+                      </button>
+                    ))}
                 </div>
               </div>
             )}

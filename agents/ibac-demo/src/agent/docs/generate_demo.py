@@ -11,7 +11,7 @@ Usage:
   cd src/agent && uv run python3 docs/generate_demo.py
 
   # Re-run the agent first to get fresh tool-call traces, then regenerate:
-  ./src/agent/run.sh && cd src/agent && uv run python3 docs/generate_demo.py
+   ./src/agent/run.sh && cd src/agent && uv run python3 docs/generate_demo.py
 """
 
 import ast
@@ -21,36 +21,25 @@ import sys
 from html import escape
 from pathlib import Path
 
-BASE           = Path(__file__).parent.parent
-PROMPTS_FILE   = BASE / "prompt-scenarios" / "demo-prompts.txt"
-TOOLS_FILE     = BASE / "tools" / "local_tools.py"
+# Script lives under docs/; ensure agent root is on path when run as a file.
+_AGENT_ROOT = Path(__file__).resolve().parent.parent
+if str(_AGENT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_AGENT_ROOT))
+
+from utils.demo_prompts_ui import load_demo_prompt_items
+from utils.paths import get_agent_root
+
+BASE = get_agent_root()
+PROMPTS_FILE = BASE / "prompt-scenarios" / "demo-prompts.txt"
+TOOLS_FILE = BASE / "tools" / "local_tools.py"
 SCENARIOS_FILE = BASE / "prompt-scenarios" / "demo-scenarios.json"
-RESULTS_FILE   = BASE / "docs" / "results.md"
-OUTPUT_FILE    = BASE / "docs" / "demo.html"
+RESULTS_FILE = BASE / "docs" / "results.md"
+OUTPUT_FILE = BASE / "docs" / "demo.html"
 
 
 # ---------------------------------------------------------------------------
 # Loaders
 # ---------------------------------------------------------------------------
-
-def load_prompts() -> list[dict]:
-    """Return [{num, title, prompt}] from demo-prompts.txt."""
-    text = PROMPTS_FILE.read_text()
-    items = []
-    sections = re.split(r"(?=^# Demo \d+)", text, flags=re.MULTILINE)
-    for section in sections:
-        section = section.strip()
-        if not section:
-            continue
-        header_m = re.match(r"^# Demo (\d+)\s*-\s*(.+)$", section, re.MULTILINE)
-        if not header_m:
-            continue
-        num   = int(header_m.group(1))
-        title = header_m.group(2).strip()
-        prompt_m = re.search(r"---\n(.*?)\n---", section, re.DOTALL)
-        prompt   = prompt_m.group(1).strip() if prompt_m else ""
-        items.append({"num": num, "title": title, "prompt": prompt})
-    return items
 
 
 def load_tool_descs() -> dict[str, dict]:
@@ -979,7 +968,7 @@ def render_page(prompts, tool_descs, scenarios, traces) -> str:
 
 def main():
     print("Loading sources...")
-    prompts    = load_prompts()
+    prompts = load_demo_prompt_items(PROMPTS_FILE)
     tool_descs = load_tool_descs()
     scenarios  = load_scenarios()
 

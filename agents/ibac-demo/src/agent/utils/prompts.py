@@ -1,6 +1,9 @@
 """Prompt file loader with support for single-line and multi-line block formats."""
 import re
+from pathlib import Path
 from typing import Union
+
+from utils.paths import get_agent_root
 
 PromptItem = Union[tuple[str, str], tuple[str, list[str]]]
 
@@ -57,9 +60,14 @@ PROMPTS_MAP = {
 
 
 def resolve_prompts_file(prompts_type: str) -> str:
-    """Resolve a PROMPTS_TYPE value to a file path.
+    """Resolve a PROMPTS_TYPE value to an absolute file path.
 
-    Known types map to their canonical file. Unrecognised values are treated
-    as a literal file path, allowing custom files without code changes.
+    Known types map to their canonical file under the agent root. Unrecognised
+    values are treated as a literal path (relative paths resolve under agent root;
+    absolute paths are unchanged).
     """
-    return PROMPTS_MAP.get(prompts_type, prompts_type)
+    candidate = PROMPTS_MAP.get(prompts_type, prompts_type)
+    path = Path(candidate)
+    if path.is_absolute():
+        return str(path.resolve())
+    return str((get_agent_root() / path).resolve())

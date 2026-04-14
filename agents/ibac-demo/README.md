@@ -2,16 +2,16 @@
 
 A minimal LangGraph agent that uses the Acuvity AI Security Gateway.
 
-![AI Security Gateway](./assets/agent.png)
+AI Security Gateway
 
 ## Layout
 
 Unless a command says otherwise, run it with your **current directory set to `ibac-demo`** (this folder).
 
-- **`src/agent/`** - Python app (`main.py`, `server.py`, `utils/`, `tools/`, `prompt-scenarios/`, `docs/`, `tests/`), `pyproject.toml`, and Acuvity **`run.sh`** / **`run_ui.sh`**. You can also run **`./run.sh`** or **`./run_ui.sh`** at this root; they forward to `src/agent/`.
-- **`src/ui/chat_ui/`** - Vite + React chat UI
-- **`deploy/`** - Kubernetes Helm chart, Acuvity **manifest** import, optional Docker Compose ([deploy/k8s/README.md](deploy/k8s/README.md))
-- **`assets/`** (repo root) - Diagram for this README and sample PDFs for manual UI upload testing (e.g. `Q4_Operations_Report.pdf`)
+- `**src/agent/**` - Python app (`main.py`, `server.py`, `utils/`, `tools/`, `prompt-scenarios/`, `docs/`, `tests/`), `pyproject.toml`, and Acuvity `**run.sh**` / `**run_ui.sh**`. You can also run `**./run.sh**` or `**./run_ui.sh**` at this root; they forward to `src/agent/`.
+- `**src/ui/chat_ui/**` - Vite + React chat UI
+- `**deploy/**` - Kubernetes Helm chart, Acuvity **manifest** import, optional Docker Compose ([deploy/k8s/README.md](deploy/k8s/README.md))
+- `**assets/`** (repo root) - Diagram for this README and sample PDFs for manual UI upload testing (e.g. `Q4_Operations_Report.pdf`)
 
 ### Remote deployment (Kubernetes + Acuvity manifest)
 
@@ -27,49 +27,56 @@ To run the **UI**, **agent**, and **CRM MCP** in-cluster (same pattern as [fast-
 
 ## Environment variables
 
-| Variable | Description |
-|---|---|
-| `ACUVITY_TOKEN` | Acuvity app token - always required |
-| `APEX_URL` | Acuvity gateway URL - always required |
-| `LLM_PROVIDER` | `anthropic` (default), `openai`, or `openrouter` |
-| `ANTHROPIC_API_KEY` | Required when `LLM_PROVIDER=anthropic` |
-| `OPENAI_API_KEY` | Required when `LLM_PROVIDER=openai` |
-| `OPENROUTER_API_KEY` | Required when `LLM_PROVIDER=openrouter` |
-| `MCP_SERVER` | `arcade` (default) or `local` |
-| `ARCADE_API_KEY` | Required when `MCP_SERVER=arcade` |
-| `ARCADE_USER_ID` | Required when `MCP_SERVER=arcade` |
-| `ARCADE_MCP_URL` | Required when `MCP_SERVER=arcade` |
-| `LOCAL_MCP_SSE_URL` | When set with `MCP_SERVER=local`, connect to remote MCP over **SSE** (Kubernetes/Docker) instead of stdio |
-| `LOCAL_MCP_TRANSPORT` | On the MCP process only: `stdio` (default) or `sse` (see `tools/local_tools.py`) |
-| `FASTMCP_HOST` / `FASTMCP_PORT` | Bind address for SSE MCP server (use `0.0.0.0` in containers) |
-| `PROMPTS_TYPE` | `simple` (default), `scenario`, or `demo` |
+
+| Variable                        | Description                                                                                               |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `ACUVITY_TOKEN`                 | Acuvity app token - always required                                                                       |
+| `APEX_URL`                      | Acuvity gateway URL - always required                                                                     |
+| `LLM_PROVIDER`                  | `anthropic` (default), `openai`, or `openrouter`                                                          |
+| `ANTHROPIC_API_KEY`             | Required when `LLM_PROVIDER=anthropic`                                                                    |
+| `OPENAI_API_KEY`                | Required when `LLM_PROVIDER=openai`                                                                       |
+| `OPENROUTER_API_KEY`            | Required when `LLM_PROVIDER=openrouter`                                                                   |
+| `MCP_SERVER`                    | `arcade` (default) or `local`                                                                             |
+| `ARCADE_API_KEY`                | Required when `MCP_SERVER=arcade`                                                                         |
+| `ARCADE_USER_ID`                | Required when `MCP_SERVER=arcade`                                                                         |
+| `ARCADE_MCP_URL`                | Required when `MCP_SERVER=arcade`                                                                         |
+| `LOCAL_MCP_SSE_URL`             | When set with `MCP_SERVER=local`, connect to remote MCP over **SSE** (Kubernetes/Docker) instead of stdio |
+| `LOCAL_MCP_TRANSPORT`           | On the MCP process only: `stdio` (default) or `sse` (see `tools/local_tools.py`)                          |
+| `FASTMCP_HOST` / `FASTMCP_PORT` | Bind address for SSE MCP server (use `0.0.0.0` in containers)                                             |
+| `PROMPTS_TYPE`                  | `simple` (default), `scenario`, or `demo`                                                                 |
+
 
 Advanced overrides (optional):
 
-| Variable | Description |
-|---|---|
-| `LLM_MODEL` | Model name override. Defaults: `claude-opus-4-6` (Anthropic), `gpt-4o` (OpenAI) |
-| `OPENROUTER_MODEL` | OpenRouter model override (default: `stepfun/step-3.5-flash`) |
-| `LLM_BASE_URL` | Override the API endpoint - enables any third-party compatible API |
-| `LLM_API_KEY` | Override the API key - takes precedence over the provider-specific key |
-| `DEBUG_LLM` | Set to `1` to print a non-secret LLM key fingerprint (`key_source`, last 4 chars of key, model) to stderr when `build_llm` runs. Use the same value when running `./run.sh` / `./run_ui.sh` (or `./src/agent/run.sh` / `./src/agent/run_ui.sh`) to confirm both use the same key. |
+
+| Variable           | Description                                                                                                                                                                                                                                                                       |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LLM_MODEL`        | Model name override. Defaults: `claude-opus-4-6` (Anthropic), `gpt-4o` (OpenAI)                                                                                                                                                                                                   |
+| `OPENROUTER_MODEL` | OpenRouter model override (default: `stepfun/step-3.5-flash`)                                                                                                                                                                                                                     |
+| `LLM_BASE_URL`     | Override the API endpoint - enables any third-party compatible API                                                                                                                                                                                                                |
+| `LLM_API_KEY`      | Override the API key - takes precedence over the provider-specific key                                                                                                                                                                                                            |
+| `DEBUG_LLM`        | Set to `1` to print a non-secret LLM key fingerprint (`key_source`, last 4 chars of key, model) to stderr when `build_llm` runs. Use the same value when running `./run.sh` / `./run_ui.sh` (or `./src/agent/run.sh` / `./src/agent/run_ui.sh`) to confirm both use the same key. |
+| `IBAC_AGENT_ROOT`  | Optional absolute path to the agent package (folder with `main.py`, `tools/`, `prompt-scenarios/`). Defaults to resolving from `utils/paths.py`. Use if you run Python from an unusual working directory without `cd src/agent`.                                                  |
+| `IBAC_UPLOAD_DIR`  | Optional absolute path for PDF uploads. Defaults to `{agent root}/uploads`. Must match between the API server and `parse_file` when overridden.                                                                                                                                   |
+
 
 ## Getting Acuvity App Token
 
- - Access your [Acuvity](https://console.acuvity.ai) account
- - Navigate to `Access > App Tokens`
- - Create a token with an appropriate name and description.
+- Access your [Acuvity](https://console.acuvity.ai) account
+- Navigate to `Access > App Tokens`
+- Create a token with an appropriate name and description.
 
 ## Getting your AI Security Gateway (Apex) URL
 
- - Go to [https://console.acuvity.ai/me](https://console.acuvity.ai/me)
- - Copy the `Apex` URL under `General` section
+- Go to [https://console.acuvity.ai/me](https://console.acuvity.ai/me)
+- Copy the `Apex` URL under `General` section
 
 ## Run
 
 `LLM_PROVIDER` and `MCP_SERVER` are independent - any combination works.
 
 `src/agent/run.sh` does the following:
+
 - Validates required environment variables based on selected providers
 - Sets up `ca.pem` from the Acuvity gateway
 - Sets up the Acuvity AI Security Gateway as a proxy for all interactions to LLMs and MCP Servers via `HTTPS_PROXY`
@@ -127,7 +134,7 @@ export PROMPTS_TYPE=demo        # simplified scenarios for demos (see src/agent/
 
 ### Step 5 - Run
 
-From the **`ibac-demo`** directory:
+From the `**ibac-demo**` directory:
 
 ```bash
 ./run.sh
@@ -135,25 +142,6 @@ From the **`ibac-demo`** directory:
 ```
 
 Output is automatically saved to `src/agent/docs/results.md`.
-
-### OpenRouter: UI works but `./run.sh` fails
-
-`./run.sh` and the chat UI both call the same `build_llm()` in `src/agent/utils/config.py` behind the same Acuvity proxy. If the batch script fails while the UI succeeds, check the following.
-
-1. **Same key in both terminals**  
-   The UI backend inherits the environment from the shell that started `./run_ui.sh` (or `./src/agent/run_ui.sh`, or `cd src/agent && uv run python3 server.py`). `./run.sh` uses the shell where you invoke it. A different `OPENROUTER_API_KEY`, or only one of them having `LLM_API_KEY` set, explains mismatches.  
-   Run with `DEBUG_LLM=1` in both places and compare the printed `key_source`, `key_tail`, and model line. They should match.
-
-2. **Per-key limits on OpenRouter**  
-   At [openrouter.ai/keys](https://openrouter.ai/keys), each API key can have its own usage cap. Account credits can look fine while a specific key returns a limit-style error. Raise the cap, remove it, or create a new key and export it in every shell you use.
-
-3. **Batch volume and rate limits**  
-   `./run.sh` runs every prompt in the selected file; each run can trigger multiple LLM calls (tool loops). Default `PROMPTS_TYPE=simple` issues many requests in a short time. OpenRouter signals rate limiting with **HTTP 429**. Try `PROMPTS_TYPE=demo` or a smaller custom prompt file to confirm.
-
-4. **Prompt content and moderation**  
-   `simple` and `scenario` files include adversarial example lines. The UI home cards use benign CRM-style text. Some models return **HTTP 403** when input is moderation-flagged. If failures line up with specific prompts, try `PROMPTS_TYPE=demo` to compare.
-
-**OpenRouter HTTP codes** (see [errors and debugging](https://openrouter.ai/docs/api/reference/errors-and-debugging)): **402** insufficient credits, **429** rate limited, **403** moderation flagged (for documented cases).
 
 ---
 
@@ -196,9 +184,9 @@ Open [http://localhost:5174](http://localhost:5174) in your browser.
 
 The Vite dev server proxies `/api/*` to the backend at `http://localhost:8300`, so no CORS config is needed.
 
-The home screen lists all demo scenarios from `src/agent/prompt-scenarios/demo-prompts.txt`. Each card shows a short title and preview; clicking sends the **full** scenario text to the agent (same wording as the file, not truncated). Use **New chat** in the header or a full browser refresh to return to that home screen.
+The home screen loads demo scenarios from `GET /scenarios`, which reads `src/agent/prompt-scenarios/demo-prompts.txt` on the server (same content as before, no duplicate list in the frontend). Each card shows title and a one-line preview; clicking sends the **full** scenario text to the agent. Use **New chat** in the header or a full browser refresh to return to that home screen.
 
-**PDF attachments**: Use the paperclip in the composer to attach a `.pdf` file. The API stores it under `src/agent/uploads/` (gitignored) and appends the saved path to your message so the agent can call `parse_file` on that path. The `parse_file` tool reads the real PDF text from disk (via `pypdf`); only files under `uploads/` are allowed. You can send text only, PDF only, or both. Use a PDF from `assets/` at repo root if you want a fixed file for testing.
+**PDF attachments**: Use the paperclip in the composer to attach a `.pdf` file. The API stores it under the agent `uploads/` directory (default `{agent root}/uploads`, gitignored) and appends the saved path to your message so the agent can call `parse_file` on that path. The `parse_file` tool reads the real PDF text from disk (via `pypdf`); only files under `uploads/` are allowed. You can send text only, PDF only, or both. Use a PDF from `assets/` at repo root if you want a fixed file for testing.
 
 To point the frontend at a different backend host:
 
@@ -237,9 +225,12 @@ open src/agent/docs/demo.html
 
 The generator reads source files directly - no manual HTML editing:
 
-| What changes | File to edit | Action |
-|---|---|---|
-| Prompt wording or title | `src/agent/prompt-scenarios/demo-prompts.txt` | Re-run generator |
-| PREREQ injection text or target tool | `src/agent/tools/local_tools.py` | Re-run generator |
-| Which tool the prompt triggers | `src/agent/prompt-scenarios/demo-scenarios.json` (`intended_tool`) | Re-run generator |
-| Attack type label or story text | `src/agent/prompt-scenarios/demo-scenarios.json` | Re-run generator |
+
+| What changes                         | File to edit                                                       | Action           |
+| ------------------------------------ | ------------------------------------------------------------------ | ---------------- |
+| Prompt wording or title              | `src/agent/prompt-scenarios/demo-prompts.txt`                      | Re-run generator |
+| PREREQ injection text or target tool | `src/agent/tools/local_tools.py`                                   | Re-run generator |
+| Which tool the prompt triggers       | `src/agent/prompt-scenarios/demo-scenarios.json` (`intended_tool`) | Re-run generator |
+| Attack type label or story text      | `src/agent/prompt-scenarios/demo-scenarios.json`                   | Re-run generator |
+
+

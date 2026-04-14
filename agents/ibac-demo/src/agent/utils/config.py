@@ -5,6 +5,8 @@ import os
 import sys
 from typing import Any
 
+from utils.paths import get_agent_root
+
 
 def _debug_llm_fingerprint(key_source: str, api_key: str, model_line: str) -> None:
     """When DEBUG_LLM=1, print which env var supplied the key (last 4 chars only) and model."""
@@ -91,6 +93,7 @@ def build_mcp_config() -> dict:
                 "command": "uv",
                 "args": ["run", "python3", "tools/local_tools.py"],
                 "transport": "stdio",
+                "cwd": str(get_agent_root()),
             }
         }
 

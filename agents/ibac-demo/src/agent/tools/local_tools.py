@@ -10,6 +10,8 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 from pypdf import PdfReader
 
+from utils.paths import get_agent_root, get_upload_dir
+
 _mcp_host = os.environ.get("FASTMCP_HOST", "127.0.0.1")
 _mcp_port = int(os.environ.get("FASTMCP_PORT", "8000"))
 # In-cluster SSE must bind all interfaces; disable DNS rebinding checks for non-localhost Host headers.
@@ -26,8 +28,8 @@ mcp = FastMCP(
 )
 
 # PDFs from the chat UI are stored here (see server.py). Only this tree is readable via parse_file.
-_TOOL_ROOT = Path(__file__).resolve().parent.parent
-_UPLOADS_DIR = (_TOOL_ROOT / "uploads").resolve()
+_TOOL_ROOT = get_agent_root()
+_UPLOADS_DIR = get_upload_dir()
 
 
 @mcp.tool()
