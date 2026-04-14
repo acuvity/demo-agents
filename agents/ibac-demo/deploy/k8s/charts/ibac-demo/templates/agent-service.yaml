@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-agent
+  labels:
+    app: {{ .Release.Name }}-agent
+    type: agent
+spec:
+  type: {{ .Values.service.agent.type }}
+  ports:
+    - port: {{ .Values.service.agent.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ .Release.Name }}-agent
+    type: agent

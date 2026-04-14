@@ -4,19 +4,27 @@ import logging
 import os
 import uuid
 from pathlib import Path
-from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from starlette.datastructures import UploadFile as StarletteUploadFile
 from starlette.middleware.cors import CORSMiddleware
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from langgraph.graph import StateGraph, MessagesState, START
+from langgraph.prebuilt import ToolNode, tools_condition
 
-from utils.agent_graph import compile_tool_bound_graph, configure_mcp_http_logging
+from utils.acuvity_errors import policy_block_from_exception
 from utils.config import build_llm, build_mcp_config
 
-configure_mcp_http_logging()
+logging.getLogger("mcp.client.streamable_http").setLevel(logging.ERROR)
+
+SYSTEM_PROMPT = (
+    "You are an AI assistant that uses tools.\n\n"
+    "CRITICAL RULE:\n"
+    "- You MUST base your answer on tool output(s).\n"
+    "- Your answer MUST be SOLELY based on the tool output(s).\n"
+)
 
 UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
 
@@ -30,21 +38,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+_agent = None
 _lock = asyncio.Lock()
-# Lazy singleton without `global` or pylint-unfriendly module-level reassignment.
-_agent_singleton: dict[str, Any] = {"graph": None}
 
 
-async def get_agent() -> Any:
+async def get_agent():
     """Lazily initialize and return the compiled LangGraph agent."""
+    global _agent
     async with _lock:
-        if _agent_singleton["graph"] is None:
+        if _agent is None:
             mcp_client = MultiServerMCPClient(build_mcp_config())
             tools = await mcp_client.get_tools()
             model = build_llm(tools)
-            _agent_singleton["graph"] = compile_tool_bound_graph(model, tools)
+
+            def call_model(state: MessagesState):
+                return {"messages": [model.invoke(
+                    [SystemMessage(content=SYSTEM_PROMPT)] + state["messages"]
+                )]}
+
+            graph = StateGraph(MessagesState)
+            graph.add_node("call_model", call_model)
+            graph.add_node("tools", ToolNode(tools))
+            graph.add_edge(START, "call_model")
+            graph.add_conditional_edges("call_model", tools_condition)
+            graph.add_edge("tools", "call_model")
+            _agent = graph.compile()
             logging.info("Agent initialized with %d tools", len(tools))
-    return _agent_singleton["graph"]
+    return _agent
 
 
 class MessageRequest(BaseModel):
@@ -80,10 +100,22 @@ async def _run_agent(message: str) -> dict:
                 for item in content
                 if item
             )
-        return {"output": content or "No response received."}
+        return {
+            "blocked": False,
+            "output": content or "No response received.",
+        }
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        blocked_payload = policy_block_from_exception(e)
+        if blocked_payload is not None:
+            return blocked_payload
+        logging.warning(
+            "Agent error not classified as gateway policy block (%s). "
+            "Set DEBUG_ACUVITY_BLOCKS=1 on the server for full exception chain and body snippets, "
+            "or ACUVITY_BLOCK_HTTP_STATUSES=400 (comma-separated) if Apex uses a status we do not map by default.",
+            type(e).__name__,
+        )
         logging.exception("Agent run failed")
         raise HTTPException(
             status_code=500,

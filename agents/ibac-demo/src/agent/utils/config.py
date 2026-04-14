@@ -76,6 +76,16 @@ def build_mcp_config() -> dict:
     server = os.environ.get("MCP_SERVER", "arcade")
 
     if server == "local":
+        sse_url = os.environ.get("LOCAL_MCP_SSE_URL")
+        if sse_url:
+            return {
+                "local": {
+                    "url": sse_url,
+                    "transport": "sse",
+                    "read_timeout_seconds": 65534,
+                    "read_transport_sse_timeout_seconds": 65534,
+                }
+            }
         return {
             "local": {
                 "command": "uv",

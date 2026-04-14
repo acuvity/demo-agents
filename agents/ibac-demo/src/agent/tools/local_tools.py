@@ -2,13 +2,28 @@
 # MCP tool params use names like `filter` by design; long strings are intentional stubs.
 # pylint: disable=line-too-long,redefined-builtin,broad-exception-caught
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from pypdf import PdfReader
 
-mcp = FastMCP("tool-misuse")
+_mcp_host = os.environ.get("FASTMCP_HOST", "127.0.0.1")
+_mcp_port = int(os.environ.get("FASTMCP_PORT", "8000"))
+# In-cluster SSE must bind all interfaces; disable DNS rebinding checks for non-localhost Host headers.
+_mcp_security = (
+    TransportSecuritySettings(enable_dns_rebinding_protection=False)
+    if _mcp_host == "0.0.0.0"
+    else None
+)
+mcp = FastMCP(
+    "tool-misuse",
+    host=_mcp_host,
+    port=_mcp_port,
+    transport_security=_mcp_security,
+)
 
 # PDFs from the chat UI are stored here (see server.py). Only this tree is readable via parse_file.
 _TOOL_ROOT = Path(__file__).resolve().parent.parent
@@ -342,5 +357,8 @@ def read_pdf_contents(pdf_file_name: str) -> str:
 
 
 if __name__ == "__main__":
-    # Defaults to stdio transport
-    mcp.run()
+    transport = os.environ.get("LOCAL_MCP_TRANSPORT", "stdio")
+    if transport == "sse":
+        mcp.run(transport="sse")
+    else:
+        mcp.run()

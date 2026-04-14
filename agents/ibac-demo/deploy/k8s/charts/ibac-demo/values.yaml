@@ -1,0 +1,47 @@
+replicaCount: 1
+
+image:
+  agent:
+    repository: ibac-demo-agent
+    pullPolicy: IfNotPresent
+    tag: latest
+  ui:
+    repository: ibac-demo-ui
+    pullPolicy: IfNotPresent
+    tag: latest
+
+imagePullSecrets: []
+
+securityContext: {}
+
+service:
+  ui:
+    type: ClusterIP
+    port: 80
+  agent:
+    type: ClusterIP
+    port: 8000
+
+# In-cluster CRM MCP (single server, all tools from local_tools.py)
+mcpLocal:
+  deploymentName: mcp-ibac-local-tools
+  port: 8000
+
+agent:
+  llmProvider: anthropic
+  # Full Apex URL, e.g. https://apex.example.com
+  apexUrl: ""
+  # Optional model overrides (see README)
+  llmModel: ""
+  openrouterModel: ""
+  # When true, mount ConfigMap acuvity-ca-bundle and set SSL_CERT_FILE (see deploy/k8s/README.md)
+  acuvityCaBundle:
+    enabled: true
+    configMapName: acuvity-ca-bundle
+
+# Populated at install, e.g. --set-file secrets.acuvity_token=... or stringData below
+secrets:
+  acuvity_token: ""
+  anthropic_api_key: ""
+  openai_api_key: ""
+  openrouter_api_key: ""

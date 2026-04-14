@@ -1,0 +1,28 @@
+# Example overrides for helm install. Prefer --set for secrets in CI.
+#
+# helm upgrade --install ibac-demo ./charts/ibac-demo -n ibac-demo \
+#   -f example-values.yaml \
+#   --set secrets.acuvity_token="$ACUVITY_TOKEN" \
+#   --set secrets.anthropic_api_key="$ANTHROPIC_API_KEY"
+
+agent:
+  llmProvider: anthropic
+  apexUrl: https://your-apex.example.com
+  llmModel: ""
+  acuvityCaBundle:
+    enabled: true
+    configMapName: acuvity-ca-bundle
+
+image:
+  agent:
+    repository: your-registry/ibac-demo-agent
+    tag: latest
+  ui:
+    repository: your-registry/ibac-demo-ui
+    tag: latest
+
+# secrets: (pass via --set or external secret manager; do not commit real values)
+#   acuvity_token: ""
+#   anthropic_api_key: ""
+#   openai_api_key: ""
+#   openrouter_api_key: ""

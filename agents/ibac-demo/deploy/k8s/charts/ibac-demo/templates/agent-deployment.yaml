@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-agent
+  labels:
+    app: {{ .Release.Name }}-agent
+    type: agent
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-agent
+      type: agent
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-agent
+        type: agent
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: agent
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.agent.repository }}:{{ .Values.image.agent.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.agent.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              export HTTPS_PROXY="https://token:${ACUVITY_TOKEN}@${APEX_URL#https://}"
+              export HTTP_PROXY="$HTTPS_PROXY"
+              exec uv run uvicorn server:app --host 0.0.0.0 --port 8000
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8000"
+            - name: MCP_SERVER
+              value: "local"
+            - name: LOCAL_MCP_SSE_URL
+              value: "http://{{ .Values.mcpLocal.deploymentName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.mcpLocal.port }}/sse"
+            - name: LLM_PROVIDER
+              value: {{ .Values.agent.llmProvider | quote }}
+            {{- if .Values.agent.llmModel }}
+            - name: LLM_MODEL
+              value: {{ .Values.agent.llmModel | quote }}
+            {{- end }}
+            {{- if .Values.agent.openrouterModel }}
+            - name: OPENROUTER_MODEL
+              value: {{ .Values.agent.openrouterModel | quote }}
+            {{- end }}
+            - name: ACUVITY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: acuvity_token
+            - name: APEX_URL
+              value: {{ required "agent.apexUrl is required" .Values.agent.apexUrl | quote }}
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: anthropic_api_key
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: openai_api_key
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: openrouter_api_key
+            {{- if .Values.agent.acuvityCaBundle.enabled }}
+            - name: SSL_CERT_FILE
+              value: /etc/ssl/certs/custom/ca-bundle.crt
+            - name: REQUESTS_CA_BUNDLE
+              value: /etc/ssl/certs/custom/ca-bundle.crt
+            {{- end }}
+          {{- if .Values.agent.acuvityCaBundle.enabled }}
+          volumeMounts:
+            - name: custom-ca
+              mountPath: "/etc/ssl/certs/custom"
+              readOnly: true
+          {{- end }}
+      {{- if .Values.agent.acuvityCaBundle.enabled }}
+      volumes:
+        - name: custom-ca
+          configMap:
+            name: {{ .Values.agent.acuvityCaBundle.configMapName }}
+            optional: false
+      {{- end }}

@@ -10,7 +10,12 @@ Unless a command says otherwise, run it with your **current directory set to `ib
 
 - **`src/agent/`** - Python app (`main.py`, `server.py`, `utils/`, `tools/`, `prompt-scenarios/`, `docs/`, `tests/`), `pyproject.toml`, and Acuvity **`run.sh`** / **`run_ui.sh`**. You can also run **`./run.sh`** or **`./run_ui.sh`** at this root; they forward to `src/agent/`.
 - **`src/ui/chat_ui/`** - Vite + React chat UI
+- **`deploy/`** - Kubernetes Helm chart, Acuvity **manifest** import, optional Docker Compose ([deploy/k8s/README.md](deploy/k8s/README.md))
 - **`assets/`** (repo root) - Diagram for this README and sample PDFs for manual UI upload testing (e.g. `Q4_Operations_Report.pdf`)
+
+### Remote deployment (Kubernetes + Acuvity manifest)
+
+To run the **UI**, **agent**, and **CRM MCP** in-cluster (same pattern as [fast-agent](../fast-agent)), see [deploy/k8s/README.md](deploy/k8s/README.md). Build images from `src/agent/Dockerfile` and `src/ui/chat_ui/Dockerfile`, install the Helm chart, then import [deploy/config/manifest.yaml](deploy/config/manifest.yaml) after replacing placeholders. Local laptop workflows stay the same: `MCP_SERVER=local` without `LOCAL_MCP_SSE_URL` still uses **stdio** to `tools/local_tools.py`.
 
 ## Prerequisites
 
@@ -34,6 +39,9 @@ Unless a command says otherwise, run it with your **current directory set to `ib
 | `ARCADE_API_KEY` | Required when `MCP_SERVER=arcade` |
 | `ARCADE_USER_ID` | Required when `MCP_SERVER=arcade` |
 | `ARCADE_MCP_URL` | Required when `MCP_SERVER=arcade` |
+| `LOCAL_MCP_SSE_URL` | When set with `MCP_SERVER=local`, connect to remote MCP over **SSE** (Kubernetes/Docker) instead of stdio |
+| `LOCAL_MCP_TRANSPORT` | On the MCP process only: `stdio` (default) or `sse` (see `tools/local_tools.py`) |
+| `FASTMCP_HOST` / `FASTMCP_PORT` | Bind address for SSE MCP server (use `0.0.0.0` in containers) |
 | `PROMPTS_TYPE` | `simple` (default), `scenario`, or `demo` |
 
 Advanced overrides (optional):
