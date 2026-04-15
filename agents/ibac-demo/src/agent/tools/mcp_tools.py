@@ -1,6 +1,7 @@
 """Local MCP server with CRM tools - demonstrates tool poisoning detection."""
 # MCP tool params use names like `filter` by design; long strings are intentional stubs.
-# pylint: disable=line-too-long,redefined-builtin,broad-exception-caught
+# Imports after sys.path tweak must stay below path setup.
+# pylint: disable=line-too-long,redefined-builtin,broad-exception-caught,wrong-import-position
 import json
 import os
 import sys

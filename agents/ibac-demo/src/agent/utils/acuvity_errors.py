@@ -58,6 +58,7 @@ def _body_suggests_policy(body: str) -> bool:
 
 def _extract_message_from_json_obj(ob: dict[str, Any]) -> str | None:
     """Pull a human-readable message from common API error JSON shapes."""
+    # pylint: disable=too-many-return-statements
     if not isinstance(ob, dict):
         return None
     for key in ("message", "detail"):
@@ -98,6 +99,7 @@ def _snippet_from_body(body: str) -> str:
 
 
 def _status_and_body_from_exception(e: BaseException) -> tuple[int | None, str]:
+    # pylint: disable=too-many-branches,broad-exception-caught
     if isinstance(e, httpx.HTTPStatusError):
         try:
             body = e.response.text or ""
@@ -141,7 +143,7 @@ def _status_and_body_from_exception(e: BaseException) -> tuple[int | None, str]:
             body = str(raw)
     if not body:
         body = str(e)
-    return status, body
+    return status, str(body)
 
 
 def log_exception_chain(exc: BaseException, *, prefix: str = "acuvity_block_debug") -> None:
@@ -158,7 +160,10 @@ def log_exception_chain(exc: BaseException, *, prefix: str = "acuvity_block_debu
         )
         if snippet:
             lines.append(f"      body_snippet={snippet!r}")
-    lines.append(f"{prefix}: full traceback:\n{''.join(traceback.format_exception(type(exc), exc, exc.__traceback__))}")
+    tb_joined = "".join(
+        traceback.format_exception(type(exc), exc, exc.__traceback__)
+    )
+    lines.append(f"{prefix}: full traceback:\n{tb_joined}")
     logger.error("\n".join(lines))
 
 
@@ -190,7 +195,7 @@ def policy_block_from_exception(exc: BaseException) -> dict[str, Any] | None:
         if status == 400 and _body_suggests_policy(body):
             logger.info("Policy-style block: HTTP 400 with policy hints in body")
             return _blocked_payload(body, status)
-        # Proxies sometimes return 502/503 with a JSON or HTML body; treat as block if body hints policy.
+        # Proxies may return 502/503 with JSON or HTML; treat as block if body hints policy.
         if status in (502, 503, 504) and _body_suggests_policy(body):
             logger.info("Policy-style block: HTTP %s with policy hints in body", status)
             return _blocked_payload(body, status)
