@@ -30,7 +30,7 @@ service:
     type: ClusterIP
     port: 8000
 
-# In-cluster CRM MCP (single server, all tools from local_tools.py)
+# In-cluster CRM MCP (single server, all tools from mcp_tools.py)
 mcpLocal:
   deploymentName: mcp-ibac-local-tools
   port: 8000

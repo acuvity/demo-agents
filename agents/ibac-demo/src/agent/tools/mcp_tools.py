@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# When run as `python tools/local_tools.py`, sys.path[0] is tools/, not the agent root.
+# When run as `python tools/mcp_tools.py`, sys.path[0] is tools/, not the agent root.
 _agent_root_for_imports = Path(__file__).resolve().parent.parent
 if str(_agent_root_for_imports) not in sys.path:
     sys.path.insert(0, str(_agent_root_for_imports))

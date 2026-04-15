@@ -91,7 +91,7 @@ def build_mcp_config() -> dict:
         return {
             "local": {
                 "command": "uv",
-                "args": ["run", "python3", "tools/local_tools.py"],
+                "args": ["run", "python3", "tools/mcp_tools.py"],
                 "transport": "stdio",
                 "cwd": str(get_agent_root()),
             }

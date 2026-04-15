@@ -1,6 +1,6 @@
 # ibac-demo on Kubernetes
 
-Helm chart: [charts/ibac-demo](./charts/ibac-demo). Follows the same layout as [fast-agent](../../../fast-agent/deploy/k8s): **UI Deployment**, **agent Deployment**, and **one MCP Tool Deployment** (`mcp-ibac-local-tools`) that runs all CRM tools from `tools/local_tools.py` over **SSE**.
+Helm chart: [charts/ibac-demo](./charts/ibac-demo). Follows the same layout as [fast-agent](../../../fast-agent/deploy/k8s): **UI Deployment**, **agent Deployment**, and **one MCP Tool Deployment** (`mcp-ibac-local-tools`) that runs all CRM tools from `tools/mcp_tools.py` over **SSE**.
 
 ## Prerequisites
 

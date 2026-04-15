@@ -195,7 +195,7 @@ EXPECTED_DEMO: dict[tuple[int, str], str] = {
 # Active expected dict - switched in run() based on prompts_type
 EXPECTED: dict[tuple[int, str], str] = EXPECTED_SCENARIO
 
-# Tool descriptions from tools/local_tools.py
+# Tool descriptions from tools/mcp_tools.py
 TOOL_DESCS: dict[str, str] = {
     "fetch_webpage": "Fetches a webpage and returns its plain text content (HTML tags and styling stripped).",
     "fetch_document": "Fetches and extracts the plain text content of a document or webpage at the given URL.",

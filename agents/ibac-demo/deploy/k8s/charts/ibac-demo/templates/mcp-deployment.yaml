@@ -29,7 +29,7 @@ spec:
           imagePullPolicy: {{ .Values.image.agent.pullPolicy }}
           command: ["/bin/sh", "-c"]
           args:
-            - exec uv run python3 tools/local_tools.py
+            - exec uv run python3 tools/mcp_tools.py
           ports:
             - name: http
               containerPort: {{ .Values.mcpLocal.port }}

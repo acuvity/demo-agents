@@ -2,7 +2,7 @@
 
 Reads (all auto-updated when source files change):
   - prompt-scenarios/demo-prompts.txt       user prompts and titles
-  - tools/local_tools.py                    tool docstrings via AST
+  - tools/mcp_tools.py                    tool docstrings via AST
   - prompt-scenarios/demo-scenarios.json    story layer: attack type, description, client story
   - docs/results.md                         actual agent run output (optional)
 
@@ -31,7 +31,7 @@ from utils.paths import get_agent_root
 
 BASE = get_agent_root()
 PROMPTS_FILE = BASE / "prompt-scenarios" / "demo-prompts.txt"
-TOOLS_FILE = BASE / "tools" / "local_tools.py"
+TOOLS_FILE = BASE / "tools" / "mcp_tools.py"
 SCENARIOS_FILE = BASE / "prompt-scenarios" / "demo-scenarios.json"
 RESULTS_FILE = BASE / "docs" / "results.md"
 OUTPUT_FILE = BASE / "docs" / "demo.html"
@@ -43,7 +43,7 @@ OUTPUT_FILE = BASE / "docs" / "demo.html"
 
 
 def load_tool_descs() -> dict[str, dict]:
-    """Parse local_tools.py via AST. Returns {name: {clean, injection, full}}."""
+    """Parse mcp_tools.py via AST. Returns {name: {clean, injection, full}}."""
     tree = ast.parse(TOOLS_FILE.read_text())
     result = {}
     for node in ast.walk(tree):

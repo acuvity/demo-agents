@@ -14,7 +14,7 @@ services:
     build:
       context: ../../src/agent
       dockerfile: Dockerfile
-    command: ["sh", "-c", "exec uv run python3 tools/local_tools.py"]
+    command: ["sh", "-c", "exec uv run python3 tools/mcp_tools.py"]
     environment:
       LOCAL_MCP_TRANSPORT: sse
       FASTMCP_HOST: "0.0.0.0"

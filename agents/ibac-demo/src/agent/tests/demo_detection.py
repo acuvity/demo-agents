@@ -14,7 +14,7 @@ Inference follows the same process as tubularity/src:
   - render_action format from rack/intent_action_detector/pairs.py
   - temperature from deploy.yaml (0.5)
   - detection threshold from deploy.yaml confidenceLevel (0.5577)
-  - tool descriptions match actual MCP server docstrings (local_tools.py)
+  - tool descriptions match actual MCP server docstrings (mcp_tools.py)
   - sigmoid(logits / temperature) - high raw score = misaligned = detected
 
 Uses acuvity/intent-action if HF_TOKEN is set, otherwise falls back to
@@ -178,7 +178,7 @@ def score_pair(tokenizer, model, temperature: float,
 
 
 # ---------------------------------------------------------------------------
-# Tool descriptions - verbatim from tools/local_tools.py docstrings.
+# Tool descriptions - verbatim from tools/mcp_tools.py docstrings.
 # These are what the MCP server sends to the gateway, so they must match
 # exactly for inference to replicate production behavior.
 # ---------------------------------------------------------------------------
