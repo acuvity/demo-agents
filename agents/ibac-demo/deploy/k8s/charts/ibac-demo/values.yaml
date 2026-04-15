@@ -14,10 +14,18 @@ imagePullSecrets: []
 
 securityContext: {}
 
+# Vite dev server port in the UI container (langgraph/google_adk pattern).
+ui:
+  port: 5174
+  # Optional: full URL for Vite /api proxy. Empty uses in-cluster agent Service.
+  backendUrl: ""
+
 service:
   ui:
     type: ClusterIP
     port: 80
+    # Service routes to this port on the UI pod (Vite).
+    targetPort: 5174
   agent:
     type: ClusterIP
     port: 8000

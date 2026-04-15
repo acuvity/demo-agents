@@ -8,14 +8,14 @@ AI Security Gateway
 
 Unless a command says otherwise, run it with your **current directory set to `ibac-demo`** (this folder).
 
-- `**src/agent/**` - Python app (`main.py`, `server.py`, `utils/`, `tools/`, `prompt-scenarios/`, `docs/`, `tests/`), `pyproject.toml`, and Acuvity `**run.sh**` / `**run_ui.sh**`. You can also run `**./run.sh**` or `**./run_ui.sh**` at this root; they forward to `src/agent/`.
-- `**src/ui/chat_ui/**` - Vite + React chat UI
+- `**src/agent/**` - Python app (`main.py`, `server.py`, `utils/`, `tools/`, `prompt-scenarios/`, `docs/`, `tests/`), `pyproject.toml`, and Acuvity `**run.sh**` / `**run_ui.sh**` (run as `./src/agent/run.sh` or `cd src/agent && ./run.sh`).
+- `**src/ui/chat_ui/**` - Vite + React chat UI (container image builds from `**src/ui/Dockerfile**` with context `src/ui`, same pattern as langgraph/google_adk)
 - `**deploy/**` - Kubernetes Helm chart, Acuvity **manifest** import, optional Docker Compose ([deploy/k8s/README.md](deploy/k8s/README.md))
 - `**assets/`** (repo root) - Diagram for this README and sample PDFs for manual UI upload testing (e.g. `Q4_Operations_Report.pdf`)
 
 ### Remote deployment (Kubernetes + Acuvity manifest)
 
-To run the **UI**, **agent**, and **CRM MCP** in-cluster (same pattern as [fast-agent](../fast-agent)), see [deploy/k8s/README.md](deploy/k8s/README.md). Build images from `src/agent/Dockerfile` and `src/ui/chat_ui/Dockerfile`, install the Helm chart, then import [deploy/config/manifest.yaml](deploy/config/manifest.yaml) after replacing placeholders. Local laptop workflows stay the same: `MCP_SERVER=local` without `LOCAL_MCP_SSE_URL` still uses **stdio** to `tools/local_tools.py`.
+To run the **UI**, **agent**, and **CRM MCP** in-cluster (same pattern as [fast-agent](../fast-agent)), see [deploy/k8s/README.md](deploy/k8s/README.md). Build images from `src/agent/Dockerfile` and `src/ui/Dockerfile`, install the Helm chart, then import [deploy/config/manifest.yaml](deploy/config/manifest.yaml) after replacing placeholders. Local laptop workflows stay the same: `MCP_SERVER=local` without `LOCAL_MCP_SSE_URL` still uses **stdio** to `tools/local_tools.py`.
 
 ## Prerequisites
 
@@ -55,7 +55,7 @@ Advanced overrides (optional):
 | `OPENROUTER_MODEL` | OpenRouter model override (default: `stepfun/step-3.5-flash`)                                                                                                                                                                                                                     |
 | `LLM_BASE_URL`     | Override the API endpoint - enables any third-party compatible API                                                                                                                                                                                                                |
 | `LLM_API_KEY`      | Override the API key - takes precedence over the provider-specific key                                                                                                                                                                                                            |
-| `DEBUG_LLM`        | Set to `1` to print a non-secret LLM key fingerprint (`key_source`, last 4 chars of key, model) to stderr when `build_llm` runs. Use the same value when running `./run.sh` / `./run_ui.sh` (or `./src/agent/run.sh` / `./src/agent/run_ui.sh`) to confirm both use the same key. |
+| `DEBUG_LLM`        | Set to `1` to print a non-secret LLM key fingerprint (`key_source`, last 4 chars of key, model) to stderr when `build_llm` runs. Use the same value when running `./src/agent/run.sh` / `./src/agent/run_ui.sh` to confirm both use the same key. |
 | `IBAC_AGENT_ROOT`  | Optional absolute path to the agent package (folder with `main.py`, `tools/`, `prompt-scenarios/`). Defaults to resolving from `utils/paths.py`. Use if you run Python from an unusual working directory without `cd src/agent`.                                                  |
 | `IBAC_UPLOAD_DIR`  | Optional absolute path for PDF uploads. Defaults to `{agent root}/uploads`. Must match between the API server and `parse_file` when overridden.                                                                                                                                   |
 
@@ -137,8 +137,7 @@ export PROMPTS_TYPE=demo        # simplified scenarios for demos (see src/agent/
 From the `**ibac-demo**` directory:
 
 ```bash
-./run.sh
-# equivalent: ./src/agent/run.sh
+./src/agent/run.sh
 ```
 
 Output is automatically saved to `src/agent/docs/results.md`.
@@ -157,11 +156,10 @@ It uses the same FastAPI + Vite React stack as the other agents in this repo.
 
 ### Step 1 - Start the backend
 
-**With Acuvity AI Security Gateway (same as `./run.sh`)**: use `run_ui.sh`. It validates required env vars, downloads `ca.pem` from your Apex URL, sets `HTTPS_PROXY`, `HTTP_PROXY`, and `SSL_CERT_FILE`, then starts the API server so LLM and MCP traffic is proxied through the gateway.
+**With Acuvity AI Security Gateway (same as `./src/agent/run.sh`)**: use `./src/agent/run_ui.sh`. It validates required env vars, downloads `ca.pem` from your Apex URL, sets `HTTPS_PROXY`, `HTTP_PROXY`, and `SSL_CERT_FILE`, then starts the API server so LLM and MCP traffic is proxied through the gateway.
 
 ```bash
-./run_ui.sh
-# equivalent: ./src/agent/run_ui.sh
+./src/agent/run_ui.sh
 ```
 
 **Without the gateway** (local testing only): set only your LLM and MCP vars, then:
@@ -212,7 +210,7 @@ A self-contained HTML demo page can be generated for presenting the attack scena
 ```bash
 # 1. Run the agent with demo prompts to get fresh tool-call traces
 export PROMPTS_TYPE=demo
-./run.sh
+./src/agent/run.sh
 
 # 2. Generate the HTML page
 cd src/agent && uv run python3 docs/generate_demo.py

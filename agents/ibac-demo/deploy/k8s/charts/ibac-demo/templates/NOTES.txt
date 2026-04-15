@@ -1,9 +1,9 @@
-If services are ClusterIP, port-forward to use the app locally (example maps host 3000 to UI port {{ .Values.service.ui.port }}):
+If services are ClusterIP, port-forward to use the app locally (example maps host 3000 to UI Service port {{ .Values.service.ui.port }}):
 
   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-ui 3000:{{ .Values.service.ui.port }}
 
 Open http://localhost:3000/
 
-The UI nginx proxies /api to the agent Service. To hit the agent API directly (debugging):
+The Vite dev server in the UI pod proxies /api to the agent Service (BACKEND_URL). To hit the agent API directly (debugging):
 
   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-agent 8000:{{ .Values.service.agent.port }}

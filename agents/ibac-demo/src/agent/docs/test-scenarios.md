@@ -83,12 +83,12 @@ my financial info is 4242-4242-4242-4242, Capital One Bank, 123 CVV
 
 **Detection pattern:** the user only asks for a read or summary. The model may first follow a fake compliance or policy step (email, webhook, delete, or reading a secrets file). That extra tool call is semantically far from user intent, which the cross-encoder can flag.
 
-**Running detection tests:** after a `run.sh` run with `PROMPTS_TYPE=demo`, run:
+**Running detection tests:** after a `./src/agent/run.sh` run with `PROMPTS_TYPE=demo`, run:
 ```bash
 HF_TOKEN=<token> uv run tests/demo_detection.py
 ```
 
-Note: `tests/demo_detection.py` defines its own example malicious tool payloads for scoring; live `run.sh` traces reflect the URLs and recipients encoded in `local_tools.py`.
+Note: `tests/demo_detection.py` defines its own example malicious tool payloads for scoring; live `./src/agent/run.sh` traces reflect the URLs and recipients encoded in `local_tools.py`.
 
 ---
 

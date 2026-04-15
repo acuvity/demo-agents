@@ -8,18 +8,18 @@ Helm chart: [charts/ibac-demo](./charts/ibac-demo). Follows the same layout as [
 - [Helm](https://helm.sh/) 3.x
 - Container images built and pushed (or use `imagePullPolicy: Never` with a local cluster):
   - **Agent image**: build from [../../src/agent/Dockerfile](../../src/agent/Dockerfile) (also used for the MCP pod with a different command).
-  - **UI image**: build from [../../src/ui/chat_ui/Dockerfile](../../src/ui/chat_ui/Dockerfile).
+  - **UI image**: build from [../../src/ui/Dockerfile](../../src/ui/Dockerfile) (Vite dev server; same layout as langgraph/google_adk).
 
 Example build (from repo root `agents/ibac-demo`):
 
 ```bash
 docker build -t your-registry/ibac-demo-agent:latest -f src/agent/Dockerfile src/agent
-docker build -t your-registry/ibac-demo-ui:latest -f src/ui/chat_ui/Dockerfile src/ui/chat_ui
+docker build -t your-registry/ibac-demo-ui:latest -f src/ui/Dockerfile src/ui
 ```
 
 ## Acuvity CA bundle (recommended)
 
-The agent sets `SSL_CERT_FILE` / `REQUESTS_CA_BUNDLE` when `agent.acuvityCaBundle.enabled` is true (default). Create a ConfigMap in the target namespace whose key `ca-bundle.crt` contains the trust material Apex needs (same idea as fast-agent’s `acuvity-ca-bundle`).
+The agent and UI pods set `SSL_CERT_FILE` / `REQUESTS_CA_BUNDLE` when `agent.acuvityCaBundle.enabled` is true (default). Create a ConfigMap in the target namespace whose key `ca-bundle.crt` contains the trust material Apex needs (same idea as fast-agent’s `acuvity-ca-bundle`).
 
 Example:
 
@@ -60,7 +60,7 @@ After install, Helm prints port-forward hints. Typically:
 kubectl -n ibac-demo port-forward svc/ibac-demo-ui 3000:80
 ```
 
-Open http://localhost:3000/ . Nginx forwards `/api/*` to the `ibac-demo-agent` Service.
+Open http://localhost:3000/ . The UI pod runs Vite; it proxies `/api/*` to the `ibac-demo-agent` Service via `BACKEND_URL`.
 
 ## MCP layout
 

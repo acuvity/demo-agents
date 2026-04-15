@@ -13,6 +13,11 @@ agent:
     enabled: true
     configMapName: acuvity-ca-bundle
 
+# Optional: override Vite BACKEND_URL (defaults to http://<release>-agent:<agent service port>)
+# ui:
+#   port: 5174
+#   backendUrl: ""
+
 image:
   agent:
     repository: your-registry/ibac-demo-agent

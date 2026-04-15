@@ -28,7 +28,7 @@ apps:
         kubernetesNamespace: ibac-demo
     components:
       - name: ui
-        description: "Vite/React chat UI (nginx static + /api proxy)."
+        description: "Vite/React chat UI (dev server + /api proxy to agent, same pattern as langgraph/google_adk)."
         kind: Other
         selector:
           type: Kubernetes
