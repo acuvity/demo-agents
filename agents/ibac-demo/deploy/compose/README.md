@@ -4,6 +4,8 @@ Three services: **mcp** (CRM tools over SSE), **agent** (FastAPI), **ui** (Vite 
 
 This mirrors the Kubernetes layout on a single machine. You still need valid Acuvity and LLM credentials.
 
+If you are **new to deploying this app**, run through **[../k8s/README.md](../k8s/README.md)** once on a real cluster first; Compose does not replace that learning path.
+
 For a **full ordered checklist** (including Rancher Desktop, Docker Hub, and Helm), see **[../k8s/README.md](../k8s/README.md)**. Compose is an optional shortcut for developers who prefer one machine without a cluster.
 
 ## Quick start

@@ -1,20 +1,63 @@
 # ibac-demo on Kubernetes
 
-Helm chart: [charts/ibac-demo](./charts/ibac-demo). Follows the same layout as [fast-agent](../../../fast-agent/deploy/k8s): **UI Deployment**, **agent Deployment**, and **one MCP Tool Deployment** (`mcp-ibac-local-tools`) that runs all CRM tools from `tools/mcp_tools.py` over **SSE**. The overall flow matches [langgraph](../../../langgraph/README.md) and [google_adk](../../../google_adk/README.md) (Helm chart, port-forward to the UI Service, then import the Acuvity manifest), with ibac-demo-specific steps for Acuvity secrets, Apex URL, and two images (agent and UI).
+Helm chart: [charts/ibac-demo](./charts/ibac-demo). Deploys **UI**, **agent**, and **one MCP pod** (`mcp-ibac-local-tools`, CRM tools over **SSE**). Same overall idea as [langgraph](../../../langgraph/README.md) / [google_adk](../../../google_adk/README.md): build images, `helm install`, port-forward UI, then import the Acuvity manifest.
+
+## Contents
+
+| Section | What it is |
+|---------|------------|
+| [Full procedure: first install](#full-procedure-first-install) | Steps **1 through 8** (do them in order) |
+| [After code or image changes](#after-code-or-image-changes) | Rebuild agent image, push, restart pods |
+| [Rotate API key](#rotate-openrouter-or-other-api-key-only) | Update a secret without reinstalling everything |
+| [Progressive rollout (Apex)](#progressive-rollout-apex) | Optional mental model: local vs Apex vs in-cluster gateway |
+| [Troubleshooting](#troubleshooting) | Common failures |
+| [Reference](#reference) | Docker Hub private repos, Dockerfiles, CA skip, links |
+| [MCP layout](#mcp-layout) | How the agent talks to MCP in-cluster |
+| [Acuvity manifest](#acuvity-manifest) | Policy import notes |
+| [Local rehearsal without Kubernetes](#local-rehearsal-without-kubernetes) | Docker Compose |
 
 ## Full procedure: first install
 
-Do these steps in order. **Working directories:** run `docker` / `docker build` from **`agents/ibac-demo`**. Run **`helm`** and **`kubectl`** from **`agents/ibac-demo/deploy/k8s`** (or pass absolute paths to the chart).
+Do **steps 1 through 8** below **in order**.
 
-### 1. Prerequisites
+- **Build and push images:** shell working directory **`agents/ibac-demo`** (repo folder that contains `src/` and `Makefile`).
+- **`helm` / `kubectl` / install script:** working directory **`agents/ibac-demo/deploy/k8s`** unless a command shows a full path.
 
-- `kubectl` configured for your cluster (for example **Rancher Desktop** with Kubernetes enabled; `kubectl get nodes` shows **Ready**).
+There is no separate **`k3s/`** tree: one chart works for **Rancher Desktop**, **k3s**, or any cluster where `kubectl` points. This repo does not install the cluster for you.
+
+### 1. Cluster tools
+
+You need:
+
+- **`kubectl`** talking to your cluster (`kubectl get nodes` shows **Ready**).
 - **Helm 3.x** (`helm version`).
-- **Docker** with `docker login` to [Docker Hub](https://hub.docker.com/). For `docker push`, use a [Personal Access Token](https://hub.docker.com/settings/security) with **read and write** scope (a read-only token causes `insufficient scopes`).
+- **Docker** and [Docker Hub](https://hub.docker.com/) **`docker login`**. For `docker push`, use a Hub [PAT](https://hub.docker.com/settings/security) with **read and write** (read-only PAT causes `insufficient scopes`).
+
+**Laptop cluster ([Rancher Desktop](https://rancherdesktop.io/)):** Install the app, open **Preferences**, enable **Kubernetes**, wait until it is running. Default context is often **`rancher-desktop`**; confirm with `kubectl get nodes`. The cluster usually **cannot** pull arbitrary local-only image tags; **push to Docker Hub** (or another registry) and set `image.*.repository` in Helm (step 5).
+
+**Remote k3s (or other kube):** Use the **kubeconfig** your team gives you. The **same** Helm commands apply; only the API endpoint (and optional Ingress) differ.
 
 ### 2. Build and push images
 
-Replace `YOUR_DOCKER_ID` with your Docker Hub username.
+Use your **Docker Hub username** (Docker ID), not your email, in image names. **Do not commit** real IDs into git.
+
+**Option A - Makefile (recommended)**
+
+From **`agents/ibac-demo`**:
+
+```bash
+cd agents/ibac-demo
+export DOCKER_HUB_USER=YOUR_DOCKER_ID   # your real Docker Hub username; optional if you pass DOCKER_HUB_USER= on each make line below
+docker login   # once per machine if needed
+make docker-build
+make docker-push
+```
+
+Same as `make docker-build DOCKER_HUB_USER=YOUR_DOCKER_ID` if you prefer not to `export`.
+
+Optional: `make helm-lint` validates the chart. Set **`CONTAINER_TAG`** if you do not use `latest`.
+
+**Option B - raw Docker** (same tags as Option A)
 
 ```bash
 cd agents/ibac-demo
@@ -25,7 +68,7 @@ docker push YOUR_DOCKER_ID/ibac-demo-agent:latest
 docker push YOUR_DOCKER_ID/ibac-demo-ui:latest
 ```
 
-The **MCP** pod uses the **same** image as the agent (`ibac-demo-agent`). After **agent** code changes, rebuild and push **that** image and restart **both** `ibac-demo-agent` and `mcp-ibac-local-tools`.
+The **MCP** pod uses the **same** image as the agent (`ibac-demo-agent`). After **agent** or MCP code changes, rebuild and push **that** image and restart **both** `ibac-demo-agent` and `mcp-ibac-local-tools` ([After code or image changes](#after-code-or-image-changes)).
 
 ### 3. Apex TLS bundle (ConfigMap)
 
@@ -59,11 +102,13 @@ export APEX_URL='https://your-apex-host'
 export OPENROUTER_API_KEY='...'
 ```
 
-The chart defaults to **OpenRouter** (`agent.llmProvider`). For Anthropic or OpenAI instead, set `LLM_PROVIDER` and the matching secret when using [deploy-ibac-demo.sh](./deploy-ibac-demo.sh), or adjust the `helm` flags in step 5.
+The chart defaults to **OpenRouter** (`agent.llmProvider`). For Anthropic or OpenAI instead, set `LLM_PROVIDER` and the matching secret when using [deploy-ibac-demo.sh](./deploy-ibac-demo.sh) or [deploy.sh](./deploy.sh) (same script), or adjust the `helm` flags in step 5.
 
 Unset **`LLM_API_KEY`** in any environment where you intend **`OPENROUTER_API_KEY`** to apply (the app prefers `LLM_API_KEY` when set).
 
 ### 5. Install or upgrade Helm release
+
+Replace **`YOUR_DOCKER_ID`** below with the **same** Docker Hub username you used in **step 2** (same value as **`DOCKER_HUB_USER`**).
 
 ```bash
 cd agents/ibac-demo/deploy/k8s
@@ -84,6 +129,7 @@ helm upgrade --install ibac-demo ./charts/ibac-demo -n ibac-demo \
 ```bash
 export DOCKER_HUB_USER=YOUR_DOCKER_ID
 ./deploy-ibac-demo.sh "${APEX_URL}"
+# Same as: ./deploy.sh "${APEX_URL}"   (deploy.sh wraps deploy-ibac-demo.sh; matches langgraph/google_adk naming)
 ```
 
 That script sets Acuvity and LLM secrets and, when **`DOCKER_HUB_USER`** is set, adds the two image repository overrides. You must still create the namespace and **acuvity-ca-bundle** ConfigMap yourself if you use the script (same as above).
@@ -122,6 +168,8 @@ When you change **Python agent** or **MCP** behavior, rebuild the **agent** imag
 cd agents/ibac-demo
 docker build -t YOUR_DOCKER_ID/ibac-demo-agent:latest -f src/agent/Dockerfile src/agent
 docker push YOUR_DOCKER_ID/ibac-demo-agent:latest
+# Or from agents/ibac-demo, after: export DOCKER_HUB_USER=YOUR_DOCKER_ID
+#   make docker-build && make docker-push
 
 kubectl -n ibac-demo rollout restart deploy/ibac-demo-agent deploy/mcp-ibac-local-tools
 ```
@@ -144,6 +192,16 @@ kubectl -n ibac-demo rollout restart deploy/ibac-demo-agent
 
 ---
 
+## Progressive rollout (Apex)
+
+High-level order (details are **steps 1 through 8** above):
+
+1. **App on cluster** - Images on a registry, Helm release healthy, UI via port-forward ([step 7](#7-access-the-ui)). This chart expects **Apex** (`ACUVITY_TOKEN`, `APEX_URL`, proxy on the agent pod). For **no Apex on Kubernetes** you would need a chart change or use [local Compose](../compose/README.md) / local dev without proxy.
+2. **With Apex** - **Steps 3 through 5**: CA ConfigMap, secrets, `helm` or `./deploy.sh`.
+3. **In-cluster gateway (e.g. cloud-apex)** - Install Acuvity’s gateway per their doc; set **`APEX_URL`** to that service URL. This repo only ships **ibac-demo** Helm, not cloud-apex itself.
+
+---
+
 ## Troubleshooting
 
 | Symptom | What to check |
@@ -157,53 +215,17 @@ kubectl -n ibac-demo rollout restart deploy/ibac-demo-agent
 
 For deep HTTP debugging on the agent, set env **`DEBUG_PROXY_UPSTREAM=1`** or **`DEBUG_ACUVITY_BLOCKS=1`** on the deployment (Helm extra envs or `kubectl set env`) and read pod logs. Do not share logs that contain tokens.
 
-## Local Kubernetes: Rancher Desktop and K3s
+## Reference
 
-[Rancher Desktop](https://rancherdesktop.io/) gives you a **single-node Kubernetes cluster on your laptop**. It is a practical stand-in for **K3s**-style development: you do **not** install K3s separately for local work; enable **Kubernetes** in Rancher Desktop preferences and wait until the cluster is running.
+**Docker Hub:** Build and push commands are in [**step 2**](#2-build-and-push-images). Use Docker ID in tags and in **`image.agent.repository`** / **`image.ui.repository`** (step 5). Do not put secrets or real IDs in git.
 
-1. Install Rancher Desktop and turn **Kubernetes** on (Settings / Preferences).
-2. Use the default `kubectl` context (often named **`rancher-desktop`**). Verify with `kubectl get nodes`.
-3. Build and **push** images to a registry the cluster can reach (see below). Rancher Desktop’s cluster usually **cannot** use arbitrary local-only image names unless you use image import features or a registry; **Docker Hub under your personal account** is the path most teams use for this demo.
+**Private Hub images:** Create a `docker-registry` secret in namespace **`ibac-demo`**, then set [`imagePullSecrets`](./charts/ibac-demo/values.yaml) to that secret’s name.
 
-**Remote K3s:** If your colleague provisions a **remote** K3s cluster (for example behind **Rancher Manager**), use the **kubeconfig** they give you instead of Rancher Desktop. The Helm commands below are the same; only the cluster endpoint and optional **Ingress** change.
+**Dockerfiles:** Agent (and MCP) [../../src/agent/Dockerfile](../../src/agent/Dockerfile); UI [../../src/ui/Dockerfile](../../src/ui/Dockerfile).
 
-## Docker Hub (personal account)
+**CA bundle:** Same as **step 3**. Quick test without custom CA: add **`--set agent.acuvityCaBundle.enabled=false`** to Helm (not recommended for production).
 
-You need a [Docker Hub](https://hub.docker.com/) login (`docker login`). Use your **Docker Hub username** (Docker ID), not your email, in image names.
-
-1. From repo root **`agents/ibac-demo`**, replace `YOUR_DOCKER_ID` with your Hub username:
-
-```bash
-docker build -t YOUR_DOCKER_ID/ibac-demo-agent:latest -f src/agent/Dockerfile src/agent
-docker build -t YOUR_DOCKER_ID/ibac-demo-ui:latest -f src/ui/Dockerfile src/ui
-docker push YOUR_DOCKER_ID/ibac-demo-agent:latest
-docker push YOUR_DOCKER_ID/ibac-demo-ui:latest
-```
-
-2. When you install the chart, set **`image.agent.repository`** and **`image.ui.repository`** to `YOUR_DOCKER_ID/ibac-demo-agent` and `YOUR_DOCKER_ID/ibac-demo-ui` (see **Install**). The MCP pod reuses the **agent** image and tag.
-
-3. If the Hub repos are **private**, create a `docker-registry` secret in namespace `ibac-demo` and set [`imagePullSecrets`](./charts/ibac-demo/values.yaml) in your values to that secret’s name.
-
-You do **not** put your Docker ID into application source code; only into **`docker build` / `docker push` tags** and **Helm values** (or `helm --set`).
-
-## Prerequisites (reference)
-
-- Kubernetes cluster and `kubectl` (for example **Rancher Desktop** with Kubernetes enabled).
-- [Helm](https://helm.sh/) 3.x.
-- **Agent image**: [../../src/agent/Dockerfile](../../src/agent/Dockerfile) (also used for the MCP pod).
-- **UI image**: [../../src/ui/Dockerfile](../../src/ui/Dockerfile).
-
-The **ordered first-run steps** (build, push, ConfigMap, `helm`, port-forward) are in **[Full procedure: first install](#full-procedure-first-install)** at the top of this file.
-
-## Acuvity CA bundle (reference)
-
-Same as **step 3** in [Full procedure](#full-procedure-first-install): ConfigMap **`acuvity-ca-bundle`**, key **`ca-bundle.crt`**, file usually **`src/agent/ca.pem`** (fetch with `curl "${APEX_URL}/_acuvity/ca.pem"` from **`agents/ibac-demo`**). To skip for a quick test, set `agent.acuvityCaBundle.enabled=false`.
-
-## Install and Access (reference)
-
-**Helm `OpenRouter` example, helper script, and Anthropic variant** are spelled out in **steps 5 and 7** of [Full procedure](#full-procedure-first-install). [example-values.yaml](./example-values.yaml) lists common value overrides.
-
-**UI access:** `kubectl -n ibac-demo port-forward svc/ibac-demo-ui 3000:80` then **http://localhost:3000/** (Vite proxies `/api` to the agent Service via `BACKEND_URL`).
+**Install and UI URL:** Full **`helm upgrade --install`** and **`./deploy.sh`** examples are in **steps 5 and 7**. Overrides: [example-values.yaml](./example-values.yaml). UI: port-forward **3000:80**, open **http://localhost:3000/** (Vite proxies `/api` via `BACKEND_URL`).
 
 ## MCP layout
 

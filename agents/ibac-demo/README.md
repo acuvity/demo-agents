@@ -1,35 +1,43 @@
 # Simple LangGraph Agent
 
-A minimal LangGraph agent that uses the Acuvity AI Security Gateway.
+A minimal LangGraph agent with optional chat UI. Traffic can go through the **Acuvity AI Security Gateway (Apex)** for governance and TLS to LLM and MCP providers.
 
-AI Security Gateway
+## Start here
+
+Pick **one** path first (each links to the full steps):
+
+
+| Goal                                              | Where to go                                                                                                    |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Run locally** (batch or chat UI on your laptop) | [Layout](#layout) below, then [Run](#run) and [Interactive UI](#interactive-ui-chat-mode)                      |
+| **Run on Kubernetes** (Helm, Docker Hub, Apex)    | **[deploy/k8s/README.md](deploy/k8s/README.md)** section **Full procedure: first install** (steps 1 through 8) |
+| **Run with Docker Compose** (no cluster)          | **[deploy/compose/README.md](deploy/compose/README.md)** (optional; still needs Apex + LLM env)                |
+
 
 ## Layout
 
-Unless a command says otherwise, run it with your **current directory set to `ibac-demo`** (this folder).
+Unless a command says otherwise, use `**agents/ibac-demo`** as your current directory (this folder).
 
-- `**src/agent/**` - Python app (`main.py`, `server.py`, `utils/`, `tools/`, `prompt-scenarios/`, `docs/`, `tests/`), `pyproject.toml`, and Acuvity `**run.sh**` / `**run_ui.sh**` (run as `./src/agent/run.sh` or `cd src/agent && ./run.sh`).
-- `**src/ui/chat_ui/**` - Vite + React chat UI (container image builds from `**src/ui/Dockerfile**` with context `src/ui`, same pattern as langgraph/google_adk)
-- `**deploy/**` - Kubernetes Helm chart, Acuvity **manifest** import, optional Docker Compose; start at **[deploy/README.md](deploy/README.md)** or go directly to [deploy/k8s/README.md](deploy/k8s/README.md)
-- `**assets/`** (repo root) - Diagram for this README and sample PDFs for manual UI upload testing (e.g. `Q4_Operations_Report.pdf`)
+- `**src/agent/**` - Python app (`main.py`, `server.py`, `utils/`, `tools/`, …), `pyproject.toml`, and `**run.sh**` / `**run_ui.sh**` (from repo root: `./src/agent/run.sh` or `cd src/agent && ./run.sh`).
+- `**src/ui/chat_ui/**` - Vite + React UI; production-style image from `src/ui/Dockerfile`.
+- `**deploy/**` - Helm chart, Acuvity manifest, optional Compose. Index: **[deploy/README.md](deploy/README.md)**.
+- `**assets/`** - Sample PDFs and diagrams for manual testing.
 
-### Remote deployment (Kubernetes + Acuvity manifest)
+### Kubernetes (in-cluster)
 
-To run the **UI**, **agent**, and **CRM MCP** in-cluster (same pattern as [fast-agent](../fast-agent) and the Helm flow in [langgraph](../langgraph/README.md) / [google_adk](../google_adk/README.md)), see **[deploy/k8s/README.md](deploy/k8s/README.md)**. That guide covers **Rancher Desktop** (local Kubernetes, k3s-style), **Docker Hub** under your personal account (build, tag, push, Helm `image.*.repository`), the Helm chart, and the Acuvity **CA bundle**. There is no separate Rancher or K3s **application** code in this repo beyond Helm and docs; Rancher Desktop or any Kubernetes cluster runs the same chart. Build images from `src/agent/Dockerfile` and `src/ui/Dockerfile`, install the chart with your registry paths, then import [deploy/config/manifest.yaml](deploy/config/manifest.yaml) after replacing placeholders. Local laptop workflows stay the same: `MCP_SERVER=local` without `LOCAL_MCP_SSE_URL` still uses **stdio** to `tools/mcp_tools.py`.
+To run **UI**, **agent**, and **CRM MCP** on any Kubernetes cluster (same idea as [langgraph](../langgraph/README.md) / [google_adk](../google_adk/README.md)), follow **[deploy/k8s/README.md](deploy/k8s/README.md)** end to end. After workloads are healthy, import **[deploy/config/manifest.yaml](deploy/config/manifest.yaml)** with your org’s placeholders. There is no separate `k3s/` tree: one Helm chart, your kubeconfig.
 
-**Kubernetes deployment (quick start)**
+**Kubernetes quick start** (details and copy-paste commands are in **deploy/k8s/README.md** steps 1 through 8):
 
-1. **Cluster:** Use [Rancher Desktop](https://rancherdesktop.io/) with Kubernetes enabled, or any cluster your team provides. Check `kubectl get nodes`.
-2. **Images:** From this folder (`ibac-demo`), `docker login` to Hub, then build and push `YOUR_DOCKER_ID/ibac-demo-agent` and `YOUR_DOCKER_ID/ibac-demo-ui` (your Docker Hub username replaces `YOUR_DOCKER_ID`). Full commands are in [deploy/k8s/README.md](deploy/k8s/README.md).
-3. **Install:** `helm upgrade --install` with `secrets.acuvity_token`, `agent.apexUrl`, `**OPENROUTER_API_KEY`** (default LLM in chart), and `--set image.agent.repository` / `--set image.ui.repository` pointing at Hub (see the Install section in that README). Or set `DOCKER_HUB_USER` when using [deploy/k8s/deploy-ibac-demo.sh](deploy/k8s/deploy-ibac-demo.sh).
-4. **UI:** `kubectl -n ibac-demo port-forward svc/ibac-demo-ui 3000:80` then open [http://localhost:3000/](http://localhost:3000/)
-5. **Acuvity:** Import the manifest from [deploy/config/manifest.yaml](deploy/config/manifest.yaml) per your org’s process (see also [infra/cli/README.md](../../infra/cli/README.md) if your repo uses that flow for other agents).
+1. **Cluster:** Kubernetes running; `kubectl get nodes` shows **Ready** (e.g. [Rancher Desktop](https://rancherdesktop.io/) with Kubernetes on).
+2. **Images:** `docker login` to Docker Hub. Set your Hub username once: `export DOCKER_HUB_USER=YOUR_DOCKER_ID` (replace with your real Docker ID; do not commit it). Then from this folder: `make docker-build` and `make docker-push` (or pass `DOCKER_HUB_USER=...` on each `make` line). Raw `docker build` / `docker push` commands are in the k8s README **step 2**.
+3. **Install:** Export `ACUVITY_TOKEN`, `APEX_URL`, and your LLM secret (default chart uses OpenRouter). Run `**helm upgrade --install`** as in k8s README **step 5**, or from `**deploy/k8s`**: `./deploy.sh "${APEX_URL}"` (same as `deploy-ibac-demo.sh`) with `**DOCKER_HUB_USER**` set if images live on Hub. Full flags and CA ConfigMap are in that doc.
+4. **UI:** `kubectl -n ibac-demo port-forward svc/ibac-demo-ui 3000:80` then open **[http://localhost:3000/](http://localhost:3000/)**.
+5. **Governance:** Import the manifest per your process ([infra/cli](../../infra/cli/README.md) if your org uses it).
 
-You do **not** need to share your Docker ID or Rancher credentials in git; use placeholders in docs and real values only in your shell or private values files.
+Do **not** put real Docker IDs or tokens in git; use placeholders in docs and secrets only in your shell.
 
-
-
-## Prerequisites
+## Accounts and tools (local development)
 
 - Python 3.12+
 - [uv](https://github.com/astral-sh/uv)
@@ -106,6 +114,7 @@ export APEX_URL=https://...
 ### Step 2 - Pick your LLM
 
 ```bash
+export LLM_PROVIDER=openrouter
 export OPENROUTER_API_KEY=...        # openrouter (default)
 export OPENROUTER_MODEL=stepfun/step-3.5-flash         # optional; find models at openrouter.ai/models
 
