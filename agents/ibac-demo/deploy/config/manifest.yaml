@@ -1,21 +1,26 @@
-# yaml-language-server: $schema=https://api.acuvity.us/api/v1/jsonschema/import.json
+# yaml-language-server: $schema=https://api.acuvity.dev/api/v1/jsonschema/import.json
 #
-# Acuvity app manifest for ibac-demo (LangGraph + local CRM MCP).
-# Replace label, apps[0].name, subject, and kubernetesNamespace with your environment.
-# Kubernetes resource names must match the Helm release:
-#   helm install ibac-demo ./deploy/k8s/charts/ibac-demo -n ibac-demo
-# yields Deployments: ibac-demo-ui, ibac-demo-agent, and mcp-ibac-local-tools (see values.yaml mcpLocal.deploymentName).
+# Acuvity app manifest for ibac-demo (LangGraph + in-cluster MCP). Dev API: api.acuvity.dev.
+#
+# Before import:
+#   1) Import deploy/config/providers-openrouter.yaml (same acuctl -A and --namespace).
+#   2) In subject, set values after = inside each quoted string (same shape Kanav shared; no separate REPLACE_* keys).
+#
+# Kubernetes names must match Helm (release ibac-demo, namespace ibac-demo):
+#   Deployments: ibac-demo-ui, ibac-demo-agent, mcp-ibac-local-tools
 
-label: apps-v2/ibac-demo
+label: apps/ibac-demo
 
 apps:
   - name: ibac-demo
-    description: "ibac-demo LangGraph agent with in-cluster CRM MCP tools"
+    description: "IBAC agent application using LangGraph."
     subject:
       - - "@source:namespace=/"
-        - "@source:name=app-tokens"
         - "@source:type=mtls"
-        - "@apptoken:name=REPLACE_ME"
+        - "@source:name=app-tokens"
+        - "@org=acuvity.ai"
+        - "@scope:project=marcus" # whatever project you are working in; add id after = inside the quotes
+        - "@apptoken:name=ibacdemo-apex-agent" # token you are using from the dev console; add name after = inside the quotes
     tracing: Recording
     otelReceivers:
       - endpoint: "127.0.0.1:4317"
@@ -28,7 +33,7 @@ apps:
         kubernetesNamespace: ibac-demo
     components:
       - name: ui
-        description: "Vite/React chat UI (dev server + /api proxy to agent, same pattern as langgraph/google_adk)."
+        description: "The UI running a React application."
         kind: Other
         selector:
           type: Kubernetes
@@ -43,13 +48,13 @@ apps:
               IPRanges:
                 - "0.0.0.0/0"
               port: 80
-              description: "Allow external requests to UI"
+              description: "Allow all external requests"
               action: Allow
         egress:
           defaultPolicy:
             ACLAction: Allow
       - name: agent
-        description: "FastAPI LangGraph agent API."
+        description: "The agent running the API server."
         kind: Agent
         selector:
           type: Kubernetes
@@ -64,19 +69,17 @@ apps:
               IPRanges:
                 - "0.0.0.0/0"
               port: 8000
-              description: "Allow external requests to agent"
+              description: "Allow all external requests"
               action: Allow
           listeners:
             - port: 8000
               mode: Proxy
               hosts:
-                - localhost
-                - 127.0.0.1
-                - ibac-demo-agent.ibac-demo.svc.cluster.local
-                - ibac-demo-agent.ibac-demo
                 - ibac-demo-agent
-              # Extractors below assume JSON POST /send. The chat UI may send multipart/form-data
-              # when a PDF is attached; extend scripts if your policies must inspect that traffic.
+                - ibac-demo-agent.ibac-demo
+                - ibac-demo-agent.ibac-demo.svc.cluster.local
+                - localhost
+                - "127.0.0.1"
               extractors:
                 - def:
                     name: chat/request/message
@@ -108,7 +111,7 @@ apps:
               proxy:
                 listenTLS: Disabled
                 dialTLS: Disabled
-                defaultPolicyAction: Deny
+                defaultPolicyAction: Allow
                 policies:
                   - name: allow-all-external
                     description: "Allow all external requests"
@@ -120,20 +123,20 @@ apps:
           defaultPolicy:
             ACLAction: Allow
           policies:
-            - name: allow-mcp-local-crm
-              description: "Allow requests to CRM MCP server"
+            - name: allow-mcp-servers
+              description: "Allow requests to in-cluster MCP server"
               rules:
                 - mode: Proxy
                   proxyAction: Allow
                   appComponents:
-                    - "ibac-demo/mcp-local-crm"
-            - name: allow-openai
-              description: "Allow requests to OpenAI API"
+                    - "ibac-demo/mcp-servers"
+            - name: allow-openrouter
+              description: "Allow requests to OpenRouter"
               rules:
                 - mode: Proxy
                   proxyAction: Allow
                   providers:
-                    - openai-api
+                    - openrouter
             - name: allow-anthropic
               description: "Allow requests to Anthropic API"
               rules:
@@ -141,9 +144,9 @@ apps:
                   proxyAction: Allow
                   providers:
                     - anthropic-api
-      - name: mcp-local-crm
-        description: "MCP Server: ibac-demo CRM tools (single server, all tools)."
-        kind: Tool
+      - name: mcp-servers
+        description: "MCP servers that the agent uses."
+        kind: Other
         selector:
           type: Kubernetes
           kubernetes:
@@ -151,13 +154,21 @@ apps:
             kubernetesNamespace: ibac-demo
             type: Deployment
         ingress:
+          defaultACLAction: Allow
+          ACLs:
+            - name: allow-all-external
+              IPRanges:
+                - "0.0.0.0/0"
+              port: 8000
+              description: "Allow all external requests (MCP Service port)"
+              action: Allow
           listeners:
             - port: 8000
               mode: Proxy
               hosts:
-                - mcp-ibac-local-tools.ibac-demo.svc.cluster.local
-                - mcp-ibac-local-tools.ibac-demo
                 - mcp-ibac-local-tools
+                - mcp-ibac-local-tools.ibac-demo
+                - mcp-ibac-local-tools.ibac-demo.svc.cluster.local
               extractors:
                 - ref: mcp/input-sse
                 - ref: mcp/output-sse
@@ -167,12 +178,13 @@ apps:
               proxy:
                 listenTLS: Disabled
                 dialTLS: Disabled
-                defaultPolicyAction: Deny
+                defaultPolicyAction: Allow
                 policies:
                   - name: allow-agent
-                    description: "Allow requests from the agent"
+                    description: "Allow agent to call MCP servers"
                     rules:
-                      - action: Allow
+                      - mode: Proxy
+                        proxyAction: Allow
                         appComponents:
                           - "ibac-demo/agent"
         egress:
