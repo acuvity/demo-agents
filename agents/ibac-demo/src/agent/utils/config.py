@@ -1,8 +1,10 @@
 """LLM and MCP configuration builders."""
 # Imports are lazy per provider to avoid loading unused stacks.
 # pylint: disable=import-outside-toplevel
+import json
 import os
 import sys
+import time
 from typing import Any
 
 from utils.paths import get_agent_root
@@ -76,6 +78,33 @@ def build_llm(tools):
 def build_mcp_config() -> dict:
     """Build the MCP client config based on MCP_SERVER env var (arcade or local)."""
     server = os.environ.get("MCP_SERVER", "arcade")
+    # #region agent log
+    try:
+        arcade_url_set = bool(os.environ.get("ARCADE_MCP_URL"))
+        with open(
+            "/Users/asrivani/src/ibac/demo-agents/.cursor/debug-ab17fa.log",
+            "a",
+            encoding="utf-8",
+        ) as _lf:
+            _lf.write(
+                json.dumps(
+                    {
+                        "sessionId": "ab17fa",
+                        "hypothesisId": "H1",
+                        "location": "config.py:build_mcp_config",
+                        "message": "mcp_server branch",
+                        "data": {
+                            "MCP_SERVER": server,
+                            "arcade_url_set": arcade_url_set,
+                        },
+                        "timestamp": int(time.time() * 1000),
+                    }
+                )
+                + "\n"
+            )
+    except OSError:
+        pass
+    # #endregion
 
     if server == "local":
         sse_url = os.environ.get("LOCAL_MCP_SSE_URL")
@@ -98,6 +127,16 @@ def build_mcp_config() -> dict:
                 "cwd": str(get_agent_root()),
             }
         }
+
+    required_arcade = ("ARCADE_MCP_URL", "ARCADE_API_KEY", "ARCADE_USER_ID")
+    missing_arcade = [k for k in required_arcade if not os.environ.get(k)]
+    if missing_arcade:
+        raise RuntimeError(
+            "MCP_SERVER is 'arcade' (default) but these env vars are unset: "
+            + ", ".join(missing_arcade)
+            + ". Set them for Arcade MCP, or use embedded CRM tools with stdio: "
+            "`export MCP_SERVER=local` (do not set LOCAL_MCP_SSE_URL unless you run MCP over SSE)."
+        ) from None
 
     return {
         "arcade": {
