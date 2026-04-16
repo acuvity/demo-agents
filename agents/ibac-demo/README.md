@@ -15,15 +15,29 @@ Unless a command says otherwise, run it with your **current directory set to `ib
 
 ### Remote deployment (Kubernetes + Acuvity manifest)
 
-To run the **UI**, **agent**, and **CRM MCP** in-cluster (same pattern as [fast-agent](../fast-agent)), see [deploy/k8s/README.md](deploy/k8s/README.md). Build images from `src/agent/Dockerfile` and `src/ui/Dockerfile`, install the Helm chart, then import [deploy/config/manifest.yaml](deploy/config/manifest.yaml) after replacing placeholders. Local laptop workflows stay the same: `MCP_SERVER=local` without `LOCAL_MCP_SSE_URL` still uses **stdio** to `tools/mcp_tools.py`.
+To run the **UI**, **agent**, and **CRM MCP** in-cluster (same pattern as [fast-agent](../fast-agent) and the Helm flow in [langgraph](../langgraph/README.md) / [google_adk](../google_adk/README.md)), see **[deploy/k8s/README.md](deploy/k8s/README.md)**. That guide covers **Rancher Desktop** (local Kubernetes, k3s-style), **Docker Hub** under your personal account (build, tag, push, Helm `image.*.repository`), the Helm chart, and the Acuvity **CA bundle**. There is no separate Rancher or K3s **application** code in this repo beyond Helm and docs; Rancher Desktop or any Kubernetes cluster runs the same chart. Build images from `src/agent/Dockerfile` and `src/ui/Dockerfile`, install the chart with your registry paths, then import [deploy/config/manifest.yaml](deploy/config/manifest.yaml) after replacing placeholders. Local laptop workflows stay the same: `MCP_SERVER=local` without `LOCAL_MCP_SSE_URL` still uses **stdio** to `tools/mcp_tools.py`.
+
+<details>
+<summary><strong>Kubernetes deployment (quick start)</strong></summary>
+
+1. **Cluster:** Use [Rancher Desktop](https://rancherdesktop.io/) with Kubernetes enabled, or any cluster your team provides. Check `kubectl get nodes`.
+2. **Images:** From this folder (`ibac-demo`), `docker login` to Hub, then build and push `YOUR_DOCKER_ID/ibac-demo-agent` and `YOUR_DOCKER_ID/ibac-demo-ui` (your Docker Hub username replaces `YOUR_DOCKER_ID`). Full commands are in [deploy/k8s/README.md](deploy/k8s/README.md).
+3. **Install:** `helm upgrade --install` with `secrets.acuvity_token`, `agent.apexUrl`, **`OPENROUTER_API_KEY`** (default LLM in chart), and `--set image.agent.repository` / `--set image.ui.repository` pointing at Hub (see the Install section in that README). Or set `DOCKER_HUB_USER` when using [deploy/k8s/deploy-ibac-demo.sh](deploy/k8s/deploy-ibac-demo.sh).
+4. **UI:** `kubectl -n ibac-demo port-forward svc/ibac-demo-ui 3000:80` then open http://localhost:3000/
+5. **Acuvity:** Import the manifest from [deploy/config/manifest.yaml](deploy/config/manifest.yaml) per your org’s process (see also [infra/cli/README.md](../../infra/cli/README.md) if your repo uses that flow for other agents).
+
+You do **not** need to share your Docker ID or Rancher credentials in git; use placeholders in docs and real values only in your shell or private values files.
+
+</details>
 
 ## Prerequisites
 
 - Python 3.12+
 - [uv](https://github.com/astral-sh/uv)
 - An [Acuvity](https://console.acuvity.ai) account (for using the AI Security Gateway)
+- An [OpenRouter](https://openrouter.ai/) account (default LLM for this demo)
 - An [Arcade](https://www.arcade.dev/) account (when using `MCP_SERVER=arcade`)
-- An [OpenRouter](https://openrouter.ai/) account (when using `LLM_PROVIDER=openrouter`)
+- An [Anthropic](https://console.anthropic.com/) account (when using `LLM_PROVIDER=anthropic`)
 
 ## Environment variables
 
@@ -32,10 +46,10 @@ To run the **UI**, **agent**, and **CRM MCP** in-cluster (same pattern as [fast-
 | ------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `ACUVITY_TOKEN`                 | Acuvity app token - always required                                                                       |
 | `APEX_URL`                      | Acuvity gateway URL - always required                                                                     |
-| `LLM_PROVIDER`                  | `anthropic` (default), `openai`, or `openrouter`                                                          |
+| `LLM_PROVIDER`                  | `openrouter` (default), `openai`, or `anthropic`                                                          |
+| `OPENROUTER_API_KEY`            | Required when `LLM_PROVIDER=openrouter` (default)                                                         |
 | `ANTHROPIC_API_KEY`             | Required when `LLM_PROVIDER=anthropic`                                                                    |
 | `OPENAI_API_KEY`                | Required when `LLM_PROVIDER=openai`                                                                       |
-| `OPENROUTER_API_KEY`            | Required when `LLM_PROVIDER=openrouter`                                                                   |
 | `MCP_SERVER`                    | `arcade` (default) or `local`                                                                             |
 | `ARCADE_API_KEY`                | Required when `MCP_SERVER=arcade`                                                                         |
 | `ARCADE_USER_ID`                | Required when `MCP_SERVER=arcade`                                                                         |
@@ -93,13 +107,13 @@ export APEX_URL=https://...
 ### Step 2 - Pick your LLM
 
 ```bash
-export ANTHROPIC_API_KEY=...        # anthropic (default)
+export OPENROUTER_API_KEY=...        # openrouter (default)
+export OPENROUTER_MODEL=stepfun/step-3.5-flash         # optional; find models at openrouter.ai/models
 
 # OR
 
-export LLM_PROVIDER=openrouter
-export OPENROUTER_API_KEY=...
-export OPENROUTER_MODEL=stepfun/step-3.5-flash         # find models at openrouter.ai/models
+export LLM_PROVIDER=anthropic
+export ANTHROPIC_API_KEY=...
 
 # OR
 

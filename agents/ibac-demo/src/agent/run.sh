@@ -16,8 +16,8 @@ if [[ "$APEX_URL" != https://* ]]; then
   exit 1
 fi
 
-# LLM provider selection: anthropic (default), openai, or openrouter
-LLM_PROVIDER="${LLM_PROVIDER:-anthropic}"
+# LLM provider selection: openrouter (default), openai, or anthropic
+LLM_PROVIDER="${LLM_PROVIDER:-openrouter}"
 export LLM_PROVIDER
 
 if [[ -n "$LLM_API_KEY" ]]; then

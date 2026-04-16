@@ -11,7 +11,7 @@ if [[ "$APEX_URL" != https://* ]]; then
   exit 1
 fi
 
-LLM_PROVIDER="${LLM_PROVIDER:-anthropic}"
+LLM_PROVIDER="${LLM_PROVIDER:-openrouter}"
 export LLM_PROVIDER
 
 if [[ -n "$LLM_API_KEY" ]]; then

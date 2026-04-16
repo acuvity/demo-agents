@@ -20,7 +20,7 @@ async def main():
     tools = await mcp_client.get_tools()
     model = build_llm(tools)
 
-    print(f"Using LLM_PROVIDER={os.environ.get('LLM_PROVIDER', 'anthropic')}")
+    print(f"Using LLM_PROVIDER={os.environ.get('LLM_PROVIDER', 'openrouter')}")
     print(f"Using MCP_SERVER={os.environ.get('MCP_SERVER', 'arcade')}")
     print(f"Loaded {len(tools)} tools\n")
 

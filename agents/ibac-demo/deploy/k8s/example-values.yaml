@@ -3,10 +3,10 @@
 # helm upgrade --install ibac-demo ./charts/ibac-demo -n ibac-demo \
 #   -f example-values.yaml \
 #   --set secrets.acuvity_token="$ACUVITY_TOKEN" \
-#   --set secrets.anthropic_api_key="$ANTHROPIC_API_KEY"
+#   --set secrets.openrouter_api_key="$OPENROUTER_API_KEY"
 
 agent:
-  llmProvider: anthropic
+  llmProvider: openrouter
   apexUrl: https://your-apex.example.com
   llmModel: ""
   acuvityCaBundle:

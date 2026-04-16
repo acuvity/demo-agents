@@ -34,7 +34,7 @@ services:
       PORT: "8000"
       MCP_SERVER: local
       LOCAL_MCP_SSE_URL: http://mcp:8000/sse
-      LLM_PROVIDER: ${LLM_PROVIDER:-anthropic}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openrouter}
     ports:
       - "8300:8000"
 

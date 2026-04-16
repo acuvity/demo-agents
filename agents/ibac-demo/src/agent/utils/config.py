@@ -24,14 +24,14 @@ def build_llm(tools):
     """Build the LLM based on LLM_PROVIDER env var.
 
     Supported providers:
-    - anthropic (default): uses ANTHROPIC_API_KEY; LLM_BASE_URL overrides the endpoint.
+    - openrouter (default): uses OPENROUTER_API_KEY via the OpenRouter API.
+    - anthropic: uses ANTHROPIC_API_KEY; LLM_BASE_URL overrides the endpoint.
     - openai: uses OPENAI_API_KEY; LLM_BASE_URL enables any OpenAI-compatible endpoint.
-    - openrouter: uses OPENROUTER_API_KEY via the OpenRouter API.
 
     LLM_API_KEY overrides the provider-specific key for all providers.
     LLM_MODEL overrides the default model name.
     """
-    provider = os.environ.get("LLM_PROVIDER", "anthropic")
+    provider = os.environ.get("LLM_PROVIDER", "openrouter")
     base_url = os.environ.get("LLM_BASE_URL")
     api_key_override = os.environ.get("LLM_API_KEY")
 
