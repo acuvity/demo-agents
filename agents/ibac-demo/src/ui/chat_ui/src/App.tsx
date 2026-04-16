@@ -14,9 +14,27 @@ interface Message {
 
 interface DemoScenario {
   num: number
-  title: string
   fullPrompt: string
-  preview: string
+}
+
+/** Demo 1 last (matches GET /scenarios order and works if the API is still on file order). */
+function orderScenariosForFaq(
+  rows: Array<{ num: number; fullPrompt: string }>
+): DemoScenario[] {
+  const normalized = rows.map((r) => ({ num: r.num, fullPrompt: r.fullPrompt }))
+  const first = normalized.filter((s) => s.num === 1)
+  const rest = normalized.filter((s) => s.num !== 1)
+  return [...rest, ...first]
+}
+
+/** Short FAQ label; hover `title` and click still use the full prompt. */
+function clipPromptForFaqCard(text: string, maxChars = 110): string {
+  const collapsed = text.trim().replace(/\s+/g, ' ')
+  if (collapsed.length <= maxChars) return collapsed
+  const cut = collapsed.slice(0, maxChars)
+  const lastSpace = cut.lastIndexOf(' ')
+  const end = lastSpace > maxChars * 0.45 ? lastSpace : maxChars
+  return `${cut.slice(0, end).trimEnd()}…`
 }
 
 const API_URL = '/api'
@@ -50,7 +68,8 @@ function App() {
         }
         const data = (await res.json()) as DemoScenario[]
         if (!cancelled) {
-          setDemoScenarios(Array.isArray(data) ? data : [])
+          const rows = Array.isArray(data) ? data : []
+          setDemoScenarios(orderScenariosForFaq(rows))
         }
       } catch {
         if (!cancelled) {
@@ -197,12 +216,12 @@ function App() {
                       <button
                         key={scenario.num}
                         type="button"
+                        title={scenario.fullPrompt}
                         onClick={() => sendMessage(scenario.fullPrompt)}
                         className="text-left text-sm px-4 py-3 rounded-xl border border-border bg-card hover:bg-accent hover:border-ring/40 transition-colors text-foreground"
                       >
-                        <span className="font-medium text-foreground block">{scenario.title}</span>
-                        <span className="text-xs text-muted-foreground mt-1 block line-clamp-2">
-                          {scenario.preview}
+                        <span className="text-foreground block text-left text-sm leading-snug break-words">
+                          {clipPromptForFaqCard(scenario.fullPrompt)}
                         </span>
                       </button>
                     ))}
