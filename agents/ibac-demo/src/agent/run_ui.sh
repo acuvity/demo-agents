@@ -33,15 +33,24 @@ if [[ "$MCP_SERVER" == "arcade" ]]; then
   export ARCADE_MCP_URL="${ARCADE_MCP_URL:?ARCADE_MCP_URL is not set (required when MCP_SERVER=arcade)}"
 fi
 
-CA_PATH="$(dirname "$0")/ca.pem"
+# Absolute path so SSL_CERT_FILE stays valid after we cd into the agent dir (relative paths would break).
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CA_PATH="$SCRIPT_DIR/ca.pem"
 if [ ! -f "$CA_PATH" ]; then
   curl -s -o "$CA_PATH" "${APEX_URL}/_acuvity/ca.pem"
 fi
 
-export HTTPS_PROXY="https://token:${ACUVITY_TOKEN}@${APEX_URL#https://}"
-export HTTP_PROXY="https://token:${ACUVITY_TOKEN}@${APEX_URL#https://}"
+# Percent-encode token in proxy userinfo. Raw tokens with @ : / + etc. break the URL and cause proxy 401.
+ACUVITY_TOKEN_PROXY_ESC="$(
+python3 <<'PY'
+import os, urllib.parse
+print(urllib.parse.quote(os.environ["ACUVITY_TOKEN"].strip(), safe=""))
+PY
+)"
+export HTTPS_PROXY="https://token:${ACUVITY_TOKEN_PROXY_ESC}@${APEX_URL#https://}"
+export HTTP_PROXY="https://token:${ACUVITY_TOKEN_PROXY_ESC}@${APEX_URL#https://}"
 export SSL_CERT_FILE="$CA_PATH"
 
-cd "$(dirname "$0")"
+cd "$SCRIPT_DIR"
 echo "Starting UI backend on http://0.0.0.0:8300 (Acuvity proxy enabled)"
 uv run python3 server.py

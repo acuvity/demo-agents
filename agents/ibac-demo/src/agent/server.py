@@ -4,7 +4,9 @@ import logging
 import os
 import uuid
 from typing import Any
+from urllib.parse import urlparse
 
+import httpx
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from starlette.datastructures import UploadFile as StarletteUploadFile
@@ -70,6 +72,94 @@ def _append_pdf_hint(message: str, saved_abs: str) -> str:
     return (base + hint).strip()
 
 
+def _proxy_tunnel_http_status(exc: BaseException) -> int | None:
+    """If the chain contains httpx/httpcore ProxyError with 401 or 407, return that code."""
+    for link in _walk_exception_chain(exc):
+        if type(link).__name__ != "ProxyError":
+            continue
+        text = str(link)
+        if "407" in text:
+            return 407
+        if "401" in text:
+            return 401
+    return None
+
+
+def _walk_exception_chain(exc: BaseException):
+    """Yield exception and __cause__ / __context__ links (deduped by id)."""
+    seen: set[int] = set()
+    cur: BaseException | None = exc
+    while cur is not None and id(cur) not in seen:
+        yield cur
+        seen.add(id(cur))
+        nxt = cur.__cause__
+        if nxt is None:
+            nxt = cur.__context__
+        cur = nxt if isinstance(nxt, BaseException) else None
+
+
+def _proxy_env_summary() -> str:
+    raw = (os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY") or "").strip()
+    if not raw:
+        return "HTTPS_PROXY/HTTP_PROXY=(unset)"
+    try:
+        p = urlparse(raw)
+        host = p.hostname or "?"
+        port_suffix = f":{p.port}" if p.port else ""
+        return f"proxy_target={p.scheme}://[token_redacted]{host}{port_suffix}"
+    except (TypeError, ValueError):
+        return "HTTPS_PROXY/HTTP_PROXY=(set, could not parse)"
+
+
+def _log_upstream_http_debug(exc: BaseException) -> None:
+    """When DEBUG_PROXY_UPSTREAM=1 and a proxy is configured, log HTTP details per chain link."""
+    if os.environ.get("DEBUG_PROXY_UPSTREAM", "").strip() not in ("1", "true", "yes"):
+        return
+    if not (os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")):
+        return
+    lines = [
+        "DEBUG_PROXY_UPSTREAM: upstream error detail (compare response URL host to api.openai.com, "
+        "openrouter.ai, or your Apex; body may be Acuvity or vendor)",
+        _proxy_env_summary(),
+    ]
+    for i, link in enumerate(_walk_exception_chain(exc)):
+        mod = type(link).__module__
+        name = type(link).__name__
+        lines.append(f"  [{i}] {mod}.{name}: {link!r}")
+        resp = getattr(link, "response", None)
+        if resp is not None:
+            req = getattr(resp, "request", None)
+            url = getattr(req, "url", None) if req is not None else None
+            status = getattr(resp, "status_code", None)
+            body = ""
+            try:
+                body = (getattr(resp, "text", None) or "")[:8000]
+            except (OSError, TypeError, ValueError) as read_err:
+                body = f"(unreadable: {read_err})"
+            lines.append(f"      http_status={status!r} request_url={url!r}")
+            lines.append(f"      response_body={body!r}")
+        body_only = getattr(link, "body", None)
+        if isinstance(body_only, str) and body_only.strip() and resp is None:
+            lines.append(f"      exc.body={body_only[:4000]!r}")
+    logging.error("\n".join(lines))
+
+
+def _openrouter_api_error_response(exc: BaseException) -> tuple[int, str] | None:
+    """OpenRouter LLM errors (403 is often account/team, not Acuvity policy)."""
+    if type(exc).__name__ != "OpenRouterDefaultError":
+        return None
+    status = getattr(exc, "status_code", None)
+    if not isinstance(status, int) or status < 400 or status > 599:
+        status = 502
+    body = getattr(exc, "body", None)
+    if isinstance(body, str) and body.strip():
+        detail = body.strip()
+    else:
+        msg = getattr(exc, "message", None)
+        detail = str(msg).strip() if msg else str(exc)
+    return status, f"OpenRouter: {detail}"
+
+
 async def _run_agent(message: str) -> dict:
     try:
         agent = await get_agent()
@@ -89,16 +179,58 @@ async def _run_agent(message: str) -> dict:
     except HTTPException:
         raise
     except Exception as e:
+        _log_upstream_http_debug(e)
+        proxy_tunnel = _proxy_tunnel_http_status(e)
+        if proxy_tunnel == 401:
+            logging.warning(
+                "Acuvity proxy returned 401 (check ACUVITY_TOKEN, APEX_URL, and use "
+                "run_ui.sh / run.sh so the token is percent-encoded in HTTPS_PROXY)."
+            )
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "Acuvity proxy rejected credentials (401 Unauthorized). "
+                    "Confirm ACUVITY_TOKEN and APEX_URL, then start via ./src/agent/run_ui.sh "
+                    "(it URL-encodes the token for HTTPS_PROXY)."
+                ),
+            ) from e
+        if proxy_tunnel == 407:
+            logging.warning(
+                "Acuvity proxy returned 407 Proxy Authentication Required (HTTPS_PROXY tunnel "
+                "auth failed; not an LLM or Apex policy body)."
+            )
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "Acuvity proxy rejected tunnel authentication (407 Proxy Authentication "
+                    "Required). The proxy did not accept the credentials embedded in HTTPS_PROXY "
+                    "(wrong or expired ACUVITY_TOKEN, bad URL encoding, or org expects a "
+                    "different proxy auth mode). Fix the token and restart via "
+                    "./src/agent/run_ui.sh."
+                ),
+            ) from e
+        or_err = _openrouter_api_error_response(e)
+        if or_err is not None:
+            ostatus, odetail = or_err
+            logging.warning("OpenRouter API error (%s): %s", ostatus, odetail)
+            raise HTTPException(status_code=ostatus, detail=odetail) from e
         blocked_payload = policy_block_from_exception(e)
         if blocked_payload is not None:
             return blocked_payload
-        logging.warning(
-            "Agent error not classified as gateway policy block (%s). "
-            "Set DEBUG_ACUVITY_BLOCKS=1 on the server for full exception chain "
-            "and body snippets, or ACUVITY_BLOCK_HTTP_STATUSES=400 (comma-separated) "
-            "if Apex uses a status we do not map by default.",
-            type(e).__name__,
-        )
+        if isinstance(e, httpx.ProxyError):
+            logging.warning(
+                "Agent error: %s (proxy tunnel failure; not classified as Apex policy block). "
+                "See DEBUG_PROXY_UPSTREAM=1 logs for proxy target.",
+                type(e).__name__,
+            )
+        else:
+            logging.warning(
+                "Agent error not classified as gateway policy block (%s). "
+                "Set DEBUG_ACUVITY_BLOCKS=1 on the server for full exception chain "
+                "and body snippets, or ACUVITY_BLOCK_HTTP_STATUSES=400 (comma-separated) "
+                "if Apex uses a status we do not map by default.",
+                type(e).__name__,
+            )
         logging.exception("Agent run failed")
         raise HTTPException(
             status_code=500,

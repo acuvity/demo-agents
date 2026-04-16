@@ -41,20 +41,28 @@ if [[ "$MCP_SERVER" == "arcade" ]]; then
   export ARCADE_MCP_URL="${ARCADE_MCP_URL:?ARCADE_MCP_URL is not set (required when MCP_SERVER=arcade)}"
 fi
 
-# Download Apex CA
+# Download Apex CA (absolute path so SSL_CERT_FILE stays valid after cd into agent dir).
 # https://[APEX_URL]/_acuvity/ca.pem
-CA_PATH="$(dirname "$0")/ca.pem"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CA_PATH="$SCRIPT_DIR/ca.pem"
 
 if [ ! -f "$CA_PATH" ]; then
   curl -s -o "$CA_PATH" "${APEX_URL}/_acuvity/ca.pem"
 fi
 
-export HTTPS_PROXY="https://token:${ACUVITY_TOKEN}@${APEX_URL#https://}"
-export HTTP_PROXY="https://token:${ACUVITY_TOKEN}@${APEX_URL#https://}"
+# Percent-encode token in proxy userinfo. Raw tokens with @ : / + etc. break the URL and cause proxy 401.
+ACUVITY_TOKEN_PROXY_ESC="$(
+python3 <<'PY'
+import os, urllib.parse
+print(urllib.parse.quote(os.environ["ACUVITY_TOKEN"].strip(), safe=""))
+PY
+)"
+export HTTPS_PROXY="https://token:${ACUVITY_TOKEN_PROXY_ESC}@${APEX_URL#https://}"
+export HTTP_PROXY="https://token:${ACUVITY_TOKEN_PROXY_ESC}@${APEX_URL#https://}"
 
 export SSL_CERT_FILE="$CA_PATH"
 
-cd "$(dirname "$0")"
+cd "$SCRIPT_DIR"
 RESULTS_FILE="docs/results.md"
 uv run python3 main.py 2>&1 | tee "$RESULTS_FILE"
 
