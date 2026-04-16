@@ -25,7 +25,7 @@ Unless a command says otherwise, use `**agents/ibac-demo`** as your current dire
 
 ### Kubernetes (in-cluster)
 
-To run **UI**, **agent**, and **CRM MCP** on any Kubernetes cluster (same idea as [langgraph](../langgraph/README.md) / [google_adk](../google_adk/README.md)), follow **[deploy/k8s/README.md](deploy/k8s/README.md)** end to end. After workloads are healthy, import **[deploy/config/manifest.yaml](deploy/config/manifest.yaml)** with your org’s placeholders. There is no separate `k3s/` tree: one Helm chart, your kubeconfig.
+To run **UI**, **agent**, and **CRM MCP** on any Kubernetes cluster (same idea as [langgraph](../langgraph/README.md) / [google_adk](../google_adk/README.md)), follow **[deploy/k8s/README.md](deploy/k8s/README.md)** end to end. After workloads are healthy, import **[deploy/config/providers-openrouter.yaml](deploy/config/providers-openrouter.yaml)** then **[deploy/config/manifest.yaml](deploy/config/manifest.yaml)** with your org placeholders (`acuctl` commands are in that doc). There is no separate `k3s/` tree: one Helm chart, your kubeconfig.
 
 **Kubernetes quick start** (details and copy-paste commands are in **deploy/k8s/README.md** steps 1 through 8):
 

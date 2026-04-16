@@ -13,7 +13,7 @@ Helm chart: [charts/ibac-demo](./charts/ibac-demo). Deploys **UI**, **agent**, a
 | [Troubleshooting](#troubleshooting) | Common failures |
 | [Reference](#reference) | Docker Hub private repos, Dockerfiles, CA skip, links |
 | [MCP layout](#mcp-layout) | How the agent talks to MCP in-cluster |
-| [Acuvity manifest](#acuvity-manifest) | Policy import notes |
+| [Acuvity manifest](#acuvity-manifest) | `acuctl import` (OpenRouter provider, then app manifest) |
 | [Local rehearsal without Kubernetes](#local-rehearsal-without-kubernetes) | Docker Compose |
 
 ## Full procedure: first install
@@ -156,7 +156,30 @@ If the UI shows **Failed to fetch**, the browser never reached the app reliably:
 
 ### 8. Acuvity manifest (policy)
 
-After workloads are healthy, import [../config/manifest.yaml](../config/manifest.yaml) with placeholders updated for your org. See **Acuvity manifest** below for multipart vs JSON notes.
+After workloads are healthy, import Acuvity YAML into **dev** (`api.acuvity.dev`). Order matters: **OpenRouter provider** first, then **app manifest**.
+
+1. **Edit** [../config/manifest.yaml](../config/manifest.yaml): in `subject`, set **`@scope:project=`** and **`@apptoken:name=`** the same way Kanav described (add the project id and app token **name** after each `=` **inside the quotes**). Use [console.acuvity.dev](https://console.acuvity.dev). Do not commit real values if your team treats them as sensitive.
+
+2. **Shell** (example: project **marcus** from URL `https://console.acuvity.dev/apps/marcus/appagents` → path segment **`apps/marcus`**):
+
+```bash
+cd agents/ibac-demo
+
+export APP_ORG='acuvity.ai'
+export APP_PROJECT_PATH='apps/marcus'   # your slug after /apps/ in the console URL
+
+acuctl import -A https://api.acuvity.dev \
+  --namespace "/orgs/${APP_ORG}/${APP_PROJECT_PATH}" \
+  - < deploy/config/providers-openrouter.yaml
+
+acuctl import -A https://api.acuvity.dev \
+  --namespace "/orgs/${APP_ORG}/${APP_PROJECT_PATH}" \
+  - < deploy/config/manifest.yaml
+```
+
+3. If the app import fails on **`anthropic-api`**, ensure that provider exists in your project (org defaults or a separate provider import).
+
+See **Acuvity manifest** below for multipart vs JSON notes on extractors.
 
 ---
 
@@ -235,7 +258,12 @@ For deep HTTP debugging on the agent, set env **`DEBUG_PROXY_UPSTREAM=1`** or **
 
 ## Acuvity manifest
 
-Import [../config/manifest.yaml](../config/manifest.yaml) after you replace placeholders (`label`, `subject`, namespace, app name if needed). Deployment names in the manifest assume Helm release name **`ibac-demo`** in namespace **`ibac-demo`**.
+Files:
+
+- [../config/providers-openrouter.yaml](../config/providers-openrouter.yaml) - **OpenRouter** provider for egress `providers: [openrouter]`. Import **first** with the same **`-A`** and **`--namespace`** as the app.
+- [../config/manifest.yaml](../config/manifest.yaml) - **ibac-demo** app (UI, agent, **mcp-servers** component for Deployment **`mcp-ibac-local-tools`**).
+
+Fill **`@scope:project=`** and **`@apptoken:name=`** in `subject` before import (Kanav’s shape: values go after `=` inside the quoted strings). Deployment and Service DNS names assume Helm release **`ibac-demo`** in namespace **`ibac-demo`** (agent Service **`ibac-demo-agent`**, port **8000**).
 
 **Note:** The sample Lua extractors for `POST /send` assume a **JSON** body (`{"message":"..."}`). The interactive UI often sends **multipart/form-data** with a PDF. Adjust extractors for your policy needs or add a JSON-only path if required.
 
