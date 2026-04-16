@@ -2,6 +2,7 @@
 set -euo pipefail
 
 # Deploy ibac-demo Helm chart into namespace ibac-demo.
+# deploy.sh in this directory is a thin wrapper that execs this script (parity with other demos).
 # Usage:
 #   export OPENROUTER_API_KEY=...   # default LLM; or ANTHROPIC_API_KEY / OPENAI_API_KEY
 #   export ACUVITY_TOKEN=...
