@@ -11,3 +11,6 @@ src/agent/tests/demo-detection-results.md
 # Docker Compose local env (not committed)
 deploy/compose/.env
 deploy/compose/.env.template
+
+# Microsoft Word owner lock files (created while a .docx is open)
+**/~$*.docx
