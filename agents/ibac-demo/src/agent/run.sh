@@ -59,6 +59,9 @@ PY
 )"
 export HTTPS_PROXY="https://token:${ACUVITY_TOKEN_PROXY_ESC}@${APEX_URL#https://}"
 export HTTP_PROXY="https://token:${ACUVITY_TOKEN_PROXY_ESC}@${APEX_URL#https://}"
+# Skip proxy for in-cluster MCP (K8s) and local SSE (localhost).
+export NO_PROXY="127.0.0.1,localhost,.svc.cluster.local"
+export no_proxy="$NO_PROXY"
 
 export SSL_CERT_FILE="$CA_PATH"
 

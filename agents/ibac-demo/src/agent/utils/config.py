@@ -80,12 +80,14 @@ def build_mcp_config() -> dict:
     if server == "local":
         sse_url = os.environ.get("LOCAL_MCP_SSE_URL")
         if sse_url:
+            # langchain-mcp-adapters 0.2.x: SSE uses timeout + sse_read_timeout (seconds),
+            # not read_timeout_seconds / read_transport_sse_timeout_seconds.
             return {
                 "local": {
                     "url": sse_url,
                     "transport": "sse",
-                    "read_timeout_seconds": 65534,
-                    "read_transport_sse_timeout_seconds": 65534,
+                    "timeout": 65534.0,
+                    "sse_read_timeout": 65534.0,
                 }
             }
         return {

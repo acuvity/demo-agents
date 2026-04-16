@@ -10,25 +10,24 @@ Unless a command says otherwise, run it with your **current directory set to `ib
 
 - `**src/agent/**` - Python app (`main.py`, `server.py`, `utils/`, `tools/`, `prompt-scenarios/`, `docs/`, `tests/`), `pyproject.toml`, and Acuvity `**run.sh**` / `**run_ui.sh**` (run as `./src/agent/run.sh` or `cd src/agent && ./run.sh`).
 - `**src/ui/chat_ui/**` - Vite + React chat UI (container image builds from `**src/ui/Dockerfile**` with context `src/ui`, same pattern as langgraph/google_adk)
-- `**deploy/**` - Kubernetes Helm chart, Acuvity **manifest** import, optional Docker Compose ([deploy/k8s/README.md](deploy/k8s/README.md))
+- `**deploy/**` - Kubernetes Helm chart, Acuvity **manifest** import, optional Docker Compose; start at **[deploy/README.md](deploy/README.md)** or go directly to [deploy/k8s/README.md](deploy/k8s/README.md)
 - `**assets/`** (repo root) - Diagram for this README and sample PDFs for manual UI upload testing (e.g. `Q4_Operations_Report.pdf`)
 
 ### Remote deployment (Kubernetes + Acuvity manifest)
 
 To run the **UI**, **agent**, and **CRM MCP** in-cluster (same pattern as [fast-agent](../fast-agent) and the Helm flow in [langgraph](../langgraph/README.md) / [google_adk](../google_adk/README.md)), see **[deploy/k8s/README.md](deploy/k8s/README.md)**. That guide covers **Rancher Desktop** (local Kubernetes, k3s-style), **Docker Hub** under your personal account (build, tag, push, Helm `image.*.repository`), the Helm chart, and the Acuvity **CA bundle**. There is no separate Rancher or K3s **application** code in this repo beyond Helm and docs; Rancher Desktop or any Kubernetes cluster runs the same chart. Build images from `src/agent/Dockerfile` and `src/ui/Dockerfile`, install the chart with your registry paths, then import [deploy/config/manifest.yaml](deploy/config/manifest.yaml) after replacing placeholders. Local laptop workflows stay the same: `MCP_SERVER=local` without `LOCAL_MCP_SSE_URL` still uses **stdio** to `tools/mcp_tools.py`.
 
-<details>
-<summary><strong>Kubernetes deployment (quick start)</strong></summary>
+**Kubernetes deployment (quick start)**
 
 1. **Cluster:** Use [Rancher Desktop](https://rancherdesktop.io/) with Kubernetes enabled, or any cluster your team provides. Check `kubectl get nodes`.
 2. **Images:** From this folder (`ibac-demo`), `docker login` to Hub, then build and push `YOUR_DOCKER_ID/ibac-demo-agent` and `YOUR_DOCKER_ID/ibac-demo-ui` (your Docker Hub username replaces `YOUR_DOCKER_ID`). Full commands are in [deploy/k8s/README.md](deploy/k8s/README.md).
-3. **Install:** `helm upgrade --install` with `secrets.acuvity_token`, `agent.apexUrl`, **`OPENROUTER_API_KEY`** (default LLM in chart), and `--set image.agent.repository` / `--set image.ui.repository` pointing at Hub (see the Install section in that README). Or set `DOCKER_HUB_USER` when using [deploy/k8s/deploy-ibac-demo.sh](deploy/k8s/deploy-ibac-demo.sh).
-4. **UI:** `kubectl -n ibac-demo port-forward svc/ibac-demo-ui 3000:80` then open http://localhost:3000/
+3. **Install:** `helm upgrade --install` with `secrets.acuvity_token`, `agent.apexUrl`, `**OPENROUTER_API_KEY`** (default LLM in chart), and `--set image.agent.repository` / `--set image.ui.repository` pointing at Hub (see the Install section in that README). Or set `DOCKER_HUB_USER` when using [deploy/k8s/deploy-ibac-demo.sh](deploy/k8s/deploy-ibac-demo.sh).
+4. **UI:** `kubectl -n ibac-demo port-forward svc/ibac-demo-ui 3000:80` then open [http://localhost:3000/](http://localhost:3000/)
 5. **Acuvity:** Import the manifest from [deploy/config/manifest.yaml](deploy/config/manifest.yaml) per your org’s process (see also [infra/cli/README.md](../../infra/cli/README.md) if your repo uses that flow for other agents).
 
 You do **not** need to share your Docker ID or Rancher credentials in git; use placeholders in docs and real values only in your shell or private values files.
 
-</details>
+
 
 ## Prerequisites
 
@@ -55,7 +54,7 @@ You do **not** need to share your Docker ID or Rancher credentials in git; use p
 | `ARCADE_USER_ID`                | Required when `MCP_SERVER=arcade`                                                                         |
 | `ARCADE_MCP_URL`                | Required when `MCP_SERVER=arcade`                                                                         |
 | `LOCAL_MCP_SSE_URL`             | When set with `MCP_SERVER=local`, connect to remote MCP over **SSE** (Kubernetes/Docker) instead of stdio |
-| `LOCAL_MCP_TRANSPORT`           | On the MCP process only: `stdio` (default) or `sse` (see `tools/mcp_tools.py`)                          |
+| `LOCAL_MCP_TRANSPORT`           | On the MCP process only: `stdio` (default) or `sse` (see `tools/mcp_tools.py`)                            |
 | `FASTMCP_HOST` / `FASTMCP_PORT` | Bind address for SSE MCP server (use `0.0.0.0` in containers)                                             |
 | `PROMPTS_TYPE`                  | `simple` (default), `scenario`, or `demo`                                                                 |
 
@@ -63,16 +62,16 @@ You do **not** need to share your Docker ID or Rancher credentials in git; use p
 Advanced overrides (optional):
 
 
-| Variable           | Description                                                                                                                                                                                                                                                                       |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LLM_MODEL`        | Model name override. Defaults: `claude-opus-4-6` (Anthropic), `gpt-4o` (OpenAI)                                                                                                                                                                                                   |
-| `OPENROUTER_MODEL` | OpenRouter model override (default: `stepfun/step-3.5-flash`)                                                                                                                                                                                                                     |
-| `LLM_BASE_URL`     | Override the API endpoint - enables any third-party compatible API                                                                                                                                                                                                                |
-| `LLM_API_KEY`      | Override the API key - takes precedence over the provider-specific key                                                                                                                                                                                                            |
-| `DEBUG_LLM`        | Set to `1` to print a non-secret LLM key fingerprint (`key_source`, last 4 chars of key, model) to stderr when `build_llm` runs. Use the same value when running `./src/agent/run.sh` / `./src/agent/run_ui.sh` to confirm both use the same key. |
+| Variable               | Description                                                                                                                                                                                                                                                            |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LLM_MODEL`            | Model name override. Defaults: `claude-opus-4-6` (Anthropic), `gpt-4o` (OpenAI)                                                                                                                                                                                        |
+| `OPENROUTER_MODEL`     | OpenRouter model override (default: `stepfun/step-3.5-flash`)                                                                                                                                                                                                          |
+| `LLM_BASE_URL`         | Override the API endpoint - enables any third-party compatible API                                                                                                                                                                                                     |
+| `LLM_API_KEY`          | Override the API key - takes precedence over the provider-specific key                                                                                                                                                                                                 |
+| `DEBUG_LLM`            | Set to `1` to print a non-secret LLM key fingerprint (`key_source`, last 4 chars of key, model) to stderr when `build_llm` runs. Use the same value when running `./src/agent/run.sh` / `./src/agent/run_ui.sh` to confirm both use the same key.                      |
 | `DEBUG_PROXY_UPSTREAM` | Set to `1` when `HTTPS_PROXY` is set (e.g. `run_ui.sh`) to log full upstream HTTP details on agent errors: exception chain, `request_url`, `http_status`, and `response_body` (may be Acuvity gateway or LLM vendor). Do not share these logs if they contain secrets. |
-| `IBAC_AGENT_ROOT`  | Optional absolute path to the agent package (folder with `main.py`, `tools/`, `prompt-scenarios/`). Defaults to resolving from `utils/paths.py`. Use if you run Python from an unusual working directory without `cd src/agent`.                                                  |
-| `IBAC_UPLOAD_DIR`  | Optional absolute path for PDF uploads. Defaults to `{agent root}/uploads`. Must match between the API server and `parse_file` when overridden.                                                                                                                                   |
+| `IBAC_AGENT_ROOT`      | Optional absolute path to the agent package (folder with `main.py`, `tools/`, `prompt-scenarios/`). Defaults to resolving from `utils/paths.py`. Use if you run Python from an unusual working directory without `cd src/agent`.                                       |
+| `IBAC_UPLOAD_DIR`      | Optional absolute path for PDF uploads. Defaults to `{agent root}/uploads`. Must match between the API server and `parse_file` when overridden.                                                                                                                        |
 
 
 ## Getting Acuvity App Token
@@ -206,3 +205,4 @@ To point the frontend at a different backend host:
 ```bash
 BACKEND_URL=http://your-host:8300 npm run dev
 ```
+

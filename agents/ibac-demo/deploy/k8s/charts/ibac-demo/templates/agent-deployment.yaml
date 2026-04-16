@@ -33,6 +33,9 @@ spec:
               set -e
               export HTTPS_PROXY="https://token:${ACUVITY_TOKEN}@${APEX_URL#https://}"
               export HTTP_PROXY="$HTTPS_PROXY"
+              # In-cluster MCP (LOCAL_MCP_SSE_URL) must not use the external proxy; httpx would fail.
+              export NO_PROXY="127.0.0.1,localhost,.svc.cluster.local"
+              export no_proxy="$NO_PROXY"
               exec uv run uvicorn server:app --host 0.0.0.0 --port 8000
           ports:
             - name: http
