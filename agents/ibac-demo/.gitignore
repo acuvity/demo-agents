@@ -1,0 +1,22 @@
+# PDF uploads from chat UI (server.py)
+src/agent/uploads/
+
+# Generated / local outputs under docs (keep README.md, generate_demo.py tracked)
+src/agent/docs/results.md
+
+# Generated outputs from tests/ experiment scripts (keep *.py and README.md tracked)
+src/agent/tests/comparison-results.md
+src/agent/tests/demo-detection-results.md
+
+# Docker Compose local env (not committed)
+deploy/compose/.env
+deploy/compose/.env.template
+
+
+# Microsoft Word owner lock files (created while a .docx is open)
+**/~$*.docx
+
+# TLS / CA material (downloaded Apex ca.pem, deploy/k8s gateway dev pair, local certs)
+src/agent/ca.pem
+deploy/k8s/ca/
+certs/

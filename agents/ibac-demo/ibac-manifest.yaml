@@ -1,0 +1,127 @@
+label: apps/ibac-demo
+apps:
+  - name: ibac-demo
+    description: "IBAC agent application using LangGraph."
+    subject:
+      - - "@org=${APP_ORG}"
+    tracing: Recording
+    otelReceivers:
+      - endpoint: "127.0.0.1:4317"
+        protocol: GRPC
+      - endpoint: "127.0.0.1:4318"
+        protocol: HTTP
+    selector:
+      type: None
+    components:
+      - name: ui
+        description: "The UI running a React application."
+        kind: Other
+        selector:
+          type: None
+        ingress:
+          defaultACLAction: Allow
+          ACLs:
+            - name: allow-all-external
+              IPRanges:
+                - "0.0.0.0/0"
+              port: 80
+              description: "Allow all external requests"
+              action: Allow
+        egress:
+          defaultPolicy:
+            ACLAction: Allow
+      - name: agent
+        description: "The agent running the API server."
+        kind: Agent
+        selector:
+          type: None
+        ingress:
+          defaultACLAction: Allow
+          ACLs:
+            - name: allow-all-external
+              IPRanges:
+                - "0.0.0.0/0"
+              port: 8000
+              description: "Allow all external requests"
+              action: Allow
+          listeners:
+            - port: 8000
+              mode: Proxy
+              hosts:
+                - ibac-demo-agent
+                - ibac-demo-agent.ibac-demo
+                - ibac-demo-agent.ibac-demo.svc.cluster.local
+              proxy:
+                listenTLS: Disabled
+                dialTLS: Disabled
+                defaultPolicyAction: Allow
+                policies:
+                  - name: allow-all-external
+                    description: "Allow all external requests"
+                    rules:
+                      - action: Allow
+                        IPRanges:
+                          - "0.0.0.0/0"
+        egress:
+          defaultPolicy:
+            ACLAction: Allow
+          policies:
+            - name: allow-openrouter
+              description: "Allow requests to OpenRouter"
+              rules:
+                - action: Allow
+                  mode: Proxy
+                  proxyAction: Allow
+                  providers:
+                    - openrouter
+            - name: allow-anthropic
+              description: "Allow requests to Anthropic API"
+              rules:
+                - action: Allow
+                  mode: Proxy
+                  proxyAction: Allow
+                  providers:
+                    - anthropic-api
+      - name: mcp-servers
+        description: "MCP servers that the agent uses."
+        kind: Other
+        selector:
+          type: None
+        ingress:
+          defaultACLAction: Allow
+          ACLs:
+            - name: allow-all-external
+              IPRanges:
+                - "0.0.0.0/0"
+              port: 8000
+              description: "Allow all external requests"
+              action: Allow
+          listeners:
+            - port: 8000
+              mode: Proxy
+              hosts:
+                - mcp-ibac-local-tools
+                - mcp-ibac-local-tools.ibac-demo
+                - mcp-ibac-local-tools.ibac-demo.svc.cluster.local
+              extractors:
+                - ref: mcp/input-sse
+                - ref: mcp/output-sse
+                - ref: mcp/input-http
+                - ref: mcp/output-http
+                - ref: mcp/output-http-get
+              proxy:
+                listenTLS: Disabled
+                dialTLS: Disabled
+                defaultPolicyAction: Allow
+                policies:
+                  - name: allow-agent
+                    description: "Allow agent to call MCP servers"
+                    rules:
+                      - action: Allow
+                        mode: Proxy
+                        proxyAction: Allow
+                        appComponents:
+                          - "ibac-demo/agent"
+        egress:
+          defaultPolicy:
+            ACLAction: Allow

@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.mcpLocal.deploymentName }}
+  labels:
+    app: {{ .Values.mcpLocal.deploymentName }}
+    type: mcp-tool
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.mcpLocal.deploymentName }}
+      type: mcp-tool
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.mcpLocal.deploymentName }}
+        type: mcp-tool
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: mcp
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.agent.repository }}:{{ .Values.image.agent.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.agent.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - exec uv run python3 tools/mcp_tools.py
+          ports:
+            - name: http
+              containerPort: {{ .Values.mcpLocal.port }}
+              protocol: TCP
+          env:
+            - name: LOCAL_MCP_TRANSPORT
+              value: "sse"
+            - name: FASTMCP_HOST
+              value: "0.0.0.0"
+            - name: FASTMCP_PORT
+              value: {{ .Values.mcpLocal.port | quote }}

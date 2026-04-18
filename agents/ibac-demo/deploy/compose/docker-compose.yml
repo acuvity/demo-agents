@@ -1,0 +1,50 @@
+# Local multi-container rehearsal (UI + agent + MCP). Not required for Kubernetes.
+# From this directory:
+#   docker compose --env-file .env up --build
+#
+# .env must include ACUVITY_TOKEN, APEX_URL, LLM keys, and the same proxy settings
+# you use for ./src/agent/run_ui.sh, for example:
+#   HTTPS_PROXY=https://token:${ACUVITY_TOKEN}@${APEX_URL#https://}
+#   HTTP_PROXY=${HTTPS_PROXY}
+#   SSL_CERT_FILE=/path/in/container/ca.pem
+# For a quick test without mounting ca.pem, you may need to add your Apex CA to the image.
+
+services:
+  mcp:
+    build:
+      context: ../../src/agent
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "exec uv run python3 tools/mcp_tools.py"]
+    environment:
+      LOCAL_MCP_TRANSPORT: sse
+      FASTMCP_HOST: "0.0.0.0"
+      FASTMCP_PORT: "8000"
+    ports:
+      - "18000:8000"
+
+  agent:
+    build:
+      context: ../../src/agent
+      dockerfile: Dockerfile
+    depends_on:
+      - mcp
+    env_file:
+      - .env
+    environment:
+      PORT: "8000"
+      MCP_SERVER: local
+      LOCAL_MCP_SSE_URL: http://mcp:8000/sse
+      LLM_PROVIDER: ${LLM_PROVIDER:-openrouter}
+    ports:
+      - "8300:8000"
+
+  ui:
+    build:
+      context: ../../src/ui
+      dockerfile: Dockerfile
+    depends_on:
+      - agent
+    environment:
+      BACKEND_URL: "http://agent:8000"
+    ports:
+      - "5174:5174"

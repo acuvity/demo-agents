@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://api.acuvity.dev/api/v1/jsonschema/import.json
+#
+# OpenRouter provider definition for Acuvity dev (api.acuvity.dev).
+# Import before deploy/config/manifest.yaml so egress can reference providers: [openrouter].
+# See deploy/k8s/README.md (Acuvity manifest).
+
+label: acuvity.ai/providers/openrouter
+providers:
+  - name: openrouter
+    status: Stable
+    friendlyName: OpenRouter
+    category: App
+    webHost: openrouter.ai
+    hosts:
+      - name: api.openrouter.ai
+    extractors:
+      - ref: oaiapi/responses/input
+      - ref: oaiapi/responses/output
+      - ref: oaiapi/responses/output/get
+      - ref: oaiapi/responses/ws/input
+      - ref: oaiapi/responses/ws/output
+      - ref: oaiapi/text/completions/input
+      - ref: oaiapi/text/completions/output
+      - ref: oaiapi/audio/generation/input
+      - ref: oaiapi/audio/transcriptions/input
+      - ref: oaiapi/audio/translations/input
+      - ref: oaiapi/text/embeddings/input
+      - ref: oaiapi/file/upload/input
+      - ref: oaiapi/image/generations/input
+      - ref: oaiapi/image/edits/input
+      - ref: oaiapi/image/variations/input
+      - ref: oaiapi/audio/speech/output
+      - ref: oaiapi/audio/transcriptions/output
+      - ref: oaiapi/audio/translations/output
+      - ref: oaiapi/text/embeddings/output
+      - ref: oaiapi/image/generations/output
+      - ref: oaiapi/image/edits/output
+      - ref: oaiapi/image/variations/output
+      - ref: anth/v1/messages/input
+      - ref: anth/v1/messages/output
