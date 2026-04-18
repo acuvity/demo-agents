@@ -12,5 +12,11 @@ src/agent/tests/demo-detection-results.md
 deploy/compose/.env
 deploy/compose/.env.template
 
+
 # Microsoft Word owner lock files (created while a .docx is open)
 **/~$*.docx
+
+# TLS / CA material (downloaded Apex ca.pem, deploy/k8s gateway dev pair, local certs)
+src/agent/ca.pem
+deploy/k8s/ca/
+certs/
