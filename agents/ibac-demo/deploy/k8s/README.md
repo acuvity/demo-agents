@@ -10,6 +10,7 @@ Helm chart: [charts/ibac-demo](./charts/ibac-demo). Deploys **UI**, **agent**, a
 | [After code or image changes](#after-code-or-image-changes) | Rebuild agent image, push, restart pods |
 | [Rotate API key](#rotate-openrouter-or-other-api-key-only) | Update a secret without reinstalling everything |
 | [Progressive rollout (Apex)](#progressive-rollout-apex) | Optional mental model: local vs Apex vs in-cluster gateway |
+| [Cloud-apex dev certificates](#cloud-apex-dev-certificates) | Dev signing pair for gateway installs (not [step 3](#3-apex-tls-bundle-configmap) client CA) |
 | [Troubleshooting](#troubleshooting) | Common failures |
 | [Reference](#reference) | Docker Hub private repos, Dockerfiles, CA skip, links |
 | [MCP layout](#mcp-layout) | How the agent talks to MCP in-cluster |
@@ -158,7 +159,7 @@ If the UI shows **Failed to fetch**, the browser never reached the app reliably:
 
 After workloads are healthy, import Acuvity YAML into **dev** (`api.acuvity.dev`). Order matters: **OpenRouter provider** first, then **app manifest**.
 
-1. **Edit** [../config/manifest.yaml](../config/manifest.yaml): in `subject`, set **`@scope:project=`** and **`@apptoken:name=`** the same way Kanav described (add the project id and app token **name** after each `=` **inside the quotes**). Use [console.acuvity.dev](https://console.acuvity.dev). Do not commit real values if your team treats them as sensitive.
+1. **Subject:** [../config/manifest.yaml](../config/manifest.yaml) uses **`@org=${APP_ORG}`**. **`export APP_ORG=acuvity.ai`** (or your org) before the **`envsubst | acuctl import`** line below, or replace that line with a literal **`@org=acuvity.ai`** and keep using **`- < deploy/config/manifest.yaml`**. Do not commit secrets.
 
 2. **Shell** (example: project **marcus** from URL `https://console.acuvity.dev/apps/marcus/appagents` → path segment **`apps/marcus`**):
 
@@ -172,9 +173,8 @@ acuctl import -A https://api.acuvity.dev \
   --namespace "/orgs/${APP_ORG}/${APP_PROJECT_PATH}" \
   - < deploy/config/providers-openrouter.yaml
 
-acuctl import -A https://api.acuvity.dev \
-  --namespace "/orgs/${APP_ORG}/${APP_PROJECT_PATH}" \
-  - < deploy/config/manifest.yaml
+envsubst < deploy/config/manifest.yaml | acuctl import -A https://api.acuvity.dev \
+  --namespace "/orgs/${APP_ORG}/${APP_PROJECT_PATH}" -
 ```
 
 3. If the app import fails on **`anthropic-api`**, ensure that provider exists in your project (org defaults or a separate provider import).
@@ -221,7 +221,30 @@ High-level order (details are **steps 1 through 8** above):
 
 1. **App on cluster** - Images on a registry, Helm release healthy, UI via port-forward ([step 7](#7-access-the-ui)). This chart expects **Apex** (`ACUVITY_TOKEN`, `APEX_URL`, proxy on the agent pod). For **no Apex on Kubernetes** you would need a chart change or use [local Compose](../compose/README.md) / local dev without proxy.
 2. **With Apex** - **Steps 3 through 5**: CA ConfigMap, secrets, `helm` or `./deploy.sh`.
-3. **In-cluster gateway (e.g. cloud-apex)** - Install Acuvity’s gateway per their doc; set **`APEX_URL`** to that service URL. This repo only ships **ibac-demo** Helm, not cloud-apex itself.
+3. **In-cluster gateway (e.g. cloud-apex)** - Install Acuvity’s gateway per their doc (Helm in the gateway namespace, not this chart). Set **`APEX_URL`** on **ibac-demo** to that gateway’s HTTPS URL. See [Cloud-apex dev certificates](#cloud-apex-dev-certificates) if you need a **dev signing pair** for the gateway itself.
+
+### Cloud-apex dev certificates
+
+This section is **only** for operators who install **cloud-apex** (or another in-cluster Apex gateway) in **development** when enterprise PKI is not used. It is **not** the same file as [step 3](#3-apex-tls-bundle-configmap).
+
+| Files | Purpose |
+|-------|---------|
+| **`${APEX_URL}/_acuvity/ca.pem`** (step 3) | **Client trust**: the **ibac-demo** agent trusts the Apex HTTPS endpoint. Stored in ConfigMap **`acuvity-ca-bundle`**. |
+| **`ca-cert.pem`** + **`ca-key.pem`** (below) | **Signing pair for the gateway** in dev (used by Acuvity’s gateway install, not by the ibac-demo Helm chart). |
+
+From **`agents/ibac-demo/deploy/k8s`** (files land in **`ca/`**, which is [gitignored](../../.gitignore) so **`ca-key.pem` is never committed**):
+
+```bash
+mkdir -p ca
+curl -fsS -o ./ca/ca-cert.pem \
+  https://raw.githubusercontent.com/acuvity/demo-agents/refs/heads/main/certs/ca-cert.pem
+curl -fsS -o ./ca/ca-key.pem \
+  https://raw.githubusercontent.com/acuvity/demo-agents/refs/heads/main/certs/ca-key.pem
+```
+
+**Warnings:** Dev-only material; **do not commit** the private key; not for production. Use Acuvity’s full gateway documentation for **where** these paths are referenced (Helm values, secrets, mounts).
+
+**After the gateway is running:** point **`APEX_URL`** at that gateway’s URL when you [export secrets for Helm](#4-export-secrets-for-helm). You may still need [step 3](#3-apex-tls-bundle-configmap) for **`_acuvity/ca.pem`** on **ibac-demo** pods so the agent trusts that endpoint, depending on your TLS chain.
 
 ---
 
@@ -261,9 +284,9 @@ For deep HTTP debugging on the agent, set env **`DEBUG_PROXY_UPSTREAM=1`** or **
 Files:
 
 - [../config/providers-openrouter.yaml](../config/providers-openrouter.yaml) - **OpenRouter** provider for egress `providers: [openrouter]`. Import **first** with the same **`-A`** and **`--namespace`** as the app.
-- [../config/manifest.yaml](../config/manifest.yaml) - **ibac-demo** app (UI, agent, **mcp-servers** component for Deployment **`mcp-ibac-local-tools`**).
+- [../config/manifest.yaml](../config/manifest.yaml) - **ibac-demo** app (UI, agent, **mcp-servers**; selectors **`type: None`**, listener hosts still match in-cluster DNS when you use Helm).
 
-Fill **`@scope:project=`** and **`@apptoken:name=`** in `subject` before import (Kanav’s shape: values go after `=` inside the quoted strings). Deployment and Service DNS names assume Helm release **`ibac-demo`** in namespace **`ibac-demo`** (agent Service **`ibac-demo-agent`**, port **8000**).
+`subject` is **`@org=${APP_ORG}`** only (expand with **`envsubst`** or edit to a literal org). Listener **hosts** in the manifest align with Helm when you use the cluster: agent **`ibac-demo-agent`**, MCP **`mcp-ibac-local-tools`**, ports **8000** for agent and MCP, **80** for UI ACL.
 
 **Note:** The sample Lua extractors for `POST /send` assume a **JSON** body (`{"message":"..."}`). The interactive UI often sends **multipart/form-data** with a PDF. Adjust extractors for your policy needs or add a JSON-only path if required.
 

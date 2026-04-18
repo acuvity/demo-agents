@@ -1,26 +1,9 @@
-# yaml-language-server: $schema=https://api.acuvity.dev/api/v1/jsonschema/import.json
-#
-# Acuvity app manifest for ibac-demo (LangGraph + in-cluster MCP). Dev API: api.acuvity.dev.
-#
-# Before import:
-#   1) Import deploy/config/providers-openrouter.yaml (same acuctl -A and --namespace).
-#   2) In subject, set values after = inside each quoted string (same shape Kanav shared; no separate REPLACE_* keys).
-#
-# Kubernetes names must match Helm (release ibac-demo, namespace ibac-demo):
-#   Deployments: ibac-demo-ui, ibac-demo-agent, mcp-ibac-local-tools
-
 label: apps/ibac-demo
-
 apps:
   - name: ibac-demo
     description: "IBAC agent application using LangGraph."
     subject:
-      - - "@source:namespace=/"
-        - "@source:type=mtls"
-        - "@source:name=app-tokens"
-        - "@org=acuvity.ai"
-        - "@scope:project=marcus" # whatever project you are working in; add id after = inside the quotes
-        - "@apptoken:name=ibacdemo-apex-agent" # token you are using from the dev console; add name after = inside the quotes
+      - - "@org=${APP_ORG}"
     tracing: Recording
     otelReceivers:
       - endpoint: "127.0.0.1:4317"
@@ -28,19 +11,13 @@ apps:
       - endpoint: "127.0.0.1:4318"
         protocol: HTTP
     selector:
-      type: Kubernetes
-      kubernetes:
-        kubernetesNamespace: ibac-demo
+      type: None
     components:
       - name: ui
         description: "The UI running a React application."
         kind: Other
         selector:
-          type: Kubernetes
-          kubernetes:
-            name: ibac-demo-ui
-            kubernetesNamespace: ibac-demo
-            type: Deployment
+          type: None
         ingress:
           defaultACLAction: Allow
           ACLs:
@@ -57,11 +34,7 @@ apps:
         description: "The agent running the API server."
         kind: Agent
         selector:
-          type: Kubernetes
-          kubernetes:
-            name: ibac-demo-agent
-            kubernetesNamespace: ibac-demo
-            type: Deployment
+          type: None
         ingress:
           defaultACLAction: Allow
           ACLs:
@@ -78,36 +51,6 @@ apps:
                 - ibac-demo-agent
                 - ibac-demo-agent.ibac-demo
                 - ibac-demo-agent.ibac-demo.svc.cluster.local
-                - localhost
-                - "127.0.0.1"
-              extractors:
-                - def:
-                    name: chat/request/message
-                    type: Input
-                    path: "/send"
-                    method: Post
-                    script: |-
-                      function extract()
-                        body = json.decode(input.body())
-                        return {
-                          extractions = { content = body.message },
-                        }
-                      end
-                - def:
-                    name: chat/response/output
-                    type: Output
-                    path: "/send"
-                    method: Post
-                    script: |-
-                      function extract()
-                        body = json.decode(input.body())
-                        return {
-                          extractions = {
-                            content = body.output,
-                            blocked = body.blocked,
-                          },
-                        }
-                      end
               proxy:
                 listenTLS: Disabled
                 dialTLS: Disabled
@@ -123,24 +66,19 @@ apps:
           defaultPolicy:
             ACLAction: Allow
           policies:
-            - name: allow-mcp-servers
-              description: "Allow requests to in-cluster MCP server"
-              rules:
-                - mode: Proxy
-                  proxyAction: Allow
-                  appComponents:
-                    - "ibac-demo/mcp-servers"
             - name: allow-openrouter
               description: "Allow requests to OpenRouter"
               rules:
-                - mode: Proxy
+                - action: Allow
+                  mode: Proxy
                   proxyAction: Allow
                   providers:
                     - openrouter
             - name: allow-anthropic
               description: "Allow requests to Anthropic API"
               rules:
-                - mode: Proxy
+                - action: Allow
+                  mode: Proxy
                   proxyAction: Allow
                   providers:
                     - anthropic-api
@@ -148,11 +86,7 @@ apps:
         description: "MCP servers that the agent uses."
         kind: Other
         selector:
-          type: Kubernetes
-          kubernetes:
-            name: mcp-ibac-local-tools
-            kubernetesNamespace: ibac-demo
-            type: Deployment
+          type: None
         ingress:
           defaultACLAction: Allow
           ACLs:
@@ -160,7 +94,7 @@ apps:
               IPRanges:
                 - "0.0.0.0/0"
               port: 8000
-              description: "Allow all external requests (MCP Service port)"
+              description: "Allow all external requests"
               action: Allow
           listeners:
             - port: 8000
@@ -183,7 +117,8 @@ apps:
                   - name: allow-agent
                     description: "Allow agent to call MCP servers"
                     rules:
-                      - mode: Proxy
+                      - action: Allow
+                        mode: Proxy
                         proxyAction: Allow
                         appComponents:
                           - "ibac-demo/agent"
