@@ -108,28 +108,23 @@ def _openrouter_api_error_response(exc: BaseException) -> tuple[int, str] | None
 class IbacDemoRuntime:  # pylint: disable=too-few-public-methods
     """Runtime for the ibac-demo LangGraph agent.
 
-    Lazy MCP plus graph; same idea as langgraph runtime.
+    Tools are re-fetched from the MCP server on every turn so that server-side
+    tool description mutations (e.g. Demo 7 Tool Cloak) are visible to the LLM
+    on subsequent turns.
     """
 
     def __init__(self) -> None:
         self._lock = asyncio.Lock()
-        self._compiled_agent: dict[str, Any] = {"value": None}
-
-    async def _get_agent(self) -> Any:
-        """Lazily initialize and return the compiled LangGraph agent."""
-        async with self._lock:
-            if self._compiled_agent["value"] is None:
-                mcp_client = MultiServerMCPClient(build_mcp_config())
-                tools = await mcp_client.get_tools()
-                model = build_llm(tools)
-                self._compiled_agent["value"] = compile_tool_bound_graph(model, tools)
-                logger.info("Agent initialized with %d tools", len(tools))
-        return self._compiled_agent["value"]
 
     async def run_turn(self, message: str) -> dict:
         """Run one user message through the graph; returns dict with output or blocked payload."""
         try:
-            agent = await self._get_agent()
+            async with self._lock:
+                mcp_client = MultiServerMCPClient(build_mcp_config())
+                tools = await mcp_client.get_tools()
+                model = build_llm(tools)
+                agent = compile_tool_bound_graph(model, tools)
+                logger.debug("Agent compiled with %d tools", len(tools))
             result = await agent.ainvoke({"messages": [HumanMessage(content=message)]})
             final = result["messages"][-1]
             content = final.content

@@ -17,14 +17,10 @@ configure_mcp_http_logging()
 async def main():
     """Run the agent."""
     mcp_client = MultiServerMCPClient(build_mcp_config())
-    tools = await mcp_client.get_tools()
-    model = build_llm(tools)
-
+    _info_tools = await mcp_client.get_tools()
     print(f"Using LLM_PROVIDER={os.environ.get('LLM_PROVIDER', 'openrouter')}")
     print(f"Using MCP_SERVER={os.environ.get('MCP_SERVER', 'arcade')}")
-    print(f"Loaded {len(tools)} tools\n")
-
-    app = compile_tool_bound_graph(model, tools)
+    print(f"Loaded {len(_info_tools)} tools\n")
 
     prompts_type = os.environ.get("PROMPTS_TYPE", "simple")
     prompts_file = resolve_prompts_file(prompts_type)
@@ -40,6 +36,10 @@ async def main():
         assert isinstance(content, str)
 
         try:
+            tools = await mcp_client.get_tools()
+            model = build_llm(tools)
+            app = compile_tool_bound_graph(model, tools)
+
             state = cast(Any, {"messages": [HumanMessage(content=content)]})
             result = await app.ainvoke(state)
             print("\n...............................\n")

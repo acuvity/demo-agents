@@ -40,8 +40,7 @@ def preview_from_prompt(text: str, max_len: int = 120) -> str:
 def load_demo_cards_for_api(prompts_path: Path | None = None) -> list[dict[str, Any]]:
     """Payload for GET /scenarios: num, title, fullPrompt, preview.
 
-    FAQ cards use fullPrompt only; title and preview remain for any other consumers.
-    Demo 1 is listed last so the home grid matches the requested order.
+    Order matches demo-prompts.txt (Demo 1 through Demo 6). FAQ cards use fullPrompt.
     """
     out = []
     for item in load_demo_prompt_items(prompts_path):
@@ -54,6 +53,4 @@ def load_demo_cards_for_api(prompts_path: Path | None = None) -> list[dict[str, 
                 "preview": preview_from_prompt(prompt),
             }
         )
-    first = [c for c in out if c["num"] == 1]
-    rest = [c for c in out if c["num"] != 1]
-    return rest + first
+    return out

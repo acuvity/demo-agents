@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, type KeyboardEvent, type ChangeEvent } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
 import { Send, BriefcaseBusiness, Sparkles, User, Bot, AlertCircle, RotateCcw, Paperclip, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -17,19 +18,19 @@ interface DemoScenario {
   fullPrompt: string
 }
 
-/** Demo 1 last (matches GET /scenarios order and works if the API is still on file order). */
-function orderScenariosForFaq(
+/** Match GET /scenarios: same order as demo-prompts.txt (1..6). */
+function scenariosForFaq(
   rows: Array<{ num: number; fullPrompt: string }>
 ): DemoScenario[] {
-  const normalized = rows.map((r) => ({ num: r.num, fullPrompt: r.fullPrompt }))
-  const first = normalized.filter((s) => s.num === 1)
-  const rest = normalized.filter((s) => s.num !== 1)
-  return [...rest, ...first]
+  return [...rows]
+    .map((r) => ({ num: r.num, fullPrompt: r.fullPrompt }))
+    .sort((a, b) => a.num - b.num)
 }
 
-/** Short FAQ label; hover `title` and click still use the full prompt. */
+/** Short FAQ label; prefer first paragraph (before blank line) so link lines stay off the card. */
 function clipPromptForFaqCard(text: string, maxChars = 110): string {
-  const collapsed = text.trim().replace(/\s+/g, ' ')
+  const firstBlock = text.trim().split(/\n\s*\n/)[0]?.trim() ?? text.trim()
+  const collapsed = firstBlock.replace(/\s+/g, ' ')
   if (collapsed.length <= maxChars) return collapsed
   const cut = collapsed.slice(0, maxChars)
   const lastSpace = cut.lastIndexOf(' ')
@@ -38,6 +39,8 @@ function clipPromptForFaqCard(text: string, maxChars = 110): string {
 }
 
 const API_URL = '/api'
+
+const CHAT_REMARK_PLUGINS = [remarkGfm, remarkBreaks]
 
 function App() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -48,6 +51,7 @@ function App() {
   const [demoScenarios, setDemoScenarios] = useState<DemoScenario[]>([])
   const [scenariosLoading, setScenariosLoading] = useState(true)
   const [scenariosError, setScenariosError] = useState<string | null>(null)
+  const [lastSentScenarioNum, setLastSentScenarioNum] = useState<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const pdfInputRef = useRef<HTMLInputElement>(null)
@@ -69,7 +73,7 @@ function App() {
         const data = (await res.json()) as DemoScenario[]
         if (!cancelled) {
           const rows = Array.isArray(data) ? data : []
-          setDemoScenarios(orderScenariosForFaq(rows))
+          setDemoScenarios(scenariosForFaq(rows))
         }
       } catch {
         if (!cancelled) {
@@ -97,6 +101,7 @@ function App() {
     setInput('')
     setAttachedPdf(null)
     setError(null)
+    setLastSentScenarioNum(null)
     if (pdfInputRef.current) pdfInputRef.current.value = ''
   }
 
@@ -169,7 +174,7 @@ function App() {
             <BriefcaseBusiness className="w-5 h-5 text-primary" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-base font-semibold text-foreground tracking-tight">Sales Agent</h1>
+            <h1 className="text-base font-semibold text-foreground tracking-tight">Enterprise Agent</h1>
             <p className="text-xs text-muted-foreground">Powered by LangGraph</p>
           </div>
         </div>
@@ -216,8 +221,8 @@ function App() {
                       <button
                         key={scenario.num}
                         type="button"
-                        title={scenario.fullPrompt}
-                        onClick={() => sendMessage(scenario.fullPrompt)}
+                        title={clipPromptForFaqCard(scenario.fullPrompt)}
+                        onClick={() => { setLastSentScenarioNum(scenario.num); sendMessage(scenario.fullPrompt) }}
                         className="text-left text-sm px-4 py-3 rounded-xl border border-border bg-card hover:bg-accent hover:border-ring/40 transition-colors text-foreground"
                       >
                         <span className="text-foreground block text-left text-sm leading-snug break-words">
@@ -230,38 +235,60 @@ function App() {
             )}
 
             {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={cn(
-                  'flex gap-3',
-                  msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                )}
-              >
-                <Avatar className="w-8 h-8 shrink-0">
-                  <AvatarFallback className={cn(
-                    'text-xs font-medium',
+              <div key={i}>
+                <div
+                  className={cn(
+                    'flex gap-3',
+                    msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                  )}
+                >
+                  <Avatar className="w-8 h-8 shrink-0">
+                    <AvatarFallback className={cn(
+                      'text-xs font-medium',
+                      msg.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-primary/10 text-primary'
+                    )}>
+                      {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className={cn(
+                    'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm',
                     msg.role === 'user'
                       ? 'bg-primary text-primary-foreground'
-                      : 'bg-primary/10 text-primary'
+                      : 'bg-card ring-1 ring-border'
                   )}>
-                    {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div className={cn(
-                  'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm',
-                  msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-card ring-1 ring-border'
-                )}>
-                  {msg.role === 'assistant' ? (
-                    <div className="prose-chat">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-                    </div>
-                  ) : (
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                  )}
+                    {msg.role === 'assistant' ? (
+                      <div className="prose-chat">
+                        <ReactMarkdown remarkPlugins={CHAT_REMARK_PLUGINS}>{msg.content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      <div className="prose-chat prose-chat-user">
+                        <ReactMarkdown remarkPlugins={CHAT_REMARK_PLUGINS}>{msg.content}</ReactMarkdown>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* Demo 7 follow-up chip: show after the last assistant reply to Demo 7 */}
+                {i === messages.length - 1 &&
+                  msg.role === 'assistant' &&
+                  !loading &&
+                  lastSentScenarioNum === 7 && (() => {
+                    const d8 = demoScenarios.find(s => s.num === 8)
+                    return d8 ? (
+                      <div className="flex justify-start mt-2 ml-11">
+                        <button
+                          type="button"
+                          onClick={() => { setLastSentScenarioNum(8); sendMessage(d8.fullPrompt) }}
+                          className="text-xs px-3 py-1.5 rounded-lg border border-ring/40 bg-primary/5 hover:bg-primary/10 text-primary transition-colors"
+                        >
+                          → Continue: Pull ACC-7832 transactions (Turn 2)
+                        </button>
+                      </div>
+                    ) : null
+                  })()}
               </div>
             ))}
 
