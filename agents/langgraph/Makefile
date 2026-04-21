@@ -31,17 +31,13 @@ export DOCKER_DEFAULT_PLATFORM CONTAINER_ENGINE
 
 default: charts containers
 
-demo-container: demo-agent-container demo-ui-container
+demo-container: demo-agent-container
 
 demo-agent-container:
 	@cd src/agent && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/langgraph-demo-agent:${CONTAINER_TAG} .
 
-demo-ui-container:
-	@cd ../shared-ui/chat_ui && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/langgraph-demo-ui:${CONTAINER_TAG} .
-
 demo-container-push:
 	@cd src/agent && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/langgraph-demo-agent:$(CONTAINER_TAG) .
-	@cd ../shared-ui/chat_ui && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/langgraph-demo-ui:$(CONTAINER_TAG) .
 
 containers: demo-container
 
