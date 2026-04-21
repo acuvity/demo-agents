@@ -8,6 +8,7 @@ dependencies = [
     "aiohttp",          # used by google-adk and not directly imported in our code
     "fastapi",
     "google-adk[otel-gcp,extensions]",
+    "mcp>=1.26.0",
     "openinference-instrumentation-anthropic",
     "openinference-instrumentation-google-adk",
     "openinference-instrumentation-litellm",

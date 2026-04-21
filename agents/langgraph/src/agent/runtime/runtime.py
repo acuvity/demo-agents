@@ -11,9 +11,11 @@ from langchain_mcp_adapters.sessions import (  # type: ignore[import-untyped]
     SSEConnection,
     StreamableHttpConnection,
 )
-from langchain_core.messages import AIMessage, AnyMessage, HumanMessage
+from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, ToolMessage
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.prebuilt import ToolNode
+from mcp.shared.exceptions import McpError
+import httpx
 
 from config import AgentConfig
 
@@ -30,6 +32,7 @@ logger = logging.getLogger(__name__)
 class LanggraphRuntime:
     """Runtime for the LangGraph agent."""
 
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, cfg: AgentConfig):
         self.cfg = cfg
         self.app_name = cfg["app_name"]
@@ -40,6 +43,7 @@ class LanggraphRuntime:
         self.tools: list[Any] = []
         self.agent: Any = None
         self.llm_with_tools: Any = None
+        self.tool_node: ToolNode | None = None
 
     def setup_mcp_toolsets(self) -> Mapping[str, SSEConnection | StreamableHttpConnection]:
         """Set up MCP toolset configuration from cfg."""
@@ -71,6 +75,39 @@ class LanggraphRuntime:
         response: AnyMessage = self.llm_with_tools.invoke(messages)
         return {"messages": [response]}
 
+    def _tool_error_messages(self, state: MessagesState, content: str) -> list[ToolMessage]:
+        """Build ToolMessage errors for each tool call id from the last AI message."""
+        messages = state.get("messages", [])
+        last_message = messages[-1] if messages else None
+
+        if isinstance(last_message, AIMessage) and last_message.tool_calls:
+            return [
+                ToolMessage(content=content, tool_call_id=tool_call["id"], status="error")
+                for tool_call in last_message.tool_calls
+            ]
+
+        return [ToolMessage(content=content, tool_call_id="unknown", status="error")]
+
+    async def safe_tool_node(self, state: MessagesState) -> dict[str, list[ToolMessage]]:
+        """Execute tool node with error handling for MCP and HTTP errors."""
+        tool_node = self.tool_node
+        if tool_node is None:
+            return {"messages": []}
+        try:
+            return await tool_node.ainvoke(state)
+        except McpError as e:
+            return {"messages": self._tool_error_messages(state, str(e))}
+        except httpx.HTTPStatusError as e:
+            return {
+                "messages": self._tool_error_messages(
+                    state,
+                    f"Tool call failed: {e.response.status_code} - {e.response.text}",
+                )
+            }
+        except Exception as e:
+            logger.exception("Unexpected error in tool node: %s", e)
+            raise
+
     async def send(self, user_input: str) -> str:
         """Send a message to the agent and return the response."""
         if self.agent is None:
@@ -97,9 +134,8 @@ class LanggraphRuntime:
             agent_builder.add_node("llm_call", self.llm_call)
 
             if self.tools:
-                tool_node = ToolNode(tools=self.tools)
-                agent_builder.add_node("tool_node", tool_node)
-
+                self.tool_node = ToolNode(tools=self.tools)
+                agent_builder.add_node("tool_node", self.safe_tool_node)
             agent_builder.add_edge(START, "llm_call")
 
             if self.tools:
