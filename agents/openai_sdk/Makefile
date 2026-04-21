@@ -62,7 +62,6 @@ PYLINT_SOURCES := $(patsubst src/agent/%,%,$(shell find src/agent -name '*.py' -
 lint:
 	@uv run --directory src/agent --with pylint pylint $(PYLINT_SOURCES)
 	@uv run --directory src/agent --with pyright pyright
-	@cd ../shared-ui/chat_ui && npm install && npm run lint
 
 PYTHON_PROJECTS := src/agent
 
