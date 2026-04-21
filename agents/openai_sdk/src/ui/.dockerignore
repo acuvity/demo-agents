@@ -1,7 +1,0 @@
-Dockerfile
-.gitignore
-.dockerignore
-*.jsonl
-*.secrets.yaml
-__pycache__
-node_modules

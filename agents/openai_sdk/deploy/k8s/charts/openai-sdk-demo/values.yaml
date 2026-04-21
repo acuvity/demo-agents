@@ -28,13 +28,14 @@ agent:
 
 ui:
   image:
-    repository: acuvity/openai-sdk-demo-ui
+    repository: acuvity/agent-demo-ui
     tag: latest
     pullPolicy: Always
   replicas: 1
   port: 5174
   serviceType: ClusterIP
   backendUrl: "http://openai-sdk-demo-svc"
+  agentName: "OpenAI SDK"
 
 secrets:
   anthropicApiKey: ""

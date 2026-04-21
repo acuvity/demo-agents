@@ -1,12 +1,13 @@
 services:
   ui:
-    image: acuvity/google-adk-demo-ui:latest
+    image: acuvity/agent-demo-ui:latest
     ports:
       - "5174:5174"
     depends_on:
       - agent
     environment:
       BACKEND_URL: "http://agent:8300"
+      VITE_AGENT_NAME: "Google ADK"
     restart: always
 
   agent:

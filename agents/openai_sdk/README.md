@@ -128,7 +128,7 @@ The agent API will be available at `http://localhost:8300`.
 1. Navigate to the UI directory and install dependencies:
 
 ```bash
-cd src/ui
+cd ../shared-ui/chat_ui
 npm install
 ```
 

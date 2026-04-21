@@ -37,11 +37,11 @@ demo-agent-container:
 	@cd src/agent && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/langgraph-demo-agent:${CONTAINER_TAG} .
 
 demo-ui-container:
-	@cd src/ui && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/langgraph-demo-ui:${CONTAINER_TAG} .
+	@cd ../shared-ui/chat_ui && ${CONTAINER_ENGINE} buildx build --attest type=sbom --attest type=provenance --load --platform linux/arm64/v8,linux/amd64 --tag ${OCI_REGISTRY}/langgraph-demo-ui:${CONTAINER_TAG} .
 
 demo-container-push:
 	@cd src/agent && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/langgraph-demo-agent:$(CONTAINER_TAG) .
-	@cd src/ui && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/langgraph-demo-ui:$(CONTAINER_TAG) .
+	@cd ../shared-ui/chat_ui && $(CONTAINER_ENGINE) buildx build --attest type=sbom --attest type=provenance --push --platform linux/arm64/v8,linux/amd64 --tag $(OCI_REGISTRY)/langgraph-demo-ui:$(CONTAINER_TAG) .
 
 containers: demo-container
 
@@ -62,7 +62,7 @@ PYLINT_SOURCES := $(patsubst src/agent/%,%,$(shell find src/agent -name '*.py' -
 lint:
 	@uv run --directory src/agent --with pylint pylint $(PYLINT_SOURCES)
 	@uv run --directory src/agent --with pyright pyright
-	@cd src/ui/chat_ui && npm install && npm run lint
+	@cd ../shared-ui/chat_ui && npm install && npm run lint
 
 PYTHON_PROJECTS := src/agent
 
