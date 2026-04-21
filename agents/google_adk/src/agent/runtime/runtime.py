@@ -15,7 +15,8 @@ from google.adk.tools.mcp_tool import (  # pylint: disable=import-error,no-name-
 )
 from google.adk.runners import Runner  # pylint: disable=import-error,no-name-in-module
 from google.adk.sessions import InMemorySessionService  # pylint: disable=import-error,no-name-in-module
-from google.genai import types  # pylint: disable=import-error,no-name-in-module
+from google.genai import types
+from mcp import McpError  # pylint: disable=import-error,no-name-in-module
 
 from config import AgentConfig
 
@@ -103,27 +104,29 @@ class GoogleADKRuntime:
 
     # TODO: handle errors and exceptions, retries, and timeouts  # pylint: disable=fixme
     async def send(self, user_input: str) -> str:
-        """Send a message to the agent and return the final response text."""
-        # TODO: derive user from JWT token; reuse existing session if present  # pylint: disable=fixme
+        """Send a message to the agent and return the response."""
         user_id = "default_user"
-
         session = await self.session_service.create_session(
             app_name=self.app_name,
             user_id=user_id,
         )
+        content = types.Content(role="user", parts=[types.Part.from_text(text=user_input)])
 
-        content = types.Content(
-            role="user",
-            parts=[types.Part.from_text(text=user_input)],
-        )
+        try:
+            response_text = ""
+            async for event in self.runner.run_async(
+                user_id=user_id,
+                session_id=session.id,
+                new_message=content,
+            ):
+                if event.is_final_response() and event.content and event.content.parts:
+                    response_text = event.content.parts[-1].text or ""
 
-        response_text = ""
-        async for event in self.runner.run_async(
-            user_id=user_id,
-            session_id=session.id,
-            new_message=content,
-        ):
-            if event.is_final_response() and event.content and event.content.parts:
-                response_text = event.content.parts[-1].text or ""
+            return response_text
 
-        return response_text
+        except McpError as e:
+            logger.exception("MCP tool call error for session %s: %s", session.id, e)
+            return str(e)
+        except Exception as e:
+            logger.exception("Agent run failed for session %s", session.id)
+            raise e
