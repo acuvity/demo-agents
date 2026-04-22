@@ -1,6 +1,10 @@
-# Simple LangGraph Agent
+<h1 align="center">IBAC Demo</h1>
 
-A minimal LangGraph agent with optional chat UI. Traffic can go through the **Acuvity AI Security Gateway (Apex)** for governance and TLS to LLM and MCP providers.
+<p align="center">A minimal LangGraph agent with optional chat UI. Traffic can go through the <strong>Acuvity AI Security Gateway (Apex)</strong> for governance and TLS to LLM and MCP providers.</p>
+
+<p align="center">
+  <video src="assets/ibac-demo-gif.mp4" autoplay loop muted playsinline controls width="100%"></video>
+</p>
 
 ## Start here
 
@@ -18,7 +22,7 @@ Pick **one** path first (each links to the full steps):
 
 Unless a command says otherwise, use `**agents/ibac-demo`** as your current directory (this folder).
 
-- `**src/agent/**` - Python app (`main.py`, `server.py`, `utils/`, `tools/`, …), `pyproject.toml`, and `**run.sh**` / `**run_ui.sh**` (from repo root: `./src/agent/run.sh` or `cd src/agent && ./run.sh`). For `PROMPTS_TYPE=demo`, untrusted URL setup for Demo 5 and Demo 6: **[src/agent/docs/demo-hosting.md](src/agent/docs/demo-hosting.md)**.
+- `**src/agent/**` - Python app (`main.py`, `server.py`, `utils/`, `tools/`, …), `pyproject.toml`, and `**run.sh**` / `**run_ui.sh**` (from repo root: `./src/agent/run.sh` or `cd src/agent && ./run.sh`).
 - `**src/ui/chat_ui/**` - Vite + React UI; production-style image from `src/ui/Dockerfile`.
 - `**deploy/**` - Helm chart, Acuvity manifest, optional Compose. Index: **[deploy/README.md](deploy/README.md)**.
 - `**assets/`** - Sample PDFs and diagrams for manual testing.
@@ -148,7 +152,7 @@ export PROMPTS_TYPE=simple      # basic queries, tool usage, simple injection ex
 
 # OR
 
-export PROMPTS_TYPE=scenario    # detailed multi-step attack scenarios (see src/agent/docs/test-scenarios.md)
+export PROMPTS_TYPE=scenario    # detailed multi-step attack scenarios
 
 # OR
 
@@ -163,7 +167,7 @@ From the `**ibac-demo**` directory:
 ./src/agent/run.sh
 ```
 
-Output is automatically saved to `src/agent/docs/results.md`.
+Output is automatically saved to `src/agent/results.md`.
 
 ---
 
