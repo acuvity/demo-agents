@@ -1,10 +1,8 @@
-<h1 align="center">IBAC Demo</h1>
+# IBAC Demo
 
-<p align="center">A minimal LangGraph agent with optional chat UI. Traffic can go through the <strong>Acuvity AI Security Gateway (Apex)</strong> for governance and TLS to LLM and MCP providers.</p>
+A minimal LangGraph agent with optional chat UI. Traffic can go through the **Acuvity AI Security Gateway (Apex)** for governance and TLS to LLM and MCP providers.
 
-<p align="center">
-  <img src="assets/ibac-demo.gif" alt="IBAC Demo" width="100%">
-</p>
+
 
 ## Prerequisites
 
@@ -51,11 +49,13 @@ This builds and starts the UI, agent, MCP server, email capture, and webhook log
 
 ### Step 4 - Open in your browser
 
-| What | URL |
-| ---- | --- |
-| Demo UI | http://localhost:5174 |
-| Captured emails (Demo 1) | http://localhost:8025 |
-| Captured webhook calls (Demo 2) | http://localhost:9000/events |
+
+| What                            | URL                                                          |
+| ------------------------------- | ------------------------------------------------------------ |
+| Demo UI                         | [http://localhost:5174](http://localhost:5174)               |
+| Captured emails (Demo 1)        | [http://localhost:8025](http://localhost:8025)               |
+| Captured webhook calls (Demo 2) | [http://localhost:9000/events](http://localhost:9000/events) |
+
 
 To stop: `make stop`. To view logs: `make logs`.
 
@@ -74,8 +74,9 @@ Then follow [deploy/k8s/README.md](deploy/k8s/README.md).
 
 ---
 
-<details>
-<summary>Run without Docker (local dev)</summary>
+Run without Docker (local dev)
+
+
 
 **Tools needed:** Python 3.12+, [uv](https://github.com/astral-sh/uv), Node.js
 
@@ -103,23 +104,26 @@ npm run dev
 
 Open [http://localhost:5174](http://localhost:5174) in your browser.
 
-</details>
+
 
 ---
 
 ## Advanced overrides (optional)
 
-| Variable               | Description                                                                        |
-| ---------------------- | ---------------------------------------------------------------------------------- |
-| `OPENROUTER_MODEL`     | OpenRouter model override (default: `stepfun/step-3.5-flash`)                      |
-| `LLM_MODEL`            | Model name override for OpenAI (default: `gpt-4o`)                                 |
-| `LLM_BASE_URL`         | Override the API endpoint - enables any third-party compatible API                 |
-| `LLM_API_KEY`          | Override the API key - takes precedence over the provider-specific key             |
-| `MCP_SERVER`           | `local` (default) or `arcade` - switches between local tools and Arcade MCP        |
-| `LOCAL_MCP_SSE_URL`    | When set with `MCP_SERVER=local`, connect to remote MCP over SSE instead of stdio |
-| `LOCAL_MCP_TRANSPORT`  | On the MCP process only: `stdio` (default) or `sse`                                |
-| `FASTMCP_HOST` / `FASTMCP_PORT` | Bind address for SSE MCP server (use `0.0.0.0` in containers)            |
-| `IBAC_AGENT_ROOT`      | Absolute path to the agent package. Defaults to resolving from `utils/paths.py`   |
-| `IBAC_UPLOAD_DIR`      | Absolute path for PDF uploads. Defaults to `{agent root}/uploads`                 |
-| `DEBUG_LLM`            | Set to `1` to print LLM key fingerprint to stderr                                  |
-| `DEBUG_PROXY_UPSTREAM` | Set to `1` to log full upstream HTTP details on agent errors                       |
+
+| Variable                        | Description                                                                       |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| `OPENROUTER_MODEL`              | OpenRouter model override (default: `stepfun/step-3.5-flash`)                     |
+| `LLM_MODEL`                     | Model name override for OpenAI (default: `gpt-4o`)                                |
+| `LLM_BASE_URL`                  | Override the API endpoint - enables any third-party compatible API                |
+| `LLM_API_KEY`                   | Override the API key - takes precedence over the provider-specific key            |
+| `MCP_SERVER`                    | `local` (default) or `arcade` - switches between local tools and Arcade MCP       |
+| `LOCAL_MCP_SSE_URL`             | When set with `MCP_SERVER=local`, connect to remote MCP over SSE instead of stdio |
+| `LOCAL_MCP_TRANSPORT`           | On the MCP process only: `stdio` (default) or `sse`                               |
+| `FASTMCP_HOST` / `FASTMCP_PORT` | Bind address for SSE MCP server (use `0.0.0.0` in containers)                     |
+| `IBAC_AGENT_ROOT`               | Absolute path to the agent package. Defaults to resolving from `utils/paths.py`   |
+| `IBAC_UPLOAD_DIR`               | Absolute path for PDF uploads. Defaults to `{agent root}/uploads`                 |
+| `DEBUG_LLM`                     | Set to `1` to print LLM key fingerprint to stderr                                 |
+| `DEBUG_PROXY_UPSTREAM`          | Set to `1` to log full upstream HTTP details on agent errors                      |
+
+
