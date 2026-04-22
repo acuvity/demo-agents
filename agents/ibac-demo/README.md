@@ -18,7 +18,7 @@ Pick **one** path first (each links to the full steps):
 
 Unless a command says otherwise, use `**agents/ibac-demo`** as your current directory (this folder).
 
-- `**src/agent/**` - Python app (`main.py`, `server.py`, `utils/`, `tools/`, …), `pyproject.toml`, and `**run.sh**` / `**run_ui.sh**` (from repo root: `./src/agent/run.sh` or `cd src/agent && ./run.sh`).
+- `**src/agent/**` - Python app (`main.py`, `server.py`, `utils/`, `tools/`, …), `pyproject.toml`, and `**run.sh**` / `**run_ui.sh**` (from repo root: `./src/agent/run.sh` or `cd src/agent && ./run.sh`). For `PROMPTS_TYPE=demo`, untrusted URL setup for Demo 5 and Demo 6: **[src/agent/docs/demo-hosting.md](src/agent/docs/demo-hosting.md)**.
 - `**src/ui/chat_ui/**` - Vite + React UI; production-style image from `src/ui/Dockerfile`.
 - `**deploy/**` - Helm chart, Acuvity manifest, optional Compose. Index: **[deploy/README.md](deploy/README.md)**.
 - `**assets/`** - Sample PDFs and diagrams for manual testing.

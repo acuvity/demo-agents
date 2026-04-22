@@ -10,15 +10,38 @@
 # For a quick test without mounting ca.pem, you may need to add your Apex CA to the image.
 
 services:
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+
+  webhook-receiver:
+    build:
+      context: ../../src/agent
+      dockerfile: Dockerfile
+    command: ["sh", "-c", "exec uv run python3 utils/webhook_receiver.py"]
+    environment:
+      WEBHOOK_PORT: "9000"
+      WEBHOOK_HOST: "0.0.0.0"
+    ports:
+      - "9000:9000"
+
   mcp:
     build:
       context: ../../src/agent
       dockerfile: Dockerfile
     command: ["sh", "-c", "exec uv run python3 tools/mcp_tools.py"]
+    depends_on:
+      - mailpit
+      - webhook-receiver
     environment:
       LOCAL_MCP_TRANSPORT: sse
       FASTMCP_HOST: "0.0.0.0"
       FASTMCP_PORT: "8000"
+      MAILHOG_HOST: mailpit
+      MAILHOG_PORT: "1025"
+      WEBHOOK_RECEIVER_URL: http://webhook-receiver:9000
     ports:
       - "18000:8000"
 
@@ -35,6 +58,8 @@ services:
       MCP_SERVER: local
       LOCAL_MCP_SSE_URL: http://mcp:8000/sse
       LLM_PROVIDER: ${LLM_PROVIDER:-openrouter}
+      NO_PROXY: mcp,webhook-receiver,localhost,127.0.0.1
+      no_proxy: mcp,webhook-receiver,localhost,127.0.0.1
     ports:
       - "8300:8000"
 

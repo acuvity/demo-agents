@@ -119,13 +119,13 @@ class IbacDemoRuntime:  # pylint: disable=too-few-public-methods
     async def run_turn(self, message: str) -> dict:
         """Run one user message through the graph; returns dict with output or blocked payload."""
         try:
-            async with self._lock:
-                mcp_client = MultiServerMCPClient(build_mcp_config())
-                tools = await mcp_client.get_tools()
-                model = build_llm(tools)
-                agent = compile_tool_bound_graph(model, tools)
-                logger.debug("Agent compiled with %d tools", len(tools))
-            result = await agent.ainvoke({"messages": [HumanMessage(content=message)]})
+            async with MultiServerMCPClient(build_mcp_config()) as mcp_client:
+                async with self._lock:
+                    tools = await mcp_client.get_tools()
+                    model = build_llm(tools)
+                    agent = compile_tool_bound_graph(model, tools)
+                    logger.debug("Agent compiled with %d tools", len(tools))
+                result = await agent.ainvoke({"messages": [HumanMessage(content=message)]})
             final = result["messages"][-1]
             content = final.content
             if isinstance(content, list):

@@ -217,7 +217,7 @@ function App() {
                   )}
                   {!scenariosLoading &&
                     !scenariosError &&
-                    demoScenarios.map((scenario) => (
+                    demoScenarios.filter(s => s.num !== 8).map((scenario) => (
                       <button
                         key={scenario.num}
                         type="button"
