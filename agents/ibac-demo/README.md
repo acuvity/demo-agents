@@ -3,7 +3,9 @@
 <p align="center">A minimal LangGraph agent with optional chat UI. Traffic can go through the <strong>Acuvity AI Security Gateway (Apex)</strong> for governance and TLS to LLM and MCP providers.</p>
 
 <p align="center">
-  <video src="https://github.com/acuvity/demo-agents/raw/crm-demo/agents/ibac-demo/assets/ibac-demo-gif.mp4" autoplay loop muted playsinline controls width="100%"></video>
+  <video width="100%" controls autoplay loop muted playsinline>
+    <source src="assets/ibac-demo-gif.mp4" type="video/mp4">
+  </video>
 </p>
 
 ## Start here
