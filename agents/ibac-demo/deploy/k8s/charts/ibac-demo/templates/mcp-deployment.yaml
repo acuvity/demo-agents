@@ -41,3 +41,13 @@ spec:
               value: "0.0.0.0"
             - name: FASTMCP_PORT
               value: {{ .Values.mcpLocal.port | quote }}
+            {{- if .Values.mailpit.enabled }}
+            - name: MAILHOG_HOST
+              value: {{ .Values.mailpit.deploymentName }}.{{ .Release.Namespace }}.svc.cluster.local
+            - name: MAILHOG_PORT
+              value: {{ .Values.mailpit.smtpPort | quote }}
+            {{- end }}
+            {{- if .Values.webhookReceiver.enabled }}
+            - name: WEBHOOK_RECEIVER_URL
+              value: "http://{{ .Values.webhookReceiver.deploymentName }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.webhookReceiver.port }}"
+            {{- end }}

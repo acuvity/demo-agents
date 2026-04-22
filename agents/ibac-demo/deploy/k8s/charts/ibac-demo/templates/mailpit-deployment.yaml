@@ -1,0 +1,32 @@
+{{- if .Values.mailpit.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.mailpit.deploymentName }}
+  labels:
+    app: {{ .Values.mailpit.deploymentName }}
+    type: mailpit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.mailpit.deploymentName }}
+      type: mailpit
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.mailpit.deploymentName }}
+        type: mailpit
+    spec:
+      containers:
+        - name: mailpit
+          image: axllent/mailpit:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: smtp
+              containerPort: {{ .Values.mailpit.smtpPort }}
+              protocol: TCP
+            - name: web
+              containerPort: {{ .Values.mailpit.webPort }}
+              protocol: TCP
+{{- end }}

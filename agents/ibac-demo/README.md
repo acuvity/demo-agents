@@ -2,8 +2,6 @@
 
 A minimal LangGraph agent with optional chat UI. Traffic can go through the **Acuvity AI Security Gateway (Apex)** for governance and TLS to LLM and MCP providers.
 
-
-
 ## Prerequisites
 
 **Tools**
@@ -61,7 +59,7 @@ To stop: `make stop`. To view logs: `make logs`.
 
 ## Deploy to Kubernetes
 
-Build and push images first (requires a [Docker Hub](https://hub.docker.com/) account):
+Build and push images first (requires a [Docker Hub](https://hub.docker.com/) account). Run these from the repo root (`demo-agents/agents/ibac-demo`):
 
 ```bash
 export DOCKER_HUB_USER=YOUR_DOCKER_ID
@@ -74,9 +72,7 @@ Then follow [deploy/k8s/README.md](deploy/k8s/README.md).
 
 ---
 
-Run without Docker (local dev)
-
-
+## Run without Docker (local dev)
 
 **Tools needed:** Python 3.12+, [uv](https://github.com/astral-sh/uv), Node.js
 
@@ -103,8 +99,6 @@ npm run dev
 ```
 
 Open [http://localhost:5174](http://localhost:5174) in your browser.
-
-
 
 ---
 

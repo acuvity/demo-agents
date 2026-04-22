@@ -1,0 +1,23 @@
+{{- if .Values.mailpit.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.mailpit.deploymentName }}
+  labels:
+    app: {{ .Values.mailpit.deploymentName }}
+    type: mailpit
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.mailpit.smtpPort }}
+      targetPort: smtp
+      protocol: TCP
+      name: smtp
+    - port: {{ .Values.mailpit.webPort }}
+      targetPort: web
+      protocol: TCP
+      name: web
+  selector:
+    app: {{ .Values.mailpit.deploymentName }}
+    type: mailpit
+{{- end }}

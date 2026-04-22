@@ -35,6 +35,19 @@ mcpLocal:
   deploymentName: mcp-ibac-local-tools
   port: 8000
 
+# Fake SMTP server for Demo 1 (email capture). Web UI at port 8025.
+mailpit:
+  enabled: true
+  deploymentName: mailpit
+  smtpPort: 1025
+  webPort: 8025
+
+# Webhook logger for Demo 2. Events visible at /events on port 9000.
+webhookReceiver:
+  enabled: true
+  deploymentName: webhook-receiver
+  port: 9000
+
 agent:
   llmProvider: openrouter
   # Full Apex URL, e.g. https://apex.example.com
