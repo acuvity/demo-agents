@@ -24,7 +24,7 @@ else
   export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY is not set (required when LLM_PROVIDER=anthropic)}"
 fi
 
-MCP_SERVER="${MCP_SERVER:-arcade}"
+MCP_SERVER="${MCP_SERVER:-local}"
 export MCP_SERVER
 
 if [[ "$MCP_SERVER" == "arcade" ]]; then

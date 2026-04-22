@@ -19,10 +19,10 @@ async def main():
     mcp_client = MultiServerMCPClient(build_mcp_config())
     _info_tools = await mcp_client.get_tools()
     print(f"Using LLM_PROVIDER={os.environ.get('LLM_PROVIDER', 'openrouter')}")
-    print(f"Using MCP_SERVER={os.environ.get('MCP_SERVER', 'arcade')}")
+    print(f"Using MCP_SERVER={os.environ.get('MCP_SERVER', 'local')}")
     print(f"Loaded {len(_info_tools)} tools\n")
 
-    prompts_type = os.environ.get("PROMPTS_TYPE", "simple")
+    prompts_type = os.environ.get("PROMPTS_TYPE", "demo")
     prompts_file = resolve_prompts_file(prompts_type)
     print(f"Using PROMPTS_TYPE={prompts_type} ({prompts_file})\n")
 

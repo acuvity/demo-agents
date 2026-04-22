@@ -75,7 +75,7 @@ def build_llm(tools):
 
 def build_mcp_config() -> dict:
     """Build the MCP client config based on MCP_SERVER env var (arcade or local)."""
-    server = os.environ.get("MCP_SERVER", "arcade")
+    server = os.environ.get("MCP_SERVER", "local")
 
     if server == "local":
         sse_url = os.environ.get("LOCAL_MCP_SSE_URL")

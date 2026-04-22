@@ -31,8 +31,8 @@ else
   export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY is not set (required when LLM_PROVIDER=anthropic)}"
 fi
 
-# MCP server selection: arcade (default) or local
-MCP_SERVER="${MCP_SERVER:-arcade}"
+# MCP server selection: local (default) or arcade
+MCP_SERVER="${MCP_SERVER:-local}"
 export MCP_SERVER
 
 if [[ "$MCP_SERVER" == "arcade" ]]; then
@@ -66,10 +66,4 @@ export no_proxy="$NO_PROXY"
 export SSL_CERT_FILE="$CA_PATH"
 
 cd "$SCRIPT_DIR"
-RESULTS_FILE="docs/results.md"
-uv run python3 main.py 2>&1 | tee "$RESULTS_FILE"
-
-echo ""
-echo "Generating demo HTML..."
-uv run python3 docs/generate_demo.py
-open docs/demo.html
+uv run python3 main.py
