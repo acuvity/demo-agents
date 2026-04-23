@@ -2,12 +2,12 @@
 # From this directory:
 #   docker compose --env-file .env up --build
 #
-# .env must include ACUVITY_TOKEN, APEX_URL, LLM keys, and the same proxy settings
-# you use for ./src/agent/run_ui.sh, for example:
-#   HTTPS_PROXY=https://token:${ACUVITY_TOKEN}@${APEX_URL#https://}
-#   HTTP_PROXY=${HTTPS_PROXY}
-#   SSL_CERT_FILE=/path/in/container/ca.pem
-# For a quick test without mounting ca.pem, you may need to add your Apex CA to the image.
+# Prerequisites:
+#   1. Create deploy/compose/.env with ACUVITY_TOKEN, APEX_URL, and LLM key.
+#   2. Place the Apex CA cert at deploy/compose/ca.pem (committed to the repo).
+#
+# HTTP_PROXY/HTTPS_PROXY: set in .env as https://token:<token>@<apex-host>, or run_ui.sh builds them.
+# SSL_CERT_FILE and REQUESTS_CA_BUNDLE point to the mounted ca.pem below.
 
 services:
   mailpit:
@@ -53,6 +53,7 @@ services:
       - mcp
     env_file:
       - .env
+    command: ["bash", "run_ui.sh"]
     environment:
       PORT: "8000"
       MCP_SERVER: local
@@ -60,6 +61,13 @@ services:
       LLM_PROVIDER: ${LLM_PROVIDER:-openrouter}
       NO_PROXY: mcp,webhook-receiver,localhost,127.0.0.1
       no_proxy: mcp,webhook-receiver,localhost,127.0.0.1
+      # Set HTTP_PROXY=https://token:<ACUVITY_TOKEN>@<apex-host> in .env, or run_ui.sh builds it at startup.
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      SSL_CERT_FILE: /etc/ssl/certs/custom/ca.pem
+      REQUESTS_CA_BUNDLE: /etc/ssl/certs/custom/ca.pem
+    volumes:
+      - ./ca.pem:/etc/ssl/certs/custom/ca.pem:ro
     ports:
       - "8300:8000"
 

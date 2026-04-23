@@ -3,13 +3,8 @@ apps:
   - name: ibac-demo
     description: "IBAC agent application using LangGraph."
     subject:
-      - - "@org=${APP_ORG}"
+      - - "@org=acuvity.ai"
     tracing: Recording
-    otelReceivers:
-      - endpoint: "127.0.0.1:4317"
-        protocol: GRPC
-      - endpoint: "127.0.0.1:4318"
-        protocol: HTTP
     selector:
       type: None
     components:

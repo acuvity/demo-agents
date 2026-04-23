@@ -19,4 +19,5 @@ deploy/compose/.env.template
 # TLS / CA material (downloaded Apex ca.pem, deploy/k8s gateway dev pair, local certs)
 src/agent/ca.pem
 deploy/k8s/ca/
+ca/
 certs/

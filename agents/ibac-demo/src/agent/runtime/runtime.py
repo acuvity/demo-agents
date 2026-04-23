@@ -118,6 +118,29 @@ class IbacDemoRuntime:  # pylint: disable=too-few-public-methods
 
     async def run_turn(self, message: str) -> dict:
         """Run one user message through the graph; returns dict with output or blocked payload."""
+        # #region agent log
+        import json as _json, time as _time
+        _https_proxy = os.environ.get("HTTPS_PROXY", "")
+        _http_proxy = os.environ.get("HTTP_PROXY", "")
+        _ssl_cert = os.environ.get("SSL_CERT_FILE", "")
+        _no_proxy = os.environ.get("NO_PROXY", "")
+        _proxy_set = bool(_https_proxy or _http_proxy)
+        _proxy_host = ""
+        if _https_proxy:
+            try:
+                from urllib.parse import urlparse as _up
+                _p = _up(_https_proxy)
+                _proxy_host = f"{_p.scheme}://[token_redacted]@{_p.hostname}:{_p.port}"
+            except Exception:
+                _proxy_host = "(parse error)"
+        _dbg = {"sessionId":"223447","hypothesisId":"H-A","runId":"post-fix-2","location":"runtime.py:run_turn","message":"proxy_env_check","data":{"proxy_set":_proxy_set,"proxy_host":_proxy_host,"ssl_cert_file":_ssl_cert,"no_proxy":_no_proxy,"http_proxy_set":bool(_http_proxy)},"timestamp":int(_time.time()*1000)}
+        logger.warning("DEBUG_PROXY_CHECK: %s", _json.dumps(_dbg))
+        try:
+            import urllib.request as _ur
+            _ur.urlopen("http://127.0.0.1:7303/ingest/d7c0a370-0e5c-49b6-8d54-02754ba2447a", data=_json.dumps(_dbg).encode(), timeout=1)
+        except Exception:
+            pass
+        # #endregion
         try:
             mcp_client = MultiServerMCPClient(build_mcp_config())
             async with self._lock:

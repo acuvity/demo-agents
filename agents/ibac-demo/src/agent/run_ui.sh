@@ -33,26 +33,35 @@ if [[ "$MCP_SERVER" == "arcade" ]]; then
   export ARCADE_MCP_URL="${ARCADE_MCP_URL:?ARCADE_MCP_URL is not set (required when MCP_SERVER=arcade)}"
 fi
 
-# Absolute path so SSL_CERT_FILE stays valid after we cd into the agent dir (relative paths would break).
+# Absolute path so any relative file references stay valid after we cd into the agent dir.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CA_PATH="$SCRIPT_DIR/ca.pem"
-if [ ! -f "$CA_PATH" ]; then
-  curl -s -o "$CA_PATH" "${APEX_URL}/_acuvity/ca.pem"
-fi
 
-# Percent-encode token in proxy userinfo. Raw tokens with @ : / + etc. break the URL and cause proxy 401.
-ACUVITY_TOKEN_PROXY_ESC="$(
-python3 <<'PY'
-import os, urllib.parse
-print(urllib.parse.quote(os.environ["ACUVITY_TOKEN"].strip(), safe=""))
-PY
-)"
-export HTTPS_PROXY="https://token:${ACUVITY_TOKEN_PROXY_ESC}@${APEX_URL#https://}"
-export HTTP_PROXY="https://token:${ACUVITY_TOKEN_PROXY_ESC}@${APEX_URL#https://}"
-export NO_PROXY="127.0.0.1,localhost,.svc.cluster.local"
+# Build proxy URL from ACUVITY_TOKEN + APEX_URL if not already set (e.g. via docker-compose .env).
+if [ -z "${HTTP_PROXY:-}" ]; then
+  export HTTPS_PROXY="https://token:${ACUVITY_TOKEN}@${APEX_URL#https://}"
+  export HTTP_PROXY="$HTTPS_PROXY"
+fi
+# Merge with any existing NO_PROXY (e.g. container-internal hostnames set by docker-compose)
+_BASE_NO_PROXY="127.0.0.1,localhost,.svc.cluster.local"
+_EXISTING_NO_PROXY="${NO_PROXY:-${no_proxy:-}}"
+if [[ -n "$_EXISTING_NO_PROXY" ]]; then
+  export NO_PROXY="${_EXISTING_NO_PROXY},${_BASE_NO_PROXY}"
+else
+  export NO_PROXY="$_BASE_NO_PROXY"
+fi
 export no_proxy="$NO_PROXY"
-export SSL_CERT_FILE="$CA_PATH"
+
+# If SSL_CERT_FILE is already set (e.g. mounted in Docker Compose / K8s), use it as-is.
+# Otherwise fetch the Apex CA cert locally for direct runs.
+if [ -z "${SSL_CERT_FILE:-}" ]; then
+  CA_PATH="$SCRIPT_DIR/ca.pem"
+  if [ ! -f "$CA_PATH" ]; then
+    curl -s -o "$CA_PATH" "${APEX_URL}/_acuvity/ca.pem"
+  fi
+  export SSL_CERT_FILE="$CA_PATH"
+  export REQUESTS_CA_BUNDLE="$CA_PATH"
+fi
 
 cd "$SCRIPT_DIR"
 echo "Starting UI backend on http://0.0.0.0:8300 (Acuvity proxy enabled)"
-uv run python3 server.py
+exec uv run python3 server.py

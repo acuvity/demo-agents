@@ -12,10 +12,9 @@ For a **full ordered checklist** (including Rancher Desktop, Docker Hub, and Hel
 
 1. Create `deploy/compose/.env` (this path is gitignored) with at least:
    - `ACUVITY_TOKEN`, `APEX_URL`, and the matching LLM key. The app defaults to **OpenRouter** (`LLM_PROVIDER=openrouter` if unset in compose); use **`OPENROUTER_API_KEY`**, or set `LLM_PROVIDER` and `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` instead.
-   - `HTTPS_PROXY` and `HTTP_PROXY` built the same way as [../../README.md](../../README.md) for `./src/agent/run_ui.sh`.
-   - **`NO_PROXY`** and **`no_proxy`** set to `127.0.0.1,localhost,.svc.cluster.local` when using `HTTPS_PROXY`, so in-cluster or local MCP HTTP clients do not send internal URLs through the external proxy (same idea as the Helm agent pod).
-   - `SSL_CERT_FILE` pointing at your Apex CA (for example the same `ca.pem` you fetch for local runs).
-2. If TLS to Apex fails inside containers, mount your `ca.pem` and set `SSL_CERT_FILE`, or bake the CA into a custom image.
+   - Optionally add `HTTP_PROXY` and `HTTPS_PROXY` (e.g. `HTTP_PROXY=https://token:<ACUVITY_TOKEN>@<apex-host>`). If not set, `run_ui.sh` builds them at startup from `ACUVITY_TOKEN` and `APEX_URL`.
+
+2. Place the Apex CA cert at `deploy/compose/ca.pem` (committed to the repo). The agent container mounts it at `/etc/ssl/certs/custom/ca.pem` and `SSL_CERT_FILE`/`REQUESTS_CA_BUNDLE` point to it automatically.
 
 ```bash
 cd deploy/compose
