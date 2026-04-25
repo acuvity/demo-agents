@@ -25,6 +25,12 @@ apps:
         egress:
           defaultPolicy:
             ACLAction: Allow
+          rules:
+            - name: allow-agent
+              description: "Allow requests to agent"
+              action: Allow
+              appComponents:
+                - ibac-demo/agent
       - name: agent
         description: "The agent running the API server."
         kind: Agent
@@ -77,6 +83,14 @@ apps:
                   proxyAction: Allow
                   providers:
                     - anthropic-api
+            - name: allow-mcp-servers
+              description: "Allow requests to MCP servers"
+              rules:
+                - action: Allow
+                  mode: Proxy
+                  proxyAction: Allow
+                  appComponents:
+                    - ibac-demo/mcp-servers
       - name: mcp-servers
         description: "MCP servers that the agent uses."
         kind: Other
@@ -95,6 +109,8 @@ apps:
             - port: 8000
               mode: Proxy
               hosts:
+                - mcp
+                - mcp-tls
                 - mcp-ibac-local-tools
                 - mcp-ibac-local-tools.ibac-demo
                 - mcp-ibac-local-tools.ibac-demo.svc.cluster.local

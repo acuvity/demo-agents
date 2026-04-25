@@ -4,7 +4,7 @@ set -e
 # 1. Navigate to console.acuvity.ai
 # 2. Under access, click on App Tokens
 # 3. Create your token
-export ACUVITY_TOKEN="${ACUVITY_TOKEN:?ACUVITY_TOKEN is not set}"
+export APP_TOKEN="${APP_TOKEN:?APP_TOKEN is not set}"
 
 # APEX URL - To find your apex url
 # 1. Go to - https://console.acuvity.ai/me
@@ -50,20 +50,12 @@ if [ ! -f "$CA_PATH" ]; then
   curl -s -o "$CA_PATH" "${APEX_URL}/_acuvity/ca.pem"
 fi
 
-# Percent-encode token in proxy userinfo. Raw tokens with @ : / + etc. break the URL and cause proxy 401.
-ACUVITY_TOKEN_PROXY_ESC="$(
-python3 <<'PY'
-import os, urllib.parse
-print(urllib.parse.quote(os.environ["ACUVITY_TOKEN"].strip(), safe=""))
-PY
-)"
-export HTTPS_PROXY="https://token:${ACUVITY_TOKEN_PROXY_ESC}@${APEX_URL#https://}"
-export HTTP_PROXY="https://token:${ACUVITY_TOKEN_PROXY_ESC}@${APEX_URL#https://}"
-# Skip proxy for in-cluster MCP (K8s) and local SSE (localhost).
-export NO_PROXY="127.0.0.1,localhost,.svc.cluster.local"
-export no_proxy="$NO_PROXY"
+export HTTPS_PROXY="https://ibac-demo~agent:${APP_TOKEN}@${APEX_URL#https://}"
+export HTTP_PROXY="https://ibac-demo~agent:${APP_TOKEN}@${APEX_URL#https://}"
 
-export SSL_CERT_FILE="$CA_PATH"
+
+
+export SSL_CERT_FILE="./ca/combined-ca.pem"
 
 cd "$SCRIPT_DIR"
 uv run python3 main.py

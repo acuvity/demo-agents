@@ -13,6 +13,7 @@ providers:
     webHost: openrouter.ai
     hosts:
       - name: api.openrouter.ai
+      - name: openrouter.ai
     extractors:
       - ref: oaiapi/responses/input
       - ref: oaiapi/responses/output
@@ -36,5 +37,3 @@ providers:
       - ref: oaiapi/image/generations/output
       - ref: oaiapi/image/edits/output
       - ref: oaiapi/image/variations/output
-      - ref: anth/v1/messages/input
-      - ref: anth/v1/messages/output
