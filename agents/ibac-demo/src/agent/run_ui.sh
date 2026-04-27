@@ -40,7 +40,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 export HTTPS_PROXY="https://ibac-demo~agent:${APP_TOKEN}@${APEX_URL#https://}"
 export HTTP_PROXY="https://ibac-demo~agent:${APP_TOKEN}@${APEX_URL#https://}"
 
-export SSL_CERT_FILE="./ca/combined-ca.pem"
+export SSL_CERT_FILE="$SCRIPT_DIR/ca/combined-ca.pem"
 
 cd "$SCRIPT_DIR"
 echo "Starting UI backend on http://0.0.0.0:8300 (Acuvity proxy enabled)"

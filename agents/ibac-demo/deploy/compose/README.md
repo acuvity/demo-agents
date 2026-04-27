@@ -1,28 +1,108 @@
-# Docker Compose (optional)
+# Docker Compose Deployment
 
-Three services: **mcp** (CRM tools over SSE), **agent** (FastAPI), **ui** (Vite dev server, same pattern as langgraph/google_adk).
+Services: `mailpit`, `webhook-receiver`, `mcp`, `mcp-tls`, `agent`, `ui`, `cloud-apex`
 
-This mirrors the Kubernetes layout on a single machine. You still need valid Acuvity and LLM credentials.
+---
 
-If you are **new to deploying this app**, run through **[../k8s/README.md](../k8s/README.md)** once on a real cluster first; Compose does not replace that learning path.
+## Prerequisites
 
-For a **full ordered checklist** (including Rancher Desktop, Docker Hub, and Helm), see **[../k8s/README.md](../k8s/README.md)**. Compose is an optional shortcut for developers who prefer one machine without a cluster.
+- Docker Desktop / Rancher Desktop running
+- `acuctl` installed
+- CA cert files in `deploy/compose/ca/` (`ca-cert.pem`, `ca-key.pem`)
 
-## Quick start
+---
 
-1. Create `deploy/compose/.env` (this path is gitignored) with at least:
-   - `ACUVITY_TOKEN`, `APEX_URL`, and the matching LLM key. The app defaults to **OpenRouter** (`LLM_PROVIDER=openrouter` if unset in compose); use **`OPENROUTER_API_KEY`**, or set `LLM_PROVIDER` and `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` instead.
-   - Optionally add `HTTP_PROXY` and `HTTPS_PROXY` (e.g. `HTTP_PROXY=https://token:<ACUVITY_TOKEN>@<apex-host>`). If not set, `run_ui.sh` builds them at startup from `ACUVITY_TOKEN` and `APEX_URL`.
+## Initial Setup (run once)
 
-2. Place the Apex CA cert at `deploy/compose/ca.pem` (committed to the repo). The agent container mounts it at `/etc/ssl/certs/custom/ca.pem` and `SSL_CERT_FILE`/`REQUESTS_CA_BUNDLE` point to it automatically.
+### 1. Create the combined CA bundle
+
+From the repo root `agents/ibac-demo/`:
+
+```bash
+cd src/agent
+mkdir -p ca
+cp ../deploy/compose/ca/ca-cert.pem ca/ca-cert.pem
+cat "$(uv run python3 -c "import certifi; print(certifi.where())")" ca/ca-cert.pem > ca/combined-ca.pem
+```
+
+### 2. Create `deploy/compose/.env`
+
+```
+APEX_URL=https://cloud-apex:8443
+APP_TOKEN=<your app token from console.acuvity.ai>
+APEX_API_TOKEN=<same value as APP_TOKEN>
+OPENROUTER_API_KEY=<your OpenRouter key>
+CA_CERT_PATH=./ca/ca-cert.pem
+CA_KEY_PATH=./ca/ca-key.pem
+```
+
+Get your `APP_TOKEN` from [console.acuvity.ai](https://console.acuvity.ai) under **Access > App Tokens**.
+
+### 3. Import provider and manifest
+
+From `agents/ibac-demo/`:
+
+```bash
+export APP_ORG='acuvity.ai'
+export APP_PROJECT='cloud-apex-test'   # your project name
+
+acuctl import -A https://api.acuvity.dev \
+  --namespace "/orgs/${APP_ORG}/apps/${APP_PROJECT}" \
+  - < deploy/config/providers-openrouter.yaml
+
+acuctl import -A https://api.acuvity.dev \
+  --namespace "/orgs/${APP_ORG}/apps/${APP_PROJECT}" \
+  - < ibac-manifest.yaml
+```
+
+### 4. Start
 
 ```bash
 cd deploy/compose
 docker compose --env-file .env up --build
 ```
 
-- UI: http://localhost:5174/
-- MCP (debug): http://localhost:18000/sse
-- Agent (debug): http://localhost:8300/health
+Open **http://localhost:5174** - that's the UI.
 
-The UI sets `BACKEND_URL=http://agent:8000` so Vite proxies `/api` to the agent service (port 8000 inside the compose network).
+---
+
+## After a Code Change
+
+```bash
+cd deploy/compose
+docker compose --env-file .env up --build
+```
+
+---
+
+## After a Manifest Change
+
+Re-run the imports from step 3, then restart:
+
+```bash
+docker compose --env-file .env down
+docker compose --env-file .env up --build
+```
+
+---
+
+## After a Token or URL Change
+
+Update `.env`, then restart:
+
+```bash
+docker compose --env-file .env down
+docker compose --env-file .env up --build
+```
+
+---
+
+## Useful Endpoints
+
+| Service | URL |
+|---|---|
+| UI | http://localhost:5174 |
+| Agent API | http://localhost:8300/health |
+| MCP (debug) | http://localhost:18000/sse |
+| Mailpit (email UI) | http://localhost:8025 |
+| cloud-apex | https://localhost:9443 |

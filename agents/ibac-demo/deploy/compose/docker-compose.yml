@@ -143,7 +143,7 @@ services:
       APEX_DYNAMIC_TLS_CA_KEY: /etc/acuvity/cloud-apex/dynamic-tls-ca/ca-key.pem
       APEX_HEALTH_ENABLED: "true"
       APEX_HEALTH_LISTEN: ":9080"
-      APEX_API_TOKEN: 
+      APEX_API_TOKEN: ${APEX_API_TOKEN}
       APEX_UPSTREAM_ADDITIONAL_CA: /etc/acuvity/cloud-apex/dynamic-tls-ca/ca-cert.pem
       APEX_ACUTRACER_ENABLE: "true"
       APEX_ACUTRACER_TRACESTATE_PASSPHRASE: "passphrase"
