@@ -6,7 +6,7 @@ A minimal LangGraph agent with optional chat UI. Traffic can go through the **Ac
 
 **Tools**
 
-- [Docker Desktop](https://docs.docker.com/get-docker/) (Mac/Windows) or Docker Engine (Linux)
+- [Docker Desktop](https://docs.docker.com/get-docker/) (Mac/Windows) or Rancher Desktop
 
 **Accounts**
 
