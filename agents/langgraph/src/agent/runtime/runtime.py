@@ -32,7 +32,6 @@ class LanggraphRuntime:
 
     def __init__(self, cfg: AgentConfig):
         self.cfg = cfg
-        self.app_name = cfg["app_name"]
         self.mcp_config: Mapping[str, SSEConnection | StreamableHttpConnection] = (
             self.setup_mcp_toolsets()
         )
@@ -40,6 +39,7 @@ class LanggraphRuntime:
         self.tools: list[Any] = []
         self.agent: Any = None
         self.llm_with_tools: Any = None
+        self.model_name = cfg.get("model_name", "claude-sonnet-4-6")
 
     def setup_mcp_toolsets(self) -> Mapping[str, SSEConnection | StreamableHttpConnection]:
         """Set up MCP toolset configuration from cfg."""
@@ -85,7 +85,7 @@ class LanggraphRuntime:
                     "Create a .env file with ANTHROPIC_API_KEY=sk-ant-... or export it"
                 )
             llm = ChatAnthropic(  # type: ignore[call-arg]
-                model_name="claude-sonnet-4-20250514", api_key=api_key
+                model_name=self.model_name, api_key=api_key
             )
 
             if self.tools:

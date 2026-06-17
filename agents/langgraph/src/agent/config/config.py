@@ -31,6 +31,7 @@ class AgentConfig(TypedDict):
     app_name: str
     title: str
     cors_origins: str | list[str]
+    model_name: str
     instruction: str
     mcp_servers: list[McpServerConfig] | None
     otel: OtelConfig

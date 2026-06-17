@@ -62,6 +62,8 @@ mcpServers:
 
 agent:
   corsOrigins: '["http://localhost:3000","http://localhost:8000"]'
+  model:
+    name: sonnet46
 
 ui:
   apiBaseURL: "http://localhost:8000/api/v1/chat"
