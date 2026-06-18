@@ -6,12 +6,10 @@ import threading
 
 from opentelemetry import trace
 
-from mcp.types import PromptMessage, TextContent
-from mcp_agent.core.fastagent import FastAgent
-from mcp_agent.core.request_params import RequestParams
-from mcp_agent.mcp.prompt_message_multipart import PromptMessageMultipart
-from mcp_agent.mcp.helpers.content_helpers import get_text
-from mcp_agent.logging.logger import get_logger
+from fast_agent.core.fastagent import FastAgent
+from fast_agent import RequestParams
+from fast_agent.mcp.helpers.content_helpers import get_text
+from fast_agent.core.logging.logger import get_logger
 
 
 class AgentService:  # pylint: disable=too-many-instance-attributes
@@ -114,16 +112,8 @@ class AgentService:  # pylint: disable=too-many-instance-attributes
         )
 
         try:
-            prompts = PromptMessageMultipart.to_multipart(
-                [
-                    PromptMessage(
-                        role="user",
-                        content=TextContent(type="text", text=message),
-                    ),
-                ]
-            )
             response = await self.agent.acuvity.generate(
-                multipart_messages=prompts,
+                messages=message,
                 request_params=RequestParams(use_history=self.history, max_iterations=10000),
             )
 

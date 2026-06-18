@@ -26,10 +26,11 @@ class OpenAISDKRuntime:
     def __init__(self, cfg: AgentConfig):
         self.cfg = cfg
         self.app_name = cfg["app_name"]
+        self.model_name = cfg.get("model_name", "claude-sonnet-4-6")
         self.agent = Agent(
             name="openai-sdk-mcp-agent",
             instructions=self.cfg["instruction"],
-            model=LitellmModel(model="anthropic/claude-sonnet-4-20250514"),
+            model=LitellmModel(model=f"anthropic/{self.model_name}"),  # type: ignore[call-arg]
         )
 
     async def setup_mcp_toolsets(self, stack: AsyncExitStack) -> list[MCPServer]:
