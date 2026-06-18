@@ -1,0 +1,34 @@
+name: Push images to acuvity docker registry
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-or-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ secrets.OCI_REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build containers for all agents
+        run: make containers
+        working-directory: agents
+        env:
+          OCI_REGISTRY: ${{ secrets.OCI_REGISTRY }}
+          CONTAINER_TAG: ${{ github.sha }}
+
+      - name: Push containers for all agents
+        run: make push
+        working-directory: agents
+        env:
+          OCI_REGISTRY: ${{ secrets.OCI_REGISTRY }}
+          CONTAINER_TAG: ${{ github.sha }}
