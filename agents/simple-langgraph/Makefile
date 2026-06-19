@@ -11,3 +11,7 @@ lint:
 
 deptry:
 	@uv run --with deptry deptry .
+
+
+push:
+	echo "No containers to be built"
