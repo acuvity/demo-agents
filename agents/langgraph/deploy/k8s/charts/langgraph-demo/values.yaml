@@ -8,7 +8,7 @@ agent:
   serviceType: ClusterIP
   corsOrigins: "*"
   config:
-    agentModel: "anthropic/claude-sonnet-4-6"
+    agentModel: "claude-sonnet-4-6"
   mcpServers:
     - name: mcp-server-sequential-thinking
       description: Sequential thinking MCP server
