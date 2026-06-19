@@ -29,7 +29,7 @@ dependencies = [
 ]
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["psycopg2-binary"]
+DEP002 = ["psycopg2-binary", "bcrypt"]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
