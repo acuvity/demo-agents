@@ -28,13 +28,14 @@ agent:
 
 ui:
   image:
-    repository: acuvity/langgraph-demo-ui
+    repository: acuvity/agent-demo-ui
     tag: latest
     pullPolicy: Always
   replicas: 1
   port: 5174
   serviceType: ClusterIP
   backendUrl: "http://langgraph-demo-svc"
+  agentName: "LangGraph"
 
 secrets:
   anthropicApiKey: ""

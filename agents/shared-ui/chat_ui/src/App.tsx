@@ -13,6 +13,7 @@ interface Message {
 }
 
 const API_URL = '/api'
+const AGENT_NAME = import.meta.env.VITE_AGENT_NAME || 'AI Agent'
 
 function App() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -81,7 +82,7 @@ function App() {
         </div>
         <div>
           <h1 className="text-base font-semibold text-foreground tracking-tight">Research Assistant</h1>
-          <p className="text-xs text-muted-foreground">Powered by Langgraph</p>
+          <p className="text-xs text-muted-foreground">Powered by {AGENT_NAME}</p>
         </div>
       </header>
 

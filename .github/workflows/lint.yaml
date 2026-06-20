@@ -20,10 +20,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: agents/google_adk/src/ui/chat_ui/package-lock.json
+          cache-dependency-path: agents/shared-ui/chat_ui/package-lock.json
 
       - name: Install Node dependencies
-        run: npm ci --prefix agents/google_adk/src/ui/chat_ui
+        run: npm ci --prefix agents/shared-ui/chat_ui
 
       - name: Lint
         run: make lint

@@ -27,6 +27,8 @@ spec:
           env:
             - name: BACKEND_URL
               value: {{ .Values.ui.backendUrl | quote }}
+            - name: VITE_AGENT_NAME
+              value: {{ .Values.ui.agentName | quote }}
 
             - name: SSL_CERT_FILE
               value: "/etc/ssl/certs/custom/ca-bundle.crt"
