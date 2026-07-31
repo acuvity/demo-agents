@@ -1,20 +1,11 @@
 label: apps/openai-sdk-demo
 apps:
   - name: openai-sdk-demo
-    description: "Google ADK agent application using Google ADK."
+    description: "Openai SDK agent application using Openai SDK."
     subject:
       - - "@source:namespace=/"
-        - "@source:type=mtls"
-        - "@source:name=app-tokens"
         - "@org=acuvity.ai"
-        - "@scope:project=demo-agents"
-        - "@apptoken:name=demo-agents"
     tracing: Recording
-    otelReceivers:
-      - endpoint: "127.0.0.1:4317"
-        protocol: GRPC
-      - endpoint: "127.0.0.1:4318"
-        protocol: HTTP
     selector:
       type: Kubernetes
       kubernetes:
@@ -29,18 +20,8 @@ apps:
             name: openai-sdk-demo-ui
             kubernetesNamespace: openai-sdk-demo
             type: Deployment
-        ingress:
-          defaultACLAction: Allow
-          ACLs:
-            - name: allow-all-external
-              IPRanges:
-                - "0.0.0.0/0"
-              port: 80
-              description: "Allow all external requests"
-              action: Allow
         egress:
-          defaultPolicy:
-            ACLAction: Allow
+          defaultPolicyAction: Allow
       - name: agent
         description: "The agent running the API server."
         kind: Agent
@@ -50,83 +31,41 @@ apps:
             name: openai-sdk-demo
             kubernetesNamespace: openai-sdk-demo
             type: Deployment
-        ingress:
-          defaultACLAction: Allow
-          ACLs:
-            - name: allow-all-external
-              IPRanges:
-                - "0.0.0.0/0"
-              port: 80
-              description: "Allow all external requests"
-              action: Allow
-          listeners:
-            - port: 8300
-              mode: Proxy
-              hosts:
-                - openai-sdk-demo-svc
-                - openai-sdk-demo-svc.openai-sdk-demo
-                - openai-sdk-demo-svc.openai-sdk-demo.svc.cluster.local
-              extractors:
-                - def:
-                    name: chat/request/message
-                    type: Input
-                    path: "/send"
-                    method: Post
-                    script: |-
-                      function extract()
-                        body = json.decode(input.body())
-                        return {
-                          extractions = { content = body.message },
-                        }
-                      end
-                - def:
-                    name: chat/response/message
-                    type: Output
-                    path: "/send"
-                    method: Post
-                    script: |-
-                      function extract()
-                        body = json.decode(input.body())
-                        return {
-                          extractions = { content = body.output },
-                        }
-                      end
-              proxy:
-                listenTLS: Disabled
-                dialTLS: Disabled
-                defaultPolicyAction: Allow
-                policies:
-                  - name: allow-all-external
-                    description: "Allow all external requests"
-                    rules:
-                      - action: Allow
-                        IPRanges:
-                          - "0.0.0.0/0"
+        provider:
+          category: App
+          providerType: "LLM"
+          hosts:
+            - openai-sdk-demo-svc
+            - openai-sdk-demo-svc.openai-sdk-demo
+            - openai-sdk-demo-svc.openai-sdk-demo.svc.cluster.local
+          extractors:
+            - def:
+                name: chat/request/message
+                type: Input
+                path: "/send"
+                method: Post
+                script: |-
+                  function extract()
+                    body = json.decode(input.body())
+                    return {
+                      extractions = { content = body.message },
+                    }
+                  end
+            - def:
+                name: chat/response/message
+                type: Output
+                path: "/send"
+                method: Post
+                script: |-
+                  function extract()
+                    body = json.decode(input.body())
+                    return {
+                      extractions = { content = body.output },
+                    }
+                  end
         egress:
-          defaultPolicy:
-            ACLAction: Allow
-          policies:
-            - name: allow-exa-mcp
-              description: "Allow requests to Exa MCP search"
-              ACLs:
-                - action: Allow
-                  hostnames:
-                    - "mcp.exa.ai"
-            - name: allow-mcp-tools
-              description: "Allow requests to MCP tools"
-              rules:
-                - mode: Proxy
-                  proxyAction: Allow
-                  appComponents:
-                    - "openai-sdk-demo/mcp-sequential-thinking"
-                    - "openai-sdk-demo/mcp-brave-search"
-            - name: allow-anthropic
-              description: "Allow requests to Anthropic API"
-              rules:
-                - mode: Proxy
-                  proxyAction: Allow
-                  providers:
-                  - anthropic-api
+          defaultPolicyAction: Allow
+        
       - name: mcp-sequential-thinking
         description: "MCP Server: Sequential Thinking"
         kind: Tool
@@ -136,34 +75,23 @@ apps:
             name: mcp-server-sequential-thinking
             kubernetesNamespace: openai-sdk-demo
             type: Deployment
-        ingress:
-          listeners:
-            - port: 8000
-              mode: Proxy
-              hosts:
-                - mcp-server-sequential-thinking.openai-sdk-demo.svc.cluster.local
-                - mcp-server-sequential-thinking.openai-sdk-demo
-                - mcp-server-sequential-thinking
-              extractors:
-                - ref: mcp/input-sse
-                - ref: mcp/output-sse
-                - ref: mcp/input-http
-                - ref: mcp/output-http
-                - ref: mcp/output-http-get
-              proxy:
-                listenTLS: Disabled
-                dialTLS: Disabled
-                defaultPolicyAction: Allow
-                policies:
-                  - name: allow-agent
-                    description: "Allow requests from the agent"
-                    rules:
-                      - action: Allow
-                        appComponents:
-                          - "openai-sdk-demo/agent"
+        provider:
+          category: App
+          providerType: "MCPServer"
+          hosts:
+            - mcp-server-sequential-thinking.openai-sdk-demo.svc.cluster.local
+            - mcp-server-sequential-thinking.openai-sdk-demo
+            - mcp-server-sequential-thinking
+          extractors:
+            - ref: mcp/input-http
+            - ref: mcp/output-http
+            - ref: mcp/output-http-get
+            - ref: mcp/input-sse
+            - ref: mcp/output-sse
         egress:
-          defaultPolicy:
-            ACLAction: Allow
+          defaultPolicyAction: Allow
+
+
       - name: mcp-brave-search
         description: "MCP Server: Brave Search"
         kind: Tool
@@ -173,38 +101,18 @@ apps:
             name: mcp-server-brave-search
             kubernetesNamespace: openai-sdk-demo
             type: Deployment
-        ingress:
-          listeners:
-            - port: 8000
-              mode: Proxy
-              hosts:
-                - mcp-server-brave-search.openai-sdk-demo.svc.cluster.local
-                - mcp-server-brave-search.openai-sdk-demo
-                - mcp-server-brave-search
-              extractors:
-                - ref: mcp/input-sse
-                - ref: mcp/output-sse
-                - ref: mcp/input-http
-                - ref: mcp/output-http
-                - ref: mcp/output-http-get
-              proxy:
-                listenTLS: Disabled
-                dialTLS: Disabled
-                defaultPolicyAction: Allow
-                policies:
-                  - name: allow-agent
-                    description: "Allow requests from the agent"
-                    rules:
-                      - action: Allow
-                        appComponents:
-                          - "openai-sdk-demo/agent"
+        provider:
+          category: App
+          providerType: "MCPServer"
+          hosts:
+            - mcp-server-brave-search.openai-sdk-demo.svc.cluster.local
+            - mcp-server-brave-search.openai-sdk-demo
+            - mcp-server-brave-search
+          extractors:
+            - ref: mcp/input-http
+            - ref: mcp/output-http
+            - ref: mcp/output-http-get
+            - ref: mcp/input-sse
+            - ref: mcp/output-sse
         egress:
-          defaultPolicy:
-            ACLAction: Allow
-          policies:
-            - name: allow-brave-search-api
-              description: "Allow requests to Brave Search API"
-              ACLs:
-                - action: Allow
-                  hostnames:
-                    - "api.search.brave.com"
+           defaultPolicyAction: Allow

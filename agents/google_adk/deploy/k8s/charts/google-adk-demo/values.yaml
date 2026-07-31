@@ -12,12 +12,12 @@ agent:
   mcpServers:
     - name: mcp-server-sequential-thinking
       description: Sequential thinking MCP server
-      url: "http://mcp-server-sequential-thinking:8000/mcp"
+      url: "http://mcp-server-sequential-thinking.google-adk-demo.svc.cluster.local:8000/mcp"
     - name: mcp-server-brave-search
       description: Brave search MCP server
-      url: "http://mcp-server-brave-search:8000/mcp"
+      url: "http://mcp-server-brave-search.google-adk-demo.svc.cluster.local:8000/mcp"
     - name: arcade-mcp-gateway
-      url: https://api.arcade.dev/mcp/acuvity
+      url: https://api.arcade.dev/mcp/gw_3Eff6BBPyymZD3pKxiNPekoPtuD
 
   otel:
     enabled: true
@@ -37,22 +37,32 @@ ui:
   replicas: 1
   port: 5174
   serviceType: ClusterIP
-  backendUrl: "http://google-adk-demo-svc"
+  backendUrl: "http://google-adk-demo-svc.google-adk-demo.svc.cluster.local"
 
 litellm:
   apiKey: ""
-  apiBase: "http://litellm:4500"
+  apiBase: "http://litellm.google-adk-demo.svc.cluster.local:4500"
   image: "docker.litellm.ai/berriai/litellm:main-stable"
   modelName: "claude-sonnet-4-6"
   model: "anthropic/claude-sonnet-4-6"
 
 
 arcade:
-  userId: ""
+  userId: "nikoleta@acuvity.ai"
+
+proxy:
+  host: "ais-demo-gw.proofpoint-ais.svc.cluster.local"
+  httpsPort: 443
+  httpPort: 8080
+
+caBundle:
+  enabled: false
 
 secrets:
   anthropicApiKey: ""
   braveApiKey: ""
-  arcadeApiKey: ""
+  arcadeApiKey: "arc_proj1Sx1UrQgKSaBN8WFTuHjxpXQU9c9Qr4wWnMDm9bEhrUir3kjAoS"
+  agentToken: ""
+  litellmToken: ""
 
 

@@ -5,6 +5,22 @@
 * You must have an Anthropic API key set in your environment which is accessible through `$ANTHROPIC_API_KEY`
 * You must have a Brave API key set in your environment which is accessible through `$BRAVE_API_KEY`
 
+### Component Tokens & Proxy
+
+| Environment Variable | Description |
+|----------------------|-------------|
+| `FAST_AGENT_TOKEN` | Component token for the agent — issue at [console.acuvity.ai](https://console.acuvity.ai) after manifest import |
+| `PROXY_HOST` | Host of your AI Security Gateway deployment (e.g. `ais-demo-gw.<namespace>.svc.cluster.local`) |
+| `CA_BUNDLE_PATH` | *(Optional)* Path to CA bundle PEM for TLS |
+
+The agent token is a **component token** issued by the Acuvity platform to authenticate the agent workload through the AI Security Gateway:
+
+1. Import the manifest into [console.acuvity.ai](https://console.acuvity.ai)
+2. Issue a component token for the `agent` component from the console
+3. Set `PROXY_HOST` to the host of your AI Security Gateway deployment
+
+For full instructions see the [Acuvity AppSec docs](https://docs.acuvity.ai/wURWAaVt0FMiS39eKrS9/appsec).
+
 You can use the script [./deploy-mcp-demo.sh](./deploy-mcp-demo.sh) to deploy the MCP servers and the demo application.
 
 ### Description of things the script does:

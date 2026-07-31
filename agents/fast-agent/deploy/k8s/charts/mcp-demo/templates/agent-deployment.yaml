@@ -68,9 +68,11 @@ spec:
               mountPath: /config/fastagent.config.yaml
               subPath: fastagent.config.yaml
               readOnly: true
+            {{- if .Values.caBundle.enabled }}
             - name: custom-ca
               mountPath: "/etc/ssl/certs/custom"
               readOnly: true
+            {{- end }}
           env:
           - name: POSTGRES_SERVER
             value: {{ .Release.Name }}-postgres
@@ -111,10 +113,21 @@ spec:
             value: "127.0.0.1:4317"
           - name: OTEL_EXPORTER_OTLP_INSECURE
             value: "true"
-          - name: REQUESTS_CA_BUNDLE # python requests module
+          {{- if .Values.caBundle.enabled }}
+          - name: REQUESTS_CA_BUNDLE
             value: /etc/ssl/certs/custom/ca-bundle.crt
-          - name: SSL_CERT_FILE # python httpx module
+          - name: SSL_CERT_FILE
             value: /etc/ssl/certs/custom/ca-bundle.crt
+          {{- end }}
+          - name: FAST_AGENT_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-secrets
+                key: FAST_AGENT_TOKEN
+          - name: HTTPS_PROXY
+            value: "https://token:$(FAST_AGENT_TOKEN)@{{ .Values.proxy.host }}:{{ .Values.proxy.httpsPort }}"
+          - name: HTTP_PROXY
+            value: "http://token:$(FAST_AGENT_TOKEN)@{{ .Values.proxy.host }}:{{ .Values.proxy.httpPort }}"
           {{- if .Values.secrets.descope_project_id }}
           - name: DESCOPE_PROJECT_ID
             valueFrom:
@@ -126,7 +139,8 @@ spec:
         - name: config
           secret:
             secretName: {{ .Release.Name }}-secrets
+        {{- if .Values.caBundle.enabled }}
         - name: custom-ca
           configMap:
             name: acuvity-ca-bundle
-            optional: false
+        {{- end }}

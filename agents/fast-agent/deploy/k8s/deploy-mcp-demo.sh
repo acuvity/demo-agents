@@ -4,6 +4,8 @@ set -e
 
 [ "$BRAVE_API_KEY" ] || { echo "BRAVE_API_KEY is not set. Please export it before running this script."; exit 1; }
 [ "$ANTHROPIC_API_KEY" ] || { echo "ANTHROPIC_API_KEY is not set. Please export it before running this script."; exit 1; }
+[ "$FAST_AGENT_TOKEN" ] || { echo "FAST_AGENT_TOKEN is not set. Please export it before running this script."; exit 1; }
+[ "$PROXY_HOST" ] || { echo "PROXY_HOST is not set. Please export it before running this script."; exit 1; }
 
 echo "Create or ensure the namespace 'mcp-demo' exists..."
 kubectl create namespace mcp-demo || echo "Namespace 'mcp-demo' already exists."
@@ -38,6 +40,21 @@ echo "mcpServers:
     host:
 " > values.yaml
 
-helm -n mcp-demo install mcp-demo charts/mcp-demo -f values.yaml --set secrets.anthropic_key="$ANTHROPIC_API_KEY" --set secrets.descope_project_id="$DESCOPE_PROJECT_ID"
+CA_BUNDLE_ARGS=""
+if [ -n "${CA_BUNDLE_PATH:-}" ]; then
+  echo "Applying CA bundle configmap..."
+  kubectl create configmap acuvity-ca-bundle \
+    -n mcp-demo \
+    --from-file=ca-bundle.crt="$CA_BUNDLE_PATH" \
+    --dry-run=client -o yaml | kubectl apply -f -
+  CA_BUNDLE_ARGS="--set caBundle.enabled=true"
+fi
+
+helm -n mcp-demo install mcp-demo charts/mcp-demo -f values.yaml \
+  --set secrets.anthropic_key="$ANTHROPIC_API_KEY" \
+  --set secrets.descope_project_id="$DESCOPE_PROJECT_ID" \
+  --set secrets.agentToken="$FAST_AGENT_TOKEN" \
+  --set proxy.host="$PROXY_HOST" \
+  $CA_BUNDLE_ARGS
 
 echo "MCP Chatbot Demo deployed successfully."

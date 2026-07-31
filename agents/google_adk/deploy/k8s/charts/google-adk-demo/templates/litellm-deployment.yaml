@@ -44,16 +44,29 @@ spec:
             - name: config-volume
               mountPath: /app/proxy_server_config.yaml
               subPath: config.yaml
+            {{- if .Values.caBundle.enabled }}
             - name: custom-ca
               mountPath: "/etc/ssl/certs/custom"
               readOnly: true
+            {{- end }}
           env:
             - name: PORT
               value: "4500"
+            {{- if .Values.caBundle.enabled }}
             - name: REQUESTS_CA_BUNDLE
               value: "/etc/ssl/certs/custom/ca-bundle.crt"
             - name: SSL_CERT_FILE
               value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            {{- end }}
+            - name: GOOGLE_ADK_LITELLM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: agent-secrets
+                  key: GOOGLE_ADK_LITELLM_TOKEN
+            - name: HTTPS_PROXY
+              value: "https://token:$(GOOGLE_ADK_LITELLM_TOKEN)@{{ .Values.proxy.host }}:{{ .Values.proxy.httpsPort }}"
+            - name: HTTP_PROXY
+              value: "http://token:$(GOOGLE_ADK_LITELLM_TOKEN)@{{ .Values.proxy.host }}:{{ .Values.proxy.httpPort }}"
           envFrom:
             - secretRef:
                 name: agent-secrets
@@ -61,7 +74,10 @@ spec:
         - name: config-volume
           configMap:
             name: litellm-config-file
+        {{- if .Values.caBundle.enabled }}
         - name: custom-ca
           configMap:
-            name: acuvity-ca-bundle
-            optional: false
+            name: apex-ca-bundle
+        {{- end }}
+
+

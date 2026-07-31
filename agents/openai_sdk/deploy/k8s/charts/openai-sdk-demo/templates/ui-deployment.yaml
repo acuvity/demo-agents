@@ -20,20 +20,24 @@ spec:
           imagePullPolicy: {{ .Values.ui.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.ui.port }}
+          {{- if .Values.caBundle.enabled }}
           volumeMounts:
             - name: custom-ca
               mountPath: "/etc/ssl/certs/custom"
               readOnly: true
+          {{- end }}
           env:
             - name: BACKEND_URL
               value: {{ .Values.ui.backendUrl | quote }}
-
+            {{- if .Values.caBundle.enabled }}
             - name: SSL_CERT_FILE
               value: "/etc/ssl/certs/custom/ca-bundle.crt"
             - name: REQUESTS_CA_BUNDLE
               value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            {{- end }}
+      {{- if .Values.caBundle.enabled }}
       volumes:
         - name: custom-ca
           configMap:
-            name: acuvity-ca-bundle
-            optional: false
+            name: apex-ca-bundle
+      {{- end }}
