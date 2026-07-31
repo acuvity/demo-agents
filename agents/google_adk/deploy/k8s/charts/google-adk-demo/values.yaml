@@ -17,7 +17,7 @@ agent:
       description: Brave search MCP server
       url: "http://mcp-server-brave-search.google-adk-demo.svc.cluster.local:8000/mcp"
     - name: arcade-mcp-gateway
-      url: https://api.arcade.dev/mcp/gw_3Eff6BBPyymZD3pKxiNPekoPtuD
+      url: https://api.arcade.dev/mcp/acuvity
 
   otel:
     enabled: true
@@ -48,7 +48,7 @@ litellm:
 
 
 arcade:
-  userId: "nikoleta@acuvity.ai"
+  userId: ""
 
 proxy:
   host: "ais-demo-gw.proofpoint-ais.svc.cluster.local"
@@ -61,7 +61,7 @@ caBundle:
 secrets:
   anthropicApiKey: ""
   braveApiKey: ""
-  arcadeApiKey: "arc_proj1Sx1UrQgKSaBN8WFTuHjxpXQU9c9Qr4wWnMDm9bEhrUir3kjAoS"
+  arcadeApiKey: ""
   agentToken: ""
   litellmToken: ""
 
