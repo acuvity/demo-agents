@@ -4,7 +4,7 @@
 # Usage:
 #   ANTHROPIC_API_KEY=<key> BRAVE_API_KEY=<key> \
 #     LANGGRAPH_AGENT_TOKEN=<token> \
-#     PROXY_HOST=<host> [CA_BUNDLE_PATH=<path/to/ca.pem>] ./deploy.sh
+#     PROXY_HOST=<host> CA_BUNDLE_PATH=<path/to/ca.pem> ./deploy.sh
 #
 # Prerequisites: kubectl and helm must be available on PATH and pointing at the target cluster.
 
@@ -46,6 +46,7 @@ require_env ANTHROPIC_API_KEY
 require_env BRAVE_API_KEY
 require_env LANGGRAPH_AGENT_TOKEN
 require_env PROXY_HOST
+require_env CA_BUNDLE_PATH
 
 # ---------------------------------------------------------------------------
 # Namespace
@@ -83,18 +84,14 @@ helm upgrade mcp-server-brave-search "$MCP_BRAVE_SEARCH_CHART" \
 log "mcp-server-brave-search installed."
 
 # ---------------------------------------------------------------------------
-# CA Bundle (optional)
+# CA Bundle
 # ---------------------------------------------------------------------------
-CA_BUNDLE_ARGS=()
-if [[ -n "${CA_BUNDLE_PATH:-}" ]]; then
-  step "CA Bundle"
-  kubectl create configmap acuvity-ca-bundle \
-    --namespace "$NAMESPACE" \
-    --from-file=ca-bundle.crt="$CA_BUNDLE_PATH" \
-    --dry-run=client -o yaml | kubectl apply -f -
-  log "acuvity-ca-bundle configmap applied."
-  CA_BUNDLE_ARGS=(--set caBundle.enabled=true)
-fi
+step "CA Bundle"
+kubectl create configmap acuvity-ca-bundle \
+  --namespace "$NAMESPACE" \
+  --from-file=ca-bundle.crt="$CA_BUNDLE_PATH" \
+  --dry-run=client -o yaml | kubectl apply -f -
+log "acuvity-ca-bundle configmap applied."
 
 # ---------------------------------------------------------------------------
 # Langgraph Demo
@@ -106,8 +103,7 @@ helm upgrade langgraph-demo "$CHART_DIR" \
   --set secrets.anthropicApiKey="$ANTHROPIC_API_KEY" \
   --set secrets.braveApiKey="$BRAVE_API_KEY" \
   --set secrets.agentToken="$LANGGRAPH_AGENT_TOKEN" \
-  --set proxy.host="$PROXY_HOST" \
-  "${CA_BUNDLE_ARGS[@]+"${CA_BUNDLE_ARGS[@]}"}"
+  --set proxy.host="$PROXY_HOST"
 log "langgraph-demo installed."
 
 # ---------------------------------------------------------------------------

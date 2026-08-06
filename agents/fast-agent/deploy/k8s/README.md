@@ -11,7 +11,7 @@
 |----------------------|-------------|
 | `FAST_AGENT_TOKEN` | Component token for the agent — issue at [console.acuvity.ai](https://console.acuvity.ai) after manifest import |
 | `PROXY_HOST` | Host of your AI Security Gateway deployment (e.g. `ais-demo-gw.<namespace>.svc.cluster.local`) |
-| `CA_BUNDLE_PATH` | *(Optional)* Path to CA bundle PEM for TLS |
+| `CA_BUNDLE_PATH` | Path to CA bundle PEM file for TLS verification |
 
 The agent token is a **component token** issued by the Acuvity platform to authenticate the agent workload through the AI Security Gateway:
 

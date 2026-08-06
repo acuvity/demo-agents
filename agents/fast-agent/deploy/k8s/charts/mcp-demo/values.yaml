@@ -73,9 +73,6 @@ proxy:
   httpsPort: 443
   httpPort: 8080
 
-caBundle:
-  enabled: false
-
 secrets:
   anthropic_key:
   descope_project_id:

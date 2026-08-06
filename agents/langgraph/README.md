@@ -37,6 +37,7 @@ Obtain the following API keys before proceeding:
 | Brave Search | `BRAVE_API_KEY` | [brave.com/search/api](https://brave.com/search/api) |
 | Acuvity | `LANGGRAPH_AGENT_TOKEN` | Component token — issue at [console.acuvity.ai](https://console.acuvity.ai) after manifest import (see below) |
 | Acuvity | `PROXY_HOST` | Host of your AI Security Gateway deployment (e.g. `ais-demo-gw.<namespace>.svc.cluster.local`) |
+| — | `CA_BUNDLE_PATH` | Path to your CA bundle PEM file for TLS verification |
 
 ### Component Tokens
 
@@ -60,9 +61,7 @@ export ANTHROPIC_API_KEY=<your_anthropic_key>
 export BRAVE_API_KEY=<your_brave_key>
 export LANGGRAPH_AGENT_TOKEN=<your_agent_component_token>
 export PROXY_HOST=<your_ai_security_gateway_host>
-
-# Optionally provide a CA bundle for TLS
-# export CA_BUNDLE_PATH=<path/to/ca.pem>
+export CA_BUNDLE_PATH=<path/to/ca.pem>
 
 # Run the deployment script
 ./deploy/k8s/deploy.sh

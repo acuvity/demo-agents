@@ -4,7 +4,7 @@
 # Usage:
 #   ANTHROPIC_API_KEY=<key> BRAVE_API_KEY=<key> \
 #     GOOGLE_ADK_AGENT_TOKEN=<token> GOOGLE_ADK_LITELLM_TOKEN=<token> \
-#     PROXY_HOST=<host> [ARCADE_API_KEY=<key>] [CA_BUNDLE_PATH=<path/to/ca.pem>] ./deploy.sh
+#     PROXY_HOST=<host> CA_BUNDLE_PATH=<path/to/ca.pem> [ARCADE_API_KEY=<key>] ./deploy.sh
 #
 # Prerequisites: kubectl and helm must be available on PATH and pointing at the target cluster.
 
@@ -47,6 +47,7 @@ require_env BRAVE_API_KEY
 require_env GOOGLE_ADK_AGENT_TOKEN
 require_env GOOGLE_ADK_LITELLM_TOKEN
 require_env PROXY_HOST
+require_env CA_BUNDLE_PATH
 
 # ---------------------------------------------------------------------------
 # Namespace
@@ -84,18 +85,14 @@ helm upgrade mcp-server-brave-search "$MCP_BRAVE_SEARCH_CHART" \
 log "mcp-server-brave-search installed."
 
 # ---------------------------------------------------------------------------
-# CA Bundle (optional)
+# CA Bundle
 # ---------------------------------------------------------------------------
-CA_BUNDLE_ARGS=()
-if [[ -n "${CA_BUNDLE_PATH:-}" ]]; then
-  step "CA Bundle"
-  kubectl create configmap apex-ca-bundle \
-    --namespace "$NAMESPACE" \
-    --from-file=ca-bundle.crt="$CA_BUNDLE_PATH" \
-    --dry-run=client -o yaml | kubectl apply -f -
-  log "apex-ca-bundle configmap applied."
-  CA_BUNDLE_ARGS=(--set caBundle.enabled=true)
-fi
+step "CA Bundle"
+kubectl create configmap apex-ca-bundle \
+  --namespace "$NAMESPACE" \
+  --from-file=ca-bundle.crt="$CA_BUNDLE_PATH" \
+  --dry-run=client -o yaml | kubectl apply -f -
+log "apex-ca-bundle configmap applied."
 
 # ---------------------------------------------------------------------------
 # Google ADK Demo
@@ -109,8 +106,7 @@ helm upgrade google-adk-demo "$CHART_DIR" \
   --set secrets.arcadeApiKey="${ARCADE_API_KEY:-}" \
   --set secrets.agentToken="$GOOGLE_ADK_AGENT_TOKEN" \
   --set secrets.litellmToken="$GOOGLE_ADK_LITELLM_TOKEN" \
-  --set proxy.host="$PROXY_HOST" \
-  "${CA_BUNDLE_ARGS[@]+"${CA_BUNDLE_ARGS[@]}"}"
+  --set proxy.host="$PROXY_HOST"
 log "google-adk-demo installed."
 
 # ---------------------------------------------------------------------------

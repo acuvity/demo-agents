@@ -28,11 +28,9 @@ spec:
               mountPath: "/app/config.yaml"
               subPath: config.yaml
               readOnly: true
-            {{- if .Values.caBundle.enabled }}
             - name: custom-ca
               mountPath: "/etc/ssl/certs/custom"
               readOnly: true
-            {{- end }}
           env:
             - name: BACKEND_CORS_ORIGINS
               value: {{ .Values.agent.corsOrigins | quote }}
@@ -68,12 +66,10 @@ spec:
               value: "none"
             - name: OTEL_LOG_LEVEL
               value: "info"
-            {{- if .Values.caBundle.enabled }}
             - name: REQUESTS_CA_BUNDLE
               value: "/etc/ssl/certs/custom/ca-bundle.crt"
             - name: SSL_CERT_FILE
               value: "/etc/ssl/certs/custom/ca-bundle.crt"
-            {{- end }}
             - name: OPENAI_SDK_AGENT_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -90,10 +86,8 @@ spec:
             items:
               - key: config.yaml
                 path: config.yaml
-        {{- if .Values.caBundle.enabled }}
         - name: custom-ca
           configMap:
             name: apex-ca-bundle
-        {{- end }}
 
 

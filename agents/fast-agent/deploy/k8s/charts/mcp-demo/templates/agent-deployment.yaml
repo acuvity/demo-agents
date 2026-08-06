@@ -68,11 +68,9 @@ spec:
               mountPath: /config/fastagent.config.yaml
               subPath: fastagent.config.yaml
               readOnly: true
-            {{- if .Values.caBundle.enabled }}
             - name: custom-ca
               mountPath: "/etc/ssl/certs/custom"
               readOnly: true
-            {{- end }}
           env:
           - name: POSTGRES_SERVER
             value: {{ .Release.Name }}-postgres
@@ -113,12 +111,10 @@ spec:
             value: "127.0.0.1:4317"
           - name: OTEL_EXPORTER_OTLP_INSECURE
             value: "true"
-          {{- if .Values.caBundle.enabled }}
           - name: REQUESTS_CA_BUNDLE
             value: /etc/ssl/certs/custom/ca-bundle.crt
           - name: SSL_CERT_FILE
             value: /etc/ssl/certs/custom/ca-bundle.crt
-          {{- end }}
           - name: FAST_AGENT_TOKEN
             valueFrom:
               secretKeyRef:
@@ -139,8 +135,6 @@ spec:
         - name: config
           secret:
             secretName: {{ .Release.Name }}-secrets
-        {{- if .Values.caBundle.enabled }}
         - name: custom-ca
           configMap:
             name: acuvity-ca-bundle
-        {{- end }}
