@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://api.acuvity.us/api/v1/jsonschema/import.json
+
+label: demo-agents/simple-api
+
+apps:
+  - name: simple-api
+    description: "The simple langgraph API agent of the demo-agents repo."
+    tracing: Recording
+    selector:
+      type: Kubernetes
+      kubernetes:
+        kubernetesNamespace: simple-api-demo
+    components:
+      - name: agent
+        description: "The langgraph agent"
+        kind: Agent
+        selector:
+          type: Kubernetes
+          kubernetes:
+            name: simple-api
+            kubernetesNamespace: simple-api-demo
+            type: Deployment
+        egress:
+          policies:
+            - name: allow-anthropic
+              description: "Allow requests to Anthropic API"
+              transportMode: Proxy
+              providers:
+                - anthropic-api
+              action: Allow
+          defaultPolicyAction: Allow
