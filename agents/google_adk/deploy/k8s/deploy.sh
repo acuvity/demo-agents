@@ -2,7 +2,9 @@
 # deploy.sh — Deploy the Google ADK demo and its MCP server dependencies to Kubernetes.
 #
 # Usage:
-#   ANTHROPIC_API_KEY=<key> BRAVE_API_KEY=<key> [ARCADE_API_KEY=<key>] ./deploy.sh
+#   ANTHROPIC_API_KEY=<key> BRAVE_API_KEY=<key> \
+#     GOOGLE_ADK_AGENT_TOKEN=<token> GOOGLE_ADK_LITELLM_TOKEN=<token> \
+#     PROXY_HOST=<host> CA_BUNDLE_PATH=<path/to/ca.pem> [ARCADE_API_KEY=<key>] ./deploy.sh
 #
 # Prerequisites: kubectl and helm must be available on PATH and pointing at the target cluster.
 
@@ -42,6 +44,10 @@ require_cmd kubectl
 require_cmd helm
 require_env ANTHROPIC_API_KEY
 require_env BRAVE_API_KEY
+require_env GOOGLE_ADK_AGENT_TOKEN
+require_env GOOGLE_ADK_LITELLM_TOKEN
+require_env PROXY_HOST
+require_env CA_BUNDLE_PATH
 
 # ---------------------------------------------------------------------------
 # Namespace
@@ -79,6 +85,16 @@ helm upgrade mcp-server-brave-search "$MCP_BRAVE_SEARCH_CHART" \
 log "mcp-server-brave-search installed."
 
 # ---------------------------------------------------------------------------
+# CA Bundle
+# ---------------------------------------------------------------------------
+step "CA Bundle"
+kubectl create configmap apex-ca-bundle \
+  --namespace "$NAMESPACE" \
+  --from-file=ca-bundle.crt="$CA_BUNDLE_PATH" \
+  --dry-run=client -o yaml | kubectl apply -f -
+log "apex-ca-bundle configmap applied."
+
+# ---------------------------------------------------------------------------
 # Google ADK Demo
 # ---------------------------------------------------------------------------
 step "Google ADK Demo"
@@ -87,7 +103,10 @@ helm upgrade google-adk-demo "$CHART_DIR" \
   --namespace "$NAMESPACE" \
   --set secrets.anthropicApiKey="$ANTHROPIC_API_KEY" \
   --set secrets.braveApiKey="$BRAVE_API_KEY" \
-  --set secrets.arcadeApiKey="${ARCADE_API_KEY:-}"
+  --set secrets.arcadeApiKey="${ARCADE_API_KEY:-}" \
+  --set secrets.agentToken="$GOOGLE_ADK_AGENT_TOKEN" \
+  --set secrets.litellmToken="$GOOGLE_ADK_LITELLM_TOKEN" \
+  --set proxy.host="$PROXY_HOST"
 log "google-adk-demo installed."
 
 # ---------------------------------------------------------------------------

@@ -2,7 +2,9 @@
 # deploy.sh — Deploy the OpenAI SDK Demo and its MCP server dependencies to Kubernetes.
 #
 # Usage:
-#   ANTHROPIC_API_KEY=<key> BRAVE_API_KEY=<key> ./deploy.sh
+#   ANTHROPIC_API_KEY=<key> BRAVE_API_KEY=<key> \
+#     OPENAI_SDK_AGENT_TOKEN=<token> \
+#     PROXY_HOST=<host> CA_BUNDLE_PATH=<path/to/ca.pem> ./deploy.sh
 #
 # Prerequisites: kubectl and helm must be available on PATH and pointing at the target cluster.
 
@@ -42,6 +44,9 @@ require_cmd kubectl
 require_cmd helm
 require_env ANTHROPIC_API_KEY
 require_env BRAVE_API_KEY
+require_env OPENAI_SDK_AGENT_TOKEN
+require_env PROXY_HOST
+require_env CA_BUNDLE_PATH
 
 # ---------------------------------------------------------------------------
 # Namespace
@@ -79,6 +84,16 @@ helm upgrade mcp-server-brave-search "$MCP_BRAVE_SEARCH_CHART" \
 log "mcp-server-brave-search installed."
 
 # ---------------------------------------------------------------------------
+# CA Bundle
+# ---------------------------------------------------------------------------
+step "CA Bundle"
+kubectl create configmap apex-ca-bundle \
+  --namespace "$NAMESPACE" \
+  --from-file=ca-bundle.crt="$CA_BUNDLE_PATH" \
+  --dry-run=client -o yaml | kubectl apply -f -
+log "apex-ca-bundle configmap applied."
+
+# ---------------------------------------------------------------------------
 # OpenAI SDK Demo
 # ---------------------------------------------------------------------------
 step "OpenAI SDK Demo"
@@ -86,7 +101,9 @@ helm upgrade openai-sdk-demo "$CHART_DIR" \
   --install \
   --namespace "$NAMESPACE" \
   --set secrets.anthropicApiKey="$ANTHROPIC_API_KEY" \
-  --set secrets.braveApiKey="$BRAVE_API_KEY"
+  --set secrets.braveApiKey="$BRAVE_API_KEY" \
+  --set secrets.agentToken="$OPENAI_SDK_AGENT_TOKEN" \
+  --set proxy.host="$PROXY_HOST"
 log "openai-sdk-demo installed."
 
 # ---------------------------------------------------------------------------

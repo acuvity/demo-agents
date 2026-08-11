@@ -12,10 +12,10 @@ agent:
   mcpServers:
     - name: mcp-server-sequential-thinking
       description: Sequential thinking MCP server
-      url: "http://mcp-server-sequential-thinking:8000/sse"
+      url: "http://mcp-server-sequential-thinking.langgraph-demo.svc.cluster.local:8000/sse"
     - name: mcp-server-brave-search
       description: Brave search MCP server
-      url: "http://mcp-server-brave-search:8000/sse"
+      url: "http://mcp-server-brave-search.langgraph-demo.svc.cluster.local:8000/sse"
   otel:
     enabled: true
     serviceName: "langgraph-demo-tracer"
@@ -34,10 +34,16 @@ ui:
   replicas: 1
   port: 5174
   serviceType: ClusterIP
-  backendUrl: "http://langgraph-demo-svc"
+  backendUrl: "http://langgraph-demo-svc.langgraph-demo.svc.cluster.local"
+
+proxy:
+  host: "ais-demo-gw.proofpoint-ais.svc.cluster.local"
+  httpsPort: 443
+  httpPort: 8080
 
 secrets:
   anthropicApiKey: ""
   braveApiKey: ""
+  agentToken: ""
 
 

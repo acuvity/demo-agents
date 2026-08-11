@@ -10,12 +10,12 @@ agent:
   config:
     agentModel: "claude-sonnet-4-6"
   mcpServers:
-    - name: mcp-server-sequential-thinking
+    - name: mcp-server-sequential-thinking2
       description: Sequential thinking MCP server
-      url: "http://mcp-server-sequential-thinking:8000/sse"
-    - name: mcp-server-brave-search
+      url: "http://mcp-server-sequential-thinking.openai-sdk-demo.svc.cluster.local:8000/sse"
+    - name: mcp-server-brave-search2
       description: Brave search MCP server
-      url: "http://mcp-server-brave-search:8000/sse"
+      url: "http://mcp-server-brave-search.openai-sdk-demo.svc.cluster.local:8000/sse"
   otel:
     enabled: true
     serviceName: "openai-sdk-demo-tracer"
@@ -34,10 +34,16 @@ ui:
   replicas: 1
   port: 5174
   serviceType: ClusterIP
-  backendUrl: "http://openai-sdk-demo-svc"
+  backendUrl: "http://openai-sdk-demo-svc.openai-sdk-demo.svc.cluster.local"
+
+proxy:
+  host: "ais-demo-gw.proofpoint-ais.svc.cluster.local"
+  httpsPort: 443
+  httpPort: 8080
 
 secrets:
   anthropicApiKey: ""
   braveApiKey: ""
+  agentToken: ""
 
 

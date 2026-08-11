@@ -4,17 +4,8 @@ apps:
     description: "Google ADK agent application using Google ADK."
     subject:
       - - "@source:namespace=/"
-        - "@source:type=mtls"
-        - "@source:name=app-tokens"
         - "@org=acuvity.ai"
-        - "@scope:project=demo-agents"
-        - "@apptoken:name=demo-agents"
     tracing: Recording
-    otelReceivers:
-      - endpoint: "127.0.0.1:4317"
-        protocol: GRPC
-      - endpoint: "127.0.0.1:4318"
-        protocol: HTTP
     selector:
       type: Kubernetes
       kubernetes:
@@ -29,18 +20,8 @@ apps:
             name: google-adk-demo-ui
             kubernetesNamespace: google-adk-demo
             type: Deployment
-        ingress:
-          defaultACLAction: Allow
-          ACLs:
-            - name: allow-all-external
-              IPRanges:
-                - "0.0.0.0/0"
-              port: 80
-              description: "Allow all external requests"
-              action: Allow
         egress:
-          defaultPolicy:
-            ACLAction: Allow
+          defaultPolicyAction: Allow
       - name: agent
         description: "The agent running the API server."
         kind: Agent
@@ -50,97 +31,41 @@ apps:
             name: google-adk-demo
             kubernetesNamespace: google-adk-demo
             type: Deployment
-        ingress:
-          defaultACLAction: Allow
-          ACLs:
-            - name: allow-all-external
-              IPRanges:
-                - "0.0.0.0/0"
-              port: 80
-              description: "Allow all external requests"
-              action: Allow
-          listeners:
-            - port: 8300
-              mode: Proxy
-              hosts:
-                - google-adk-demo-svc
-                - google-adk-demo-svc.google-adk-demo
-                - google-adk-demo-svc.google-adk-demo.svc.cluster.local
-              extractors:
-                - def:
-                    name: chat/request/message
-                    type: Input
-                    path: "/send"
-                    method: Post
-                    script: |-
-                      function extract()
-                        body = json.decode(input.body())
-                        return {
-                          extractions = { content = body.message },
-                        }
-                      end
-                - def:
-                    name: chat/response/message
-                    type: Output
-                    path: "/send"
-                    method: Post
-                    script: |-
-                      function extract()
-                        body = json.decode(input.body())
-                        return {
-                          extractions = { content = body.output },
-                        }
-                      end
-              proxy:
-                listenTLS: Disabled
-                dialTLS: Disabled
-                defaultPolicyAction: Allow
-                policies:
-                  - name: allow-all-external
-                    description: "Allow all external requests"
-                    rules:
-                      - action: Allow
-                        IPRanges:
-                          - "0.0.0.0/0"
+        provider:
+          category: App
+          providerType: "LLM"
+          hosts:
+            - google-adk-demo-svc
+            - google-adk-demo-svc.google-adk-demo
+            - google-adk-demo-svc.google-adk-demo.svc.cluster.local
+          extractors:
+            - def:
+                name: chat/request/message
+                type: Input
+                path: "/send"
+                method: Post
+                script: |-
+                  function extract()
+                    body = json.decode(input.body())
+                    return {
+                      extractions = { content = body.message },
+                    }
+                  end
+            - def:
+                name: chat/response/message
+                type: Output
+                path: "/send"
+                method: Post
+                script: |-
+                  function extract()
+                    body = json.decode(input.body())
+                    return {
+                      extractions = { content = body.output },
+                    }
+                  end
+     
         egress:
-          defaultPolicy:
-            ACLAction: Allow
-          policies:
-            - name: allow-exa-mcp
-              description: "Allow requests to Exa MCP search"
-              ACLs:
-                - action: Allow
-                  hostnames:
-                    - "mcp.exa.ai"
-            - name: allow-mcp-tools
-              description: "Allow requests to MCP tools"
-              rules:
-                - mode: Proxy
-                  proxyAction: Allow
-                  appComponents:
-                    - "google-adk-demo/mcp-sequential-thinking"
-                    - "google-adk-demo/mcp-brave-search"
-            - name: allow-litellm
-              description: "Allow requests to LiteLLM proxy"
-              rules:
-                - mode: Proxy
-                  proxyAction: Allow
-                  appComponents:
-                    - "google-adk-demo/litellm"
-            - name: allow-anthropic
-              description: "Allow requests to Anthropic API"
-              rules:
-                - mode: Proxy
-                  proxyAction: Allow
-                  providers:
-                  - anthropic-api
-            - name: allow-arcade-dev
-              description: "Allow requests to Arcade Dev"
-              rules:
-                - mode: Proxy
-                  proxyAction: Allow
-                  providers:
-                    - arcade-dev
+          defaultPolicyAction: Allow
       - name: mcp-sequential-thinking
         description: "MCP Server: Sequential Thinking"
         kind: Tool
@@ -150,34 +75,23 @@ apps:
             name: mcp-server-sequential-thinking
             kubernetesNamespace: google-adk-demo
             type: Deployment
-        ingress:
-          listeners:
-            - port: 8000
-              mode: Proxy
-              hosts:
-                - mcp-server-sequential-thinking.google-adk-demo.svc.cluster.local
-                - mcp-server-sequential-thinking.google-adk-demo
-                - mcp-server-sequential-thinking
-              extractors:
-                - ref: mcp/input-http
-                - ref: mcp/output-http
-                - ref: mcp/output-http-get
-                - ref: mcp/input-sse
-                - ref: mcp/output-sse
-              proxy:
-                listenTLS: Disabled
-                dialTLS: Disabled
-                defaultPolicyAction: Allow
-                policies:
-                  - name: allow-agent
-                    description: "Allow requests from the agent"
-                    rules:
-                      - action: Allow
-                        appComponents:
-                          - "google-adk-demo/agent"
+        provider:
+          category: App
+          providerType: "MCPServer"
+          hosts:
+            - mcp-server-sequential-thinking.google-adk-demo.svc.cluster.local
+            - mcp-server-sequential-thinking.google-adk-demo
+            - mcp-server-sequential-thinking
+          extractors:
+            - ref: mcp/input-http
+            - ref: mcp/output-http
+            - ref: mcp/output-http-get
+            - ref: mcp/input-sse
+            - ref: mcp/output-sse
         egress:
-          defaultPolicy:
-            ACLAction: Allow
+          defaultPolicyAction: Allow
+
+
       - name: mcp-brave-search
         description: "MCP Server: Brave Search"
         kind: Tool
@@ -187,41 +101,21 @@ apps:
             name: mcp-server-brave-search
             kubernetesNamespace: google-adk-demo
             type: Deployment
-        ingress:
-          listeners:
-            - port: 8000
-              mode: Proxy
-              hosts:
-                - mcp-server-brave-search.google-adk-demo.svc.cluster.local
-                - mcp-server-brave-search.google-adk-demo
-                - mcp-server-brave-search
-              extractors:
-                - ref: mcp/input-http
-                - ref: mcp/output-http
-                - ref: mcp/output-http-get
-                - ref: mcp/input-sse
-                - ref: mcp/output-sse
-              proxy:
-                listenTLS: Disabled
-                dialTLS: Disabled
-                defaultPolicyAction: Allow
-                policies:
-                  - name: allow-agent
-                    description: "Allow requests from the agent"
-                    rules:
-                      - action: Allow
-                        appComponents:
-                          - "google-adk-demo/agent"
+        provider:
+          category: App
+          providerType: "MCPServer"
+          hosts:
+            - mcp-server-brave-search.google-adk-demo.svc.cluster.local
+            - mcp-server-brave-search.google-adk-demo
+            - mcp-server-brave-search
+          extractors:
+            - ref: mcp/input-http
+            - ref: mcp/output-http
+            - ref: mcp/output-http-get
+            - ref: mcp/input-sse
+            - ref: mcp/output-sse
         egress:
-          defaultPolicy:
-            ACLAction: Allow
-          policies:
-            - name: allow-brave-search-api
-              description: "Allow requests to Brave Search API"
-              ACLs:
-                - action: Allow
-                  hostnames:
-                    - "api.search.brave.com"
+           defaultPolicyAction: Allow
       - name: litellm
         description: "LiteLLM proxy for model routing"
         kind: Other
@@ -231,58 +125,37 @@ apps:
             name: litellm
             kubernetesNamespace: google-adk-demo
             type: Deployment
-        ingress:
-          listeners:
-            - port: 4500
-              mode: Proxy
-              hosts:
-                - litellm.google-adk-demo.svc.cluster.local
-                - litellm.google-adk-demo
-                - litellm
-              extractors:
-                - ref: oaiapi/responses/input
-                - ref: oaiapi/responses/output
-                - ref: oaiapi/responses/output/get
-                - ref: oaiapi/responses/ws/input
-                - ref: oaiapi/responses/ws/output
-                - ref: oaiapi/text/completions/input
-                - ref: oaiapi/text/completions/output
-                - ref: oaiapi/audio/generation/input
-                - ref: oaiapi/audio/transcriptions/input
-                - ref: oaiapi/audio/translations/input
-                - ref: oaiapi/text/embeddings/input
-                - ref: oaiapi/file/upload/input
-                - ref: oaiapi/image/generations/input
-                - ref: oaiapi/image/edits/input
-                - ref: oaiapi/image/variations/input
-                - ref: oaiapi/audio/speech/output
-                - ref: oaiapi/audio/transcriptions/output
-                - ref: oaiapi/audio/translations/output
-                - ref: oaiapi/text/embeddings/output
-                - ref: oaiapi/image/generations/output
-                - ref: oaiapi/image/edits/output
-                - ref: oaiapi/image/variations/output
-                - ref: anth/v1/messages/input
-                - ref: anth/v1/messages/output
-              proxy:
-                listenTLS: Disabled
-                dialTLS: Disabled
-                defaultPolicyAction: Allow
-                policies:
-                  - name: allow-agent
-                    description: "Allow requests from the agent"
-                    rules:
-                      - action: Allow
-                        appComponents:
-                          - "google-adk-demo/agent"
+        provider:
+          category: App
+          providerType: "LLM"
+          hosts:
+            - litellm.google-adk-demo.svc.cluster.local
+            - litellm.google-adk-demo
+            - litellm
+          extractors:
+            - ref: oaiapi/responses/input
+            - ref: oaiapi/responses/output
+            - ref: oaiapi/responses/output/get
+            - ref: oaiapi/responses/ws/input
+            - ref: oaiapi/responses/ws/output
+            - ref: oaiapi/text/completions/input
+            - ref: oaiapi/text/completions/output
+            - ref: oaiapi/audio/generation/input
+            - ref: oaiapi/audio/transcriptions/input
+            - ref: oaiapi/audio/translations/input
+            - ref: oaiapi/text/embeddings/input
+            - ref: oaiapi/file/upload/input
+            - ref: oaiapi/image/generations/input
+            - ref: oaiapi/image/edits/input
+            - ref: oaiapi/image/variations/input
+            - ref: oaiapi/audio/speech/output
+            - ref: oaiapi/audio/transcriptions/output
+            - ref: oaiapi/audio/translations/output
+            - ref: oaiapi/text/embeddings/output
+            - ref: oaiapi/image/generations/output
+            - ref: oaiapi/image/edits/output
+            - ref: oaiapi/image/variations/output
+            - ref: anth/v1/messages/input
+            - ref: anth/v1/messages/output
         egress:
-          defaultPolicy:
-            ACLAction: Allow
-          policies:
-            - name: allow-anthropic
-              description: "Allow requests to Anthropic API"
-              rules:
-                - mode: Proxy
-                  proxyAction: Allow
-                  providers:
-                  - anthropic-api
+          defaultPolicyAction: Allow

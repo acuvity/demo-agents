@@ -7,15 +7,8 @@ apps:
     description: "An example agentic demo application which uses MCP tools"
     subject:
       - - "@source:namespace=/"
-        - "@source:name=app-tokens"
-        - "@source:type=mtls"
-        - "@apptoken:name=satyam"
+        - "@org=acuvity.ai"
     tracing: Recording
-    otelReceivers:
-      - endpoint: "127.0.0.1:4317"
-        protocol: GRPC
-      - endpoint: "127.0.0.1:4318"
-        protocol: HTTP
     selector:
       type: Kubernetes
       kubernetes:
@@ -30,18 +23,8 @@ apps:
             name: mcp-demo-ui
             kubernetesNamespace: mcp-demo
             type: Deployment
-        ingress:
-          defaultACLAction: Allow
-          ACLs:
-            - name: allow-all-external
-              IPRanges:
-                - "0.0.0.0/0"
-              port: 3000
-              description: "Allow all external requests"
-              action: Allow
         egress:
-          defaultPolicy:
-            ACLAction: Allow
+          defaultPolicyAction: Allow
       - name: agent
         description: "The agent running the API server."
         kind: Agent
@@ -51,116 +34,45 @@ apps:
             name: mcp-demo-agent
             kubernetesNamespace: mcp-demo
             type: Deployment
-        ingress:
-          defaultACLAction: Allow
-          ACLs:
-            - name: allow-all-external
-              IPRanges:
-                - "0.0.0.0/0"
-              port: 8000
-              description: "Allow all external requests"
-              action: Allow
-          listeners:
-            - port: 8000
-              mode: Proxy
-              hosts:
-                - localhost
-                - 127.0.0.1
-                - mcp-demo-agent.mcp-demo.svc.cluster.local
-                - mcp-demo-agent.mcp-demo
-                - mcp-demo-agent
-              extractors:
-                - def:
-                    name: chat/request/message
-                    type: Input
-                    path: "/api/v1/chat"
-                    method: Post
-                    script: |-
-                      function extract()
-                        body = json.decode(input.body())
-                        return {
-                          annotations = { conversation_id = body.conversation_id },
-                          extractions = { content = body.message },
-                        }
-                      end
-                - def:
-                    name: chat/response/message
-                    type: Output
-                    path: "/api/v1/chat"
-                    method: Post
-                    script: |-
-                      function extract()
-                        body = json.decode(input.body())
-                        return {
-                          annotations = { conversation_id = body.conversation_id },
-                          extractions = { content = body.message },
-                        }
-                      end
-              proxy:
-                listenTLS: Disabled
-                dialTLS: Disabled
-                defaultPolicyAction: Deny
-                policies:
-                  - name: allow-all-external
-                    description: "Allow all external requests"
-                    rules:
-                      - action: Allow
-                        IPRanges:
-                          - "0.0.0.0/0"
+        provider:
+          category: App
+          providerType: "LLM"
+          hosts:
+            - localhost
+            - 127.0.0.1
+            - mcp-demo-agent.mcp-demo.svc.cluster.local
+            - mcp-demo-agent.mcp-demo
+            - mcp-demo-agent
+          extractors:
+            - def:
+                name: chat/request/message
+                type: Input
+                path: "/api/v1/chat"
+                method: Post
+                script: |-
+                  function extract()
+                    body = json.decode(input.body())
+                    return {
+                      annotations = { conversation_id = body.conversation_id },
+                      extractions = { content = body.message },
+                    }
+                  end
+            - def:
+                name: chat/response/message
+                type: Output
+                path: "/api/v1/chat"
+                method: Post
+                script: |-
+                  function extract()
+                    body = json.decode(input.body())
+                    return {
+                      annotations = { conversation_id = body.conversation_id },
+                      extractions = { content = body.message },
+                    }
+                  end
         egress:
-          defaultPolicy:
-            ACLAction: Allow
-          policies:
-            - name: allow-mcp-tools
-              description: "Allow requests to MCP tools"
-              rules:
-                - mode: Proxy
-                  proxyAction: Allow
-                  appComponents:
-                    - "openai-mcp-demo/mcp-brave-search"
-                    - "openai-mcp-demo/mcp-fetch"
-                    - "openai-mcp-demo/mcp-memory"
-                    - "openai-mcp-demo/mcp-sequential-thinking"
-            - name: allow-openai
-              description: "Allow requests to OpenAI API"
-              rules:
-                - mode: Proxy
-                  proxyAction: Allow
-                  providers:
-                  - openai-api
-            - name: allow-anthropic
-              description: "Allow requests to Anthropic API"
-              rules:
-                - mode: Proxy
-                  proxyAction: Allow
-                  providers:
-                  - anthropic-api
-            - name: allow-postgres
-              description: "Allow requests to Postgres database"
-              ACLs:
-                - action: Allow
-                  hostnames:
-                    - "mcp-demo-postgres.mcp-demo.svc.cluster.local"
-      - name: postgres
-        description: "Postgres database for storing chat history."
-        kind: Other
-        selector:
-          type: Kubernetes
-          kubernetes:
-            name: mcp-demo-postgres
-            kubernetesNamespace: mcp-demo
-            type: Deployment
-        ingress:
-          defaultACLAction: Allow
-          ACLs:
-            - name: allow-internal
-              IPRanges:
-                - 10.23.0.0/16
-              port: 5432
-              action: Allow
-        egress:
-          defaultPolicy:
-            ACLAction: Allow
+          defaultPolicyAction: Allow
+
       - name: mcp-brave-search
         description: "MCP Server: Brave Search"
         kind: Tool
@@ -170,41 +82,32 @@ apps:
             name: mcp-server-brave-search
             kubernetesNamespace: mcp-demo
             type: Deployment
-        ingress:
-          listeners:
-            - port: 8000
-              mode: Proxy
-              hosts:
-                - mcp-server-brave-search.mcp-demo.svc.cluster.local
-                - mcp-server-brave-search.mcp-demo
-                - mcp-server-brave-search
-              extractors:
-                - ref: mcp/input-sse
-                - ref: mcp/output-sse
-                - ref: mcp/input-http
-                - ref: mcp/output-http
-                - ref: mcp/output-http-get
-              proxy:
-                listenTLS: Disabled
-                dialTLS: Disabled
-                defaultPolicyAction: Deny
-                policies:
-                  - name: allow-agent
-                    description: "Allow requests from the agent"
-                    rules:
-                      - action: Allow
-                        appComponents:
-                          - "openai-mcp-demo/agent"
+        provider:
+          category: App
+          providerType: "MCPServer"
+          hosts:
+            - mcp-server-brave-search.mcp-demo.svc.cluster.local
+            - mcp-server-brave-search.mcp-demo
+            - mcp-server-brave-search
+          extractors:
+            - ref: mcp/input-sse
+            - ref: mcp/output-sse
+            - ref: mcp/input-http
+            - ref: mcp/output-http
+            - ref: mcp/output-http-get
+          proxy:
+            listenTLS: Disabled
+            dialTLS: Disabled
+            defaultPolicyAction: Deny
+            policies:
+              - name: allow-agent
+                description: "Allow requests from the agent"
+                rules:
+                  - action: Allow
+                    appComponents:
+                      - "openai-mcp-demo/agent"
         egress:
-          defaultPolicy:
-            ACLAction: Allow
-          policies:
-            - name: allow-brave-search
-              description: "Allow requests to Brave Search"
-              ACLs:
-                - action: Allow
-                  hostnames:
-                    - "api.search.brave.com"
+          defaultPolicyAction: Allow
       - name: mcp-fetch
         description: "MCP Server: Fetch"
         kind: Tool
@@ -214,41 +117,32 @@ apps:
             name: mcp-server-fetch
             kubernetesNamespace: mcp-demo
             type: Deployment
-        ingress:
-          listeners:
-            - port: 8000
-              mode: Proxy
-              hosts:
-                - mcp-server-fetch.mcp-demo.svc.cluster.local
-                - mcp-server-fetch.mcp-demo
-                - mcp-server-fetch
-              extractors:
-                - ref: mcp/input-sse
-                - ref: mcp/output-sse
-                - ref: mcp/input-http
-                - ref: mcp/output-http
-                - ref: mcp/output-http-get
-              proxy:
-                listenTLS: Disabled
-                dialTLS: Disabled
-                defaultPolicyAction: Deny
-                policies:
-                  - name: allow-agent
-                    description: "Allow requests from the agent"
-                    rules:
-                      - action: Allow
-                        appComponents:
-                          - "openai-mcp-demo/agent"
+        provider:
+          category: App
+          providerType: "MCPServer"
+          hosts:
+            - mcp-server-fetch.mcp-demo.svc.cluster.local
+            - mcp-server-fetch.mcp-demo
+            - mcp-server-fetch
+          extractors:
+            - ref: mcp/input-sse
+            - ref: mcp/output-sse
+            - ref: mcp/input-http
+            - ref: mcp/output-http
+            - ref: mcp/output-http-get
+          proxy:
+            listenTLS: Disabled
+            dialTLS: Disabled
+            defaultPolicyAction: Deny
+            policies:
+              - name: allow-agent
+                description: "Allow requests from the agent"
+                rules:
+                  - action: Allow
+                    appComponents:
+                      - "openai-mcp-demo/agent"
         egress:
-          defaultPolicy:
-            ACLAction: Allow
-          policies:
-            - name: allow-all-internet
-              description: "Allow requests to the internet"
-              ACLs:
-                - action: Allow
-                  IPRanges:
-                    - "0.0.0.0/0"
+          defaultPolicyAction: Allow
       - name: mcp-memory
         description: "MCP Server: Memory"
         kind: Tool
@@ -258,34 +152,32 @@ apps:
             name: mcp-server-memory
             kubernetesNamespace: mcp-demo
             type: StatefulSet
-        ingress:
-          listeners:
-            - port: 8000
-              mode: Proxy
-              hosts:
-                - mcp-server-memory.mcp-demo.svc.cluster.local
-                - mcp-server-memory.mcp-demo
-                - mcp-server-memory
-              extractors:
-                - ref: mcp/input-sse
-                - ref: mcp/output-sse
-                - ref: mcp/input-http
-                - ref: mcp/output-http
-                - ref: mcp/output-http-get
-              proxy:
-                listenTLS: Disabled
-                dialTLS: Disabled
-                defaultPolicyAction: Deny
-                policies:
-                  - name: allow-agent
-                    description: "Allow requests from the agent"
-                    rules:
-                      - action: Allow
-                        appComponents:
-                          - "openai-mcp-demo/agent"
+        provider:
+          category: App
+          providerType: "MCPServer"
+          hosts:
+            - mcp-server-memory.mcp-demo.svc.cluster.local
+            - mcp-server-memory.mcp-demo
+            - mcp-server-memory
+          extractors:
+            - ref: mcp/input-sse
+            - ref: mcp/output-sse
+            - ref: mcp/input-http
+            - ref: mcp/output-http
+            - ref: mcp/output-http-get
+          proxy:
+            listenTLS: Disabled
+            dialTLS: Disabled
+            defaultPolicyAction: Deny
+            policies:
+              - name: allow-agent
+                description: "Allow requests from the agent"
+                rules:
+                  - action: Allow
+                    appComponents:
+                      - "openai-mcp-demo/agent"
         egress:
-          defaultPolicy:
-            ACLAction: Allow
+          defaultPolicyAction: Allow
       - name: mcp-sequential-thinking
         description: "MCP Server: Sequential Thinking"
         kind: Tool
@@ -295,31 +187,29 @@ apps:
             name: mcp-server-sequential-thinking
             kubernetesNamespace: mcp-demo
             type: Deployment
-        ingress:
-          listeners:
-            - port: 8000
-              mode: Proxy
-              hosts:
-                - mcp-server-sequential-thinking.mcp-demo.svc.cluster.local
-                - mcp-server-sequential-thinking.mcp-demo
-                - mcp-server-sequential-thinking
-              extractors:
-                - ref: mcp/input-sse
-                - ref: mcp/output-sse
-                - ref: mcp/input-http
-                - ref: mcp/output-http
-                - ref: mcp/output-http-get
-              proxy:
-                listenTLS: Disabled
-                dialTLS: Disabled
-                defaultPolicyAction: Deny
-                policies:
-                  - name: allow-agent
-                    description: "Allow requests from the agent"
-                    rules:
-                      - action: Allow
-                        appComponents:
-                          - "openai-mcp-demo/agent"
+        provider:
+          category: App
+          providerType: "MCPServer"
+          hosts:
+            - mcp-server-sequential-thinking.mcp-demo.svc.cluster.local
+            - mcp-server-sequential-thinking.mcp-demo
+            - mcp-server-sequential-thinking
+          extractors:
+            - ref: mcp/input-sse
+            - ref: mcp/output-sse
+            - ref: mcp/input-http
+            - ref: mcp/output-http
+            - ref: mcp/output-http-get
+          proxy:
+            listenTLS: Disabled
+            dialTLS: Disabled
+            defaultPolicyAction: Deny
+            policies:
+              - name: allow-agent
+                description: "Allow requests from the agent"
+                rules:
+                  - action: Allow
+                    appComponents:
+                      - "openai-mcp-demo/agent"
         egress:
-          defaultPolicy:
-            ACLAction: Allow
+          defaultPolicyAction: Allow

@@ -46,12 +46,11 @@ spec:
                 name: {{ .Release.Name }}-secrets
                 key: descope_project_id
           {{- end }}
-          - name: REQUESTS_CA_BUNDLE # python requests module
+          - name: REQUESTS_CA_BUNDLE
             value: /etc/ssl/certs/custom/ca-bundle.crt
-          - name: SSL_CERT_FILE # python httpx module
+          - name: SSL_CERT_FILE
             value: /etc/ssl/certs/custom/ca-bundle.crt
       volumes:
         - name: custom-ca
           configMap:
             name: acuvity-ca-bundle
-            optional: false

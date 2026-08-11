@@ -70,6 +70,15 @@ spec:
               value: "/etc/ssl/certs/custom/ca-bundle.crt"
             - name: SSL_CERT_FILE
               value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            - name: OPENAI_SDK_AGENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: agent-secrets
+                  key: OPENAI_SDK_AGENT_TOKEN
+            - name: HTTPS_PROXY
+              value: "https://token:$(OPENAI_SDK_AGENT_TOKEN)@{{ .Values.proxy.host }}:{{ .Values.proxy.httpsPort }}"
+            - name: HTTP_PROXY
+              value: "http://token:$(OPENAI_SDK_AGENT_TOKEN)@{{ .Values.proxy.host }}:{{ .Values.proxy.httpPort }}"
       volumes:
         - name: agent-config
           secret:
@@ -79,7 +88,6 @@ spec:
                 path: config.yaml
         - name: custom-ca
           configMap:
-            name: acuvity-ca-bundle
-            optional: false
+            name: apex-ca-bundle
 
 

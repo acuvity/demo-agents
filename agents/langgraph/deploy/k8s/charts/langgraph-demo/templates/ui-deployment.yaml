@@ -27,7 +27,6 @@ spec:
           env:
             - name: BACKEND_URL
               value: {{ .Values.ui.backendUrl | quote }}
-
             - name: SSL_CERT_FILE
               value: "/etc/ssl/certs/custom/ca-bundle.crt"
             - name: REQUESTS_CA_BUNDLE
@@ -36,4 +35,3 @@ spec:
         - name: custom-ca
           configMap:
             name: acuvity-ca-bundle
-            optional: false

@@ -68,6 +68,12 @@ agent:
 ui:
   apiBaseURL: "http://localhost:8000/api/v1/chat"
 
+proxy:
+  host: "ais-demo-gw.proofpoint-ais.svc.cluster.local"
+  httpsPort: 443
+  httpPort: 8080
+
 secrets:
   anthropic_key:
   descope_project_id:
+  agentToken: ""

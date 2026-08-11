@@ -35,6 +35,20 @@ Obtain the following API keys before proceeding:
 |----------|---------------------|-------------|
 | Anthropic | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
 | Brave Search | `BRAVE_API_KEY` | [brave.com/search/api](https://brave.com/search/api) |
+| Acuvity | `GOOGLE_ADK_AGENT_TOKEN` | Component token — issue at [console.acuvity.ai](https://console.acuvity.ai) after manifest import (see below) |
+| Acuvity | `GOOGLE_ADK_LITELLM_TOKEN` | Component token — issue at [console.acuvity.ai](https://console.acuvity.ai) after manifest import (see below) |
+| Acuvity | `PROXY_HOST` | Host of your AI Security Gateway deployment (e.g. `ais-demo-gw.<namespace>.svc.cluster.local`) |
+| — | `CA_BUNDLE_PATH` | Path to your CA bundle PEM file for TLS verification |
+
+### Component Tokens
+
+The agent and LiteLLM tokens are **component tokens** issued by the Acuvity platform to authenticate each workload through the AI Security Gateway:
+
+1. Import the [manifest file](./deploy/config/manifest.yaml) into [console.acuvity.ai](https://console.acuvity.ai)
+2. Once imported, issue a component token for each component (`agent`, `litellm`) from the console
+3. Set `PROXY_HOST` to the host of your AI Security Gateway deployment
+
+For full instructions see the [Acuvity AppSec docs](https://docs.acuvity.ai/wURWAaVt0FMiS39eKrS9/appsec).
 
 ## Kubernetes Deployment
 
@@ -46,6 +60,10 @@ The deployment script handles the complete setup including MCP servers:
 # Set required environment variables
 export ANTHROPIC_API_KEY=<your_anthropic_key>
 export BRAVE_API_KEY=<your_brave_key>
+export GOOGLE_ADK_AGENT_TOKEN=<your_agent_component_token>
+export GOOGLE_ADK_LITELLM_TOKEN=<your_litellm_component_token>
+export PROXY_HOST=<your_ai_security_gateway_host>
+export CA_BUNDLE_PATH=<path/to/ca.pem>
 
 # Run the deployment script
 ./deploy/k8s/deploy.sh
