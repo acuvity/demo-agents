@@ -1,4 +1,4 @@
-"""OpenTelemetry setup and instrumentation for the simple-api agent."""
+"""OpenTelemetry setup and instrumentation for the simple-langgraph-api agent."""
 
 import json
 import logging
@@ -29,7 +29,7 @@ from openinference.instrumentation.mcp import MCPInstrumentor
 
 logger = logging.getLogger(__name__)
 
-SERVICE = os.environ.get("OTEL_SERVICE_NAME", "simple-api")
+SERVICE = os.environ.get("OTEL_SERVICE_NAME", "simple-langgraph-api")
 
 
 class FileSpanExporter(SpanExporter):

@@ -4,15 +4,15 @@ label: demo-agents/simple-api
 
 apps:
   - name: simple-api
-    description: "The simple langgraph API agent of the demo-agents repo."
+    description: "The simple API of the demo-agents repo."
     tracing: Recording
     selector:
       type: Kubernetes
       kubernetes:
         kubernetesNamespace: simple-api-demo
     components:
-      - name: agent
-        description: "The langgraph agent"
+      - name: openai
+        description: "The OpenAI API Call"
         kind: Agent
         selector:
           type: Kubernetes
@@ -22,10 +22,10 @@ apps:
             type: Deployment
         egress:
           policies:
-            - name: allow-anthropic
-              description: "Allow requests to Anthropic API"
+            - name: allow-openai
+              description: "Allow requests to OpenAI API"
               transportMode: Proxy
               providers:
-                - anthropic-api
+                - openai-api
               action: Allow
           defaultPolicyAction: Allow
