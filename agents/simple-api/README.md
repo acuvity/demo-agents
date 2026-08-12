@@ -29,7 +29,7 @@ A minimal OpenAI API that uses the Scan/Police API.
 
 ## Getting your API URL
 
- - Goto [https://console.acuvity.ai/me](https://console.acuvity.ai/me) information page
+ - Go to [https://console.acuvity.ai/me](https://console.acuvity.ai/me) information page
  - Copy the `Apex` URL under `General` section
 
 
