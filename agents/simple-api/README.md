@@ -14,8 +14,7 @@ A minimal OpenAI API that uses the Scan/Police API.
 |---|---|
 | `APP_COMP_TOKEN` | An App Component Token to authenticate with the API |
 | `APEX_URL` | The URL for API. Get your Apex URL from `console.acuvity.ai/me` |
-|||
-| `OPENAI_API_KEY` | OpenAI API key |
+
 
 ## Import the app manifest
 
