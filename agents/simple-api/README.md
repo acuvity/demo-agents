@@ -37,5 +37,5 @@ A minimal OpenAI API that uses the Scan/Police API.
 export APP_COMP_TOKEN=...
 export APEX_URL=https://...
 
-uv run main.py
+python main.py
 ```
