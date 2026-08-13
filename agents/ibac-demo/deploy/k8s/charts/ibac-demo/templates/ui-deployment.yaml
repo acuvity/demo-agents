@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-ui
+  labels:
+    app: {{ .Release.Name }}-ui
+    type: ui
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-ui
+      type: ui
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-ui
+        type: ui
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: ui
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.ui.repository }}:{{ .Values.image.ui.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.ui.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.ui.port }}
+              protocol: TCP
+          env:
+            - name: BACKEND_URL
+              value: {{ coalesce .Values.ui.backendUrl (printf "http://%s-agent:%v" .Release.Name .Values.service.agent.port) | quote }}
+            {{- if .Values.agent.acuvityCaBundle.enabled }}
+            - name: SSL_CERT_FILE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            - name: REQUESTS_CA_BUNDLE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            {{- end }}
+          {{- if .Values.agent.acuvityCaBundle.enabled }}
+          volumeMounts:
+            - name: custom-ca
+              mountPath: "/etc/ssl/certs/custom"
+              readOnly: true
+          {{- end }}
+      {{- if .Values.agent.acuvityCaBundle.enabled }}
+      volumes:
+        - name: custom-ca
+          configMap:
+            name: {{ .Values.agent.acuvityCaBundle.configMapName }}
+            optional: false
+      {{- end }}
+

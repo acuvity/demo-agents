@@ -1,0 +1,43 @@
+{{- if .Values.webhookReceiver.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.webhookReceiver.deploymentName }}
+  labels:
+    app: {{ .Values.webhookReceiver.deploymentName }}
+    type: webhook-receiver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.webhookReceiver.deploymentName }}
+      type: webhook-receiver
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.webhookReceiver.deploymentName }}
+        type: webhook-receiver
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: webhook-receiver
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.agent.repository }}:{{ .Values.image.agent.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.agent.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - exec uv run python3 utils/webhook_receiver.py
+          ports:
+            - name: http
+              containerPort: {{ .Values.webhookReceiver.port }}
+              protocol: TCP
+          env:
+            - name: WEBHOOK_PORT
+              value: {{ .Values.webhookReceiver.port | quote }}
+            - name: WEBHOOK_HOST
+              value: "0.0.0.0"
+{{- end }}
