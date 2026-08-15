@@ -1,0 +1,12 @@
+# We are simply enabling otel here.
+# However, we are not sending/collecting our own traces/spans.
+# This enables us though to get proper relationships in our Acuvity logs.
+otel:
+  enabled: true
+  service_name: simple-langgraph-tracer
+  send_spans: true
+  console_export: true
+  no_file_export: true
+  file: trace.log
+  otlp_endpoint: http://127.0.0.1:4317
+  insecure: true

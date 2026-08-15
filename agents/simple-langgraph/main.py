@@ -7,6 +7,15 @@ from langchain_core.messages import HumanMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.graph import StateGraph, MessagesState, START
 from langgraph.prebuilt import ToolNode, tools_condition
+from config import load_config_yaml
+from observability import setup_otel
+from opentelemetry import trace
+
+cfg = load_config_yaml()
+
+setup_otel(cfg)
+
+tracer = trace.get_tracer(__name__)
 
 logging.getLogger("mcp.client.streamable_http").setLevel(logging.ERROR)
 
@@ -51,11 +60,12 @@ async def main():
                 continue
             if not prompt:
                 continue
-            result = await app.ainvoke(
-                {"messages": [HumanMessage(content=prompt)]}
-            )
-            print("Human: ", prompt)
-            print(result["messages"][-1].content+"\n")
+            with tracer.start_as_current_span("process-prompt") as span:
+              result = await app.ainvoke(
+                  {"messages": [HumanMessage(content=prompt)]}
+              )
+              print("Human: ", prompt)
+              print(result["messages"][-1].content+"\n")
 
 
 asyncio.run(main())
