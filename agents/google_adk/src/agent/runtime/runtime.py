@@ -1,9 +1,9 @@
 """Google ADK runtime for managing agent sessions and message dispatch."""
 
 import logging
-import sys
-from typing import Any, cast
 import os
+import sys
+from typing import Any
 
 from dotenv import load_dotenv
 from google.adk.agents import LlmAgent  # pylint: disable=import-error,no-name-in-module
@@ -15,9 +15,11 @@ from google.adk.tools.mcp_tool import (  # pylint: disable=import-error,no-name-
 )
 from google.adk.runners import Runner  # pylint: disable=import-error,no-name-in-module
 from google.adk.sessions import InMemorySessionService  # pylint: disable=import-error,no-name-in-module
+from google.adk.tools import FunctionTool  # pylint: disable=import-error,no-name-in-module
 from google.genai import types  # pylint: disable=import-error,no-name-in-module
 
 from config import AgentConfig
+from runtime.databricks_genie import build_databricks_genie_tool
 
 load_dotenv()
 
@@ -28,6 +30,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+GENIE_AGENT_INSTRUCTION = """
+Use research_internal_data for company-specific metrics, trends, and comparisons.
+Never guess internal facts. Use web-search tools for public information, and clearly
+distinguish public sources from Databricks Genie findings when synthesizing an answer.
+""".strip()
+
 
 class GoogleADKRuntime:
     """Manages the Google ADK agent, sessions, and message routing."""
@@ -37,6 +45,7 @@ class GoogleADKRuntime:
         self.cfg = cfg
         self.session_service = InMemorySessionService()
         self.mcp_toolsets = self.setup_mcp_toolsets()
+        self.databricks_genie_tool = build_databricks_genie_tool()
         self.app_name: str = cfg["app_name"]
 
         litellm_api_base: str | None = cfg["litellm"]["api_base"]
@@ -52,12 +61,25 @@ class GoogleADKRuntime:
         else:
             model = LiteLlm(model="anthropic/claude-sonnet-4-6")
 
+        tools: list[Any] = list(self.mcp_toolsets)
+        if self.databricks_genie_tool:
+            logger.info("Enabling native Databricks Genie research tool")
+            tools.append(
+                FunctionTool(
+                    func=self.databricks_genie_tool.research_internal_data,
+                )
+            )
+            instruction = f"{self.cfg['instruction']}\n\n{GENIE_AGENT_INSTRUCTION}"
+        else:
+            logger.info("Databricks Genie credentials not configured; tool disabled")
+            instruction = self.cfg["instruction"]
+
         self.root_agent = LlmAgent(
             model=model,
             name="research_assistant",
             description="A research assistant that can search the web and sequential thinking",
-            instruction=self.cfg["instruction"],
-            tools=cast(list[Any], self.mcp_toolsets),
+            instruction=instruction,
+            tools=tools,
         )
         self.runner = Runner(
             agent=self.root_agent,
