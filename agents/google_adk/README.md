@@ -8,6 +8,7 @@ This demo provides a conversational AI agent with the following capabilities:
 
 - **Web Search** — Query the internet for real-time information via Brave Search
 - **Sequential Thinking** — Advanced reasoning through structured thought processes
+- **Internal Data Research** — Query a curated Databricks Genie Agent directly from the ADK agent
 - **Extensible Architecture** — Add custom MCP servers to expand functionality
 
 NOTE: This demo agent has a [manifest file](./deploy/config/manifest.yaml) which describes the components in the agent as well as access policies in there.
@@ -35,6 +36,9 @@ Obtain the following API keys before proceeding:
 |----------|---------------------|-------------|
 | Anthropic | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
 | Brave Search | `BRAVE_API_KEY` | [brave.com/search/api](https://brave.com/search/api) |
+| Databricks | `DATABRICKS_HOST` | Workspace URL, such as `https://dbc-....cloud.databricks.com` |
+| Databricks | `DATABRICKS_AGENT_ID` | Genie Agent ID from the Databricks workspace |
+| Databricks | `DATABRICKS_TOKEN` | OAuth token or PAT with the `genie` scope |
 | Acuvity | `GOOGLE_ADK_AGENT_TOKEN` | Component token — issue at [console.acuvity.ai](https://console.acuvity.ai) after manifest import (see below) |
 | Acuvity | `GOOGLE_ADK_LITELLM_TOKEN` | Component token — issue at [console.acuvity.ai](https://console.acuvity.ai) after manifest import (see below) |
 | Acuvity | `PROXY_HOST` | Host of your AI Security Gateway deployment (e.g. `ais-demo-gw.<namespace>.svc.cluster.local`) |
@@ -60,6 +64,9 @@ The deployment script handles the complete setup including MCP servers:
 # Set required environment variables
 export ANTHROPIC_API_KEY=<your_anthropic_key>
 export BRAVE_API_KEY=<your_brave_key>
+export DATABRICKS_HOST=<your_workspace_url>
+export DATABRICKS_AGENT_ID=<your_genie_agent_id>
+export DATABRICKS_TOKEN=<your_databricks_token>
 export GOOGLE_ADK_AGENT_TOKEN=<your_agent_component_token>
 export GOOGLE_ADK_LITELLM_TOKEN=<your_litellm_component_token>
 export PROXY_HOST=<your_ai_security_gateway_host>
@@ -127,6 +134,9 @@ uv sync
 cat > .env << EOF
 ANTHROPIC_API_KEY=<your_anthropic_key>
 BRAVE_API_KEY=<your_brave_key>
+DATABRICKS_HOST=<your_workspace_url>
+DATABRICKS_AGENT_ID=<your_genie_agent_id>
+DATABRICKS_TOKEN=<your_databricks_token>
 EOF
 ```
 
@@ -140,6 +150,11 @@ uv run python main.py
 
 
 The agent API will be available at `http://localhost:8300`.
+
+When all three Databricks variables are present, the backend registers a native
+`research_internal_data` Google ADK tool. The call originates from the existing
+agent process and follows its configured `HTTP_PROXY`/`HTTPS_PROXY`; it does not
+create a separate MCP server or application component.
 
 ### Web UI
 

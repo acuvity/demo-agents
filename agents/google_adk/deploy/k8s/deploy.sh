@@ -3,6 +3,7 @@
 #
 # Usage:
 #   ANTHROPIC_API_KEY=<key> BRAVE_API_KEY=<key> \
+#     DATABRICKS_HOST=<host> DATABRICKS_AGENT_ID=<id> DATABRICKS_TOKEN=<token> \
 #     GOOGLE_ADK_AGENT_TOKEN=<token> GOOGLE_ADK_LITELLM_TOKEN=<token> \
 #     PROXY_HOST=<host> CA_BUNDLE_PATH=<path/to/ca.pem> [ARCADE_API_KEY=<key>] ./deploy.sh
 #
@@ -48,6 +49,9 @@ require_env GOOGLE_ADK_AGENT_TOKEN
 require_env GOOGLE_ADK_LITELLM_TOKEN
 require_env PROXY_HOST
 require_env CA_BUNDLE_PATH
+require_env DATABRICKS_HOST
+require_env DATABRICKS_AGENT_ID
+require_env DATABRICKS_TOKEN
 
 # ---------------------------------------------------------------------------
 # Namespace
@@ -104,6 +108,9 @@ helm upgrade google-adk-demo "$CHART_DIR" \
   --set secrets.anthropicApiKey="$ANTHROPIC_API_KEY" \
   --set secrets.braveApiKey="$BRAVE_API_KEY" \
   --set secrets.arcadeApiKey="${ARCADE_API_KEY:-}" \
+  --set secrets.databricksHost="$DATABRICKS_HOST" \
+  --set secrets.databricksAgentId="$DATABRICKS_AGENT_ID" \
+  --set secrets.databricksToken="$DATABRICKS_TOKEN" \
   --set secrets.agentToken="$GOOGLE_ADK_AGENT_TOKEN" \
   --set secrets.litellmToken="$GOOGLE_ADK_LITELLM_TOKEN" \
   --set proxy.host="$PROXY_HOST"

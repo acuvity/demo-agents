@@ -59,7 +59,9 @@ secrets:
   anthropicApiKey: ""
   braveApiKey: ""
   arcadeApiKey: ""
+  databricksHost: ""
+  databricksAgentId: ""
+  databricksToken: ""
   agentToken: ""
   litellmToken: ""
-
 
