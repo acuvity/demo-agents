@@ -2,9 +2,16 @@
 # deploy.sh — Deploy the Google ADK demo and its MCP server dependencies to Kubernetes.
 #
 # Usage:
+#   # Proxy mode (default):
 #   ANTHROPIC_API_KEY=<key> BRAVE_API_KEY=<key> \
 #     GOOGLE_ADK_AGENT_TOKEN=<token> GOOGLE_ADK_LITELLM_TOKEN=<token> \
 #     PROXY_HOST=<host> CA_BUNDLE_PATH=<path/to/ca.pem> [ARCADE_API_KEY=<key>] ./deploy.sh
+#
+#   # Gateway mode:
+#   MODE=gateway ANTHROPIC_API_KEY=<key> BRAVE_API_KEY=<key> \
+#     GOOGLE_ADK_AGENT_TOKEN=<app-component-token> \
+#     GATEWAY_BASE_URL=<https://apex-host/org/gateway-name> \
+#     CA_BUNDLE_PATH=<path/to/ca.pem> [ARCADE_API_KEY=<key>] ./deploy.sh
 #
 # Prerequisites: kubectl and helm must be available on PATH and pointing at the target cluster.
 
@@ -15,6 +22,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 readonly NAMESPACE="google-adk-demo"
 readonly CHART_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/charts/google-adk-demo" && pwd)"
+readonly MODE="${MODE:-proxy}"
 
 readonly MCP_SEQUENTIAL_THINKING_CHART="oci://docker.io/acuvity/mcp-server-sequential-thinking"
 readonly MCP_SEQUENTIAL_THINKING_VERSION="1.0.0"
@@ -45,9 +53,20 @@ require_cmd helm
 require_env ANTHROPIC_API_KEY
 require_env BRAVE_API_KEY
 require_env GOOGLE_ADK_AGENT_TOKEN
-require_env GOOGLE_ADK_LITELLM_TOKEN
-require_env PROXY_HOST
 require_env CA_BUNDLE_PATH
+
+case "$MODE" in
+  proxy)
+    require_env GOOGLE_ADK_LITELLM_TOKEN
+    require_env PROXY_HOST
+    ;;
+  gateway)
+    require_env GATEWAY_BASE_URL
+    ;;
+  *)
+    die "MODE must be 'proxy' or 'gateway', got '$MODE'."
+    ;;
+esac
 
 # ---------------------------------------------------------------------------
 # Namespace
@@ -98,15 +117,28 @@ log "apex-ca-bundle configmap applied."
 # Google ADK Demo
 # ---------------------------------------------------------------------------
 step "Google ADK Demo"
+helm_set_args=(
+  --set mode="$MODE"
+  --set secrets.anthropicApiKey="$ANTHROPIC_API_KEY"
+  --set secrets.braveApiKey="$BRAVE_API_KEY"
+  --set secrets.arcadeApiKey="${ARCADE_API_KEY:-}"
+  --set secrets.agentToken="$GOOGLE_ADK_AGENT_TOKEN"
+)
+if [[ "$MODE" == "proxy" ]]; then
+  helm_set_args+=(
+    --set secrets.litellmToken="$GOOGLE_ADK_LITELLM_TOKEN"
+    --set proxy.host="$PROXY_HOST"
+  )
+else
+  helm_set_args+=(
+    --set agent.gatewayBaseUrl="$GATEWAY_BASE_URL"
+  )
+fi
+
 helm upgrade google-adk-demo "$CHART_DIR" \
   --install \
   --namespace "$NAMESPACE" \
-  --set secrets.anthropicApiKey="$ANTHROPIC_API_KEY" \
-  --set secrets.braveApiKey="$BRAVE_API_KEY" \
-  --set secrets.arcadeApiKey="${ARCADE_API_KEY:-}" \
-  --set secrets.agentToken="$GOOGLE_ADK_AGENT_TOKEN" \
-  --set secrets.litellmToken="$GOOGLE_ADK_LITELLM_TOKEN" \
-  --set proxy.host="$PROXY_HOST"
+  "${helm_set_args[@]}"
 log "google-adk-demo installed."
 
 # ---------------------------------------------------------------------------

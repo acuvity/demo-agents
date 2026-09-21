@@ -24,6 +24,7 @@ class McpServerConfig(TypedDict):
 
     name: str
     url: str
+    description: str | None
 
 
 class LiteLlmConfig(TypedDict):
@@ -50,6 +51,9 @@ class AgentConfig(TypedDict):
     otel: OtelConfig
     litellm: LiteLlmConfig
     arcade: ArcadeConfig
+    mode: str | None
+    gateway_base_url: str | None
+    gateway_llm_route: str | None
 
 
 def load_config_yaml() -> AgentConfig:

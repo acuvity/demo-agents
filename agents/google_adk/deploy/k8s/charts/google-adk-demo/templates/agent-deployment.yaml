@@ -75,10 +75,12 @@ spec:
                 secretKeyRef:
                   name: agent-secrets
                   key: GOOGLE_ADK_AGENT_TOKEN
+            {{- if eq .Values.mode "proxy" }}
             - name: HTTPS_PROXY
               value: "https://token:$(GOOGLE_ADK_AGENT_TOKEN)@{{ .Values.proxy.host }}:{{ .Values.proxy.httpsPort }}"
             - name: HTTP_PROXY
               value: "http://token:$(GOOGLE_ADK_AGENT_TOKEN)@{{ .Values.proxy.host }}:{{ .Values.proxy.httpPort }}"
+            {{- end }}
       volumes:
         - name: agent-config
           secret:
