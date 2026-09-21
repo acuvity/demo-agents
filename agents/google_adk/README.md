@@ -50,6 +50,23 @@ The agent and LiteLLM tokens are **component tokens** issued by the Acuvity plat
 
 For full instructions see the [Acuvity AppSec docs](https://docs.acuvity.ai/wURWAaVt0FMiS39eKrS9/appsec).
 
+### Proxy Mode vs AI Gateway Mode
+
+The agent can route its LLM and MCP traffic through Acuvity in one of two ways, selected via `mode` (`proxy` by default):
+
+- **Proxy mode** (`mode=proxy`) — the agent and its self-hosted LiteLLM sidecar make requests transparently via `HTTPS_PROXY`/`HTTP_PROXY`, trusting Acuvity's dynamic CA, with the component token embedded as Basic-auth userinfo in the proxy URL. This is the default and matches the setup described above.
+- **Gateway mode** (`mode=gateway`) — the agent instead calls Acuvity's `AIGatewayConnector` endpoints directly: `<gateway_base_url>/<gateway_llm_route>` for the LLM (litellm appends `/v1/messages`) and `<gateway_base_url>/mcp` for all configured MCP servers (a single shared endpoint, with tool names returned prefixed by provider). Auth is a plain `Authorization: Bearer <token>` header — no CA trust required, no self-hosted LiteLLM deployment. Arcade (`arcade-mcp-gateway`) is a third-party MCP integration and is never routed through Acuvity in either mode.
+
+Gateway mode requires these on the **Acuvity/apex side** before it will work, independent of any change in this repo:
+
+1. `APEX_PROVIDER_TOKEN_KEYS` set on the apex deployment, so it can decrypt the `ProviderTokenPool` holding the real upstream provider credentials.
+2. A reachable Redis instance configured via `APEX_REDIS_ADDRESS` (and `APEX_REDIS_DISABLE_TLS` if applicable), used to track `Mcp-Session-Id` state for MCP traffic.
+3. Each MCP-type `Provider` behind the gateway needs a non-empty `tools` baseline before `toolswatch` will report a snapshot for it.
+4. Each MCP `AIGatewayConnector` needs an explicit `upstreamURL` (with `/mcp` suffix) rather than relying on the provider-derived default.
+5. The token used as `GOOGLE_ADK_AGENT_TOKEN` in gateway mode must be a real **app component token** (not a plain deployment apptoken) — issue/renew it from the imported app's `agent` component.
+
+To deploy in gateway mode, set `MODE=gateway` and `GATEWAY_BASE_URL` to the gateway's root URL (e.g. `https://<apex-host>/<org>/<gateway-name>`, without a trailing route) — see the [Kubernetes Deployment](#kubernetes-deployment) section below.
+
 ## Kubernetes Deployment
 
 <details><summary>Click to expand</summary>
@@ -57,7 +74,7 @@ For full instructions see the [Acuvity AppSec docs](https://docs.acuvity.ai/wURW
 The deployment script handles the complete setup including MCP servers:
 
 ```bash
-# Set required environment variables
+# Proxy mode (default)
 export ANTHROPIC_API_KEY=<your_anthropic_key>
 export BRAVE_API_KEY=<your_brave_key>
 export GOOGLE_ADK_AGENT_TOKEN=<your_agent_component_token>
@@ -68,6 +85,21 @@ export CA_BUNDLE_PATH=<path/to/ca.pem>
 # Run the deployment script
 ./deploy/k8s/deploy.sh
 ```
+
+```bash
+# Gateway mode
+export MODE=gateway
+export ANTHROPIC_API_KEY=<your_anthropic_key>
+export BRAVE_API_KEY=<your_brave_key>
+export GOOGLE_ADK_AGENT_TOKEN=<your_agent_component_token>
+export GATEWAY_BASE_URL=<https://apex-host/org/gateway-name>
+export CA_BUNDLE_PATH=<path/to/ca.pem>
+
+# Run the deployment script
+./deploy/k8s/deploy.sh
+```
+
+See [Proxy Mode vs AI Gateway Mode](#proxy-mode-vs-ai-gateway-mode) above for the Acuvity-side prerequisites gateway mode needs.
 
 This script will:
 

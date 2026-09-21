@@ -42,7 +42,21 @@ class GoogleADKRuntime:
         litellm_api_base: str | None = cfg["litellm"]["api_base"]
         litellm_api_key: str | None = cfg["litellm"]["api_key"]
 
-        if litellm_api_base:
+        if cfg.get("mode") == "gateway":
+            logger.info("Using AI Gateway config")
+            gateway_root = self._gateway_base_url()
+            gateway_llm_route = cfg.get("gateway_llm_route") or "anthropic-api"
+            model = LiteLlm(
+                model="anthropic/claude-sonnet-4-6",
+                api_base=f"{gateway_root}/{gateway_llm_route}",
+                extra_headers={"Authorization": f"Bearer {self._gateway_token()}"},
+                # apex owns upstream auth on the gateway path and strips/replaces
+                # any provider API-key header the client sends (see apex's
+                # aigateway request handler) — this placeholder only satisfies
+                # litellm's own client-side "an api_key must be set" check.
+                api_key="acuvity-gateway-managed",
+            )
+        elif litellm_api_base:
             logger.info("Using litellm proxy config")
             model = LiteLlm(
                 model="claude-sonnet-4-6",
@@ -65,40 +79,79 @@ class GoogleADKRuntime:
             session_service=self.session_service,
         )
 
+    def _gateway_base_url(self) -> str:
+        """Return the configured AI Gateway root URL, e.g. https://<apex-host>/<org>/<gw>."""
+        base_url = self.cfg.get("gateway_base_url")
+        if not base_url:
+            raise ValueError("mode is 'gateway' but gateway_base_url is not set in config")
+        return base_url
+
+    def _gateway_token(self) -> str:
+        """Return the app-component token used to authenticate to the AI Gateway."""
+        token = os.environ.get("GOOGLE_ADK_AGENT_TOKEN")
+        if not token:
+            raise ValueError("mode is 'gateway' but GOOGLE_ADK_AGENT_TOKEN is not set")
+        return token
+
+    def _build_mcp_toolset(self, url: str, headers: dict[str, str] | None) -> McpToolset:
+        """Build a single MCP toolset for the given URL, choosing transport by URL shape."""
+        connection_params: SseConnectionParams | StreamableHTTPConnectionParams
+        if url.rstrip("/").endswith("/sse"):
+            connection_params = SseConnectionParams(
+                url=url,
+                timeout=60,
+                sse_read_timeout=6500,
+                headers=headers,
+            )
+        else:
+            connection_params = StreamableHTTPConnectionParams(
+                url=url,
+                timeout=60,
+                sse_read_timeout=6500,
+                headers=headers,
+            )
+        return McpToolset(connection_params=connection_params)
+
     def setup_mcp_toolsets(self) -> list[McpToolset]:
-        """Build and return the list of MCP toolsets defined in config."""
+        """Build and return the list of MCP toolsets defined in config.
+
+        Arcade is a third-party MCP gateway (api.arcade.dev) that is never
+        proxied through apex, so it's split out and handled identically
+        regardless of mode. Every other configured server is "apex-fronted":
+        in gateway mode they're all served behind one shared AI Gateway MCP
+        endpoint (tools disambiguated by a provider-name prefix apex adds),
+        so gateway mode builds exactly one toolset for all of them combined
+        rather than one per configured URL.
+        """
+        servers = self.cfg["mcp_servers"] or []
+        passthrough = [s for s in servers if s["name"] == "arcade-mcp-gateway"]
+        apex_fronted = [s for s in servers if s["name"] != "arcade-mcp-gateway"]
+
         toolsets: list[McpToolset] = []
-        if not self.cfg["mcp_servers"]:
-            return toolsets
-        for server in self.cfg["mcp_servers"]:
 
-            headers: dict[str, str] = {}
-            if server["name"] == "arcade-mcp-gateway":
-                arcade_user_id: str | None = self.cfg["arcade"]["user_id"]
-                if os.environ.get("ARCADE_API_KEY") and arcade_user_id:
-                    headers["Authorization"] = f"Bearer {os.environ['ARCADE_API_KEY']}"
-                    headers["Arcade-User-ID"] = arcade_user_id
-                else:
-                    logger.debug("No Aracde credentials set, skipping arcade mcp url")
-                    continue
-
-            url: str = server["url"]
-            connection_params: SseConnectionParams | StreamableHTTPConnectionParams
-            if url.rstrip("/").endswith("/sse"):
-                connection_params = SseConnectionParams(
-                    url=url,
-                    timeout=60,
-                    sse_read_timeout=6500,
-                    headers=headers if headers else None,
+        if self.cfg.get("mode") == "gateway":
+            if apex_fronted:
+                toolsets.append(
+                    self._build_mcp_toolset(
+                        url=f"{self._gateway_base_url()}/mcp",
+                        headers={"Authorization": f"Bearer {self._gateway_token()}"},
+                    )
                 )
+        else:
+            for server in apex_fronted:
+                toolsets.append(self._build_mcp_toolset(url=server["url"], headers=None))
+
+        for server in passthrough:
+            arcade_user_id: str | None = self.cfg["arcade"]["user_id"]
+            if os.environ.get("ARCADE_API_KEY") and arcade_user_id:
+                headers = {
+                    "Authorization": f"Bearer {os.environ['ARCADE_API_KEY']}",
+                    "Arcade-User-ID": arcade_user_id,
+                }
+                toolsets.append(self._build_mcp_toolset(url=server["url"], headers=headers))
             else:
-                connection_params = StreamableHTTPConnectionParams(
-                    url=url,
-                    timeout=60,
-                    sse_read_timeout=6500,
-                    headers=headers if headers else None,
-                )
-            toolsets.append(McpToolset(connection_params=connection_params))
+                logger.debug("No Aracde credentials set, skipping arcade mcp url")
+
         return toolsets
 
     # TODO: handle errors and exceptions, retries, and timeouts  # pylint: disable=fixme

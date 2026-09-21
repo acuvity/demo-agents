@@ -1,3 +1,4 @@
+{{- if eq .Values.mode "proxy" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -73,5 +74,4 @@ spec:
         - name: custom-ca
           configMap:
             name: apex-ca-bundle
-
-
+{{- end }}

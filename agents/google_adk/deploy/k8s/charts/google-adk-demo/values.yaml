@@ -1,3 +1,5 @@
+mode: proxy
+
 agent:
   image:
     repository: acuvity/google-adk-demo-agent
@@ -7,6 +9,8 @@ agent:
   port: 8300
   serviceType: ClusterIP
   corsOrigins: "*"
+  gatewayBaseUrl: ""
+  gatewayLlmRoute: "anthropic-api"
   config:
     agentModel: "anthropic/claude-sonnet-4-6"
   mcpServers:
