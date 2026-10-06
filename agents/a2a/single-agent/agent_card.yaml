@@ -1,0 +1,45 @@
+name: Sample Agent
+description: A sample agent to test the stream functionality.
+version: "1.0.0"
+provider:
+  organization: A2A Samples
+  url: https://example.com
+capabilities:
+  streaming: true
+  push_notifications: false
+default_input_modes:
+  - text
+default_output_modes:
+  - text
+  - task-status
+skills:
+  - id: sample_agent
+    name: Sample Agent
+    description: Say hi.
+    tags:
+      - sample
+    examples:
+      - hi
+    input_modes:
+      - text
+    output_modes:
+      - text
+      - task-status
+security_schemes:
+  bearerAuth:
+    httpAuthSecurityScheme:
+      scheme: bearer
+
+security_requirements:
+  - bearerAuth: []
+
+supported_interfaces:
+  - protocol_binding: JSONRPC
+    protocol_version: "1.0"
+    url: http://127.0.0.1:41241/a2a/rpc
+  - protocol_binding: HTTP+JSON
+    protocol_version: "1.0"
+    url: http://127.0.0.1:41241/a2a/rest
+  - protocol_binding: HTTP+JSON
+    protocol_version: "0.3"
+    url: http://127.0.0.1:41241/a2a/rest
