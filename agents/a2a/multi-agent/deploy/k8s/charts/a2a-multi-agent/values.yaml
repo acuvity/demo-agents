@@ -1,0 +1,51 @@
+travelPlanner:
+  image:
+    repository: acuvity/a2a-travel-planner
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 41241
+  serviceType: ClusterIP
+
+flightsAgent:
+  image:
+    repository: acuvity/a2a-flights-agent
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 41242
+  serviceType: ClusterIP
+
+hotelsAgent:
+  image:
+    repository: acuvity/a2a-hotels-agent
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 41243
+  serviceType: ClusterIP
+
+pricingAgent:
+  image:
+    repository: acuvity/a2a-pricing-agent
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 41244
+  serviceType: ClusterIP
+
+litellm:
+  apiBase: "https://host.docker.internal:1443/acuvity.ai/aisg1/anthropic-api"
+  image: "docker.litellm.ai/berriai/litellm:main-stable"
+  modelName: "claude-sonnet-4-6"
+  model: "anthropic/claude-sonnet-4-6"
+
+gateway:
+  url: "https://host.docker.internal:1443/acuvity.ai/aisg1"
+
+secrets:
+  anthropicApiKey: ""
+  travelPlannerToken: ""
+  flightsAgentToken: ""
+  hotelsAgentToken: ""
+  pricingAgentToken: ""

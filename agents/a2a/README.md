@@ -2,36 +2,21 @@
 
 Examples of [A2A protocol](https://github.com/a2aproject/A2A) agents — a single-agent hello world and a multi-agent travel planner.
 
+NOTE: This demo has a [manifest file](./multi-agent/deploy/config/manifest.yaml) which describes the components and access policies.
+
 ---
 
 ## Single Agent (`single-agent/`)
 
-A minimal A2A server built that simulates agentic behavior. It demonstrates the full A2A request/response lifecycle:
-
-- Receives a message and immediately sends a `working` status update
-- Simulates processing with a 1-second delay
-- Returns a response artifact
-- Enforces bearer token auth via middleware (card endpoint is public)
-- Logs all incoming requests for visibility
-
-
-
-### Setup
-
-```bash
-cd single-agent
-uv sync
-```
-
-The bearer auth middleware logs the incoming token but does not validate it (validation is a TODO). Any token — or no token — is accepted.
+A minimal A2A server demonstrating the full request/response lifecycle: working status update, simulated processing, and response artifact. Bearer token auth is enforced on all endpoints except the agent card.
 
 ### Run
 
 ```bash
+cd single-agent
+uv sync
 uv run python hello_world_agent.py --host 127.0.0.1 --port 41241
 ```
-
-### Talk to it
 
 ```bash
 # From the a2a/ directory
@@ -42,67 +27,121 @@ uv run python cli.py --url http://localhost:41241 --token <your-token>
 
 ## Multi-Agent Travel Planner (`multi-agent/`)
 
-A travel planning multi-agent system built with [Google ADK](https://github.com/google/adk-python) and the A2A protocol.
-
-## Architecture
+A travel planning system built with [Google ADK](https://github.com/google/adk-python) and the A2A protocol. Four agents communicate over A2A:
 
 ```
 CLI → travel_planner (port 41241)
-         ├── flights_agent (direct or via gateway)
-         └── hotels_agent  (direct or via gateway)
+         ├── flights_agent (port 41242) → pricing_agent (port 41244)
+         └── hotels_agent  (port 41243)
 ```
 
-- **travel_planner**: Orchestrator — calls both sub-agents and combines results
-- **flights_agent**: Returns flight options for a destination
-- **hotels_agent**: Returns hotel options for a destination (routed through gateway)
-- **cli.py**: Terminal client for talking to any A2A agent
+- **travel_planner** — orchestrator, calls flights and hotels agents
+- **flights_agent** — finds flight options, calls pricing agent to evaluate prices
+- **hotels_agent** — finds hotel options
+- **pricing_agent** — evaluates whether a flight price is a good deal
 
-## Setup
+All agents route LLM calls through a LiteLLM proxy, which routes to Anthropic Claude via the Acuvity AI Security Gateway. Agent-to-agent A2A calls route through the same gateway when one is configured, or directly via Kubernetes service DNS when it isn't — see [Configuration](#configuration) below.
 
-### 1. Install dependencies
+## Prerequisites
+
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
+| `A2A_TRAVEL_PLANNER_TOKEN` | Component token from [console.acuvity.ai](https://console.acuvity.ai) |
+| `A2A_FLIGHTS_AGENT_TOKEN` | Component token from [console.acuvity.ai](https://console.acuvity.ai) |
+| `A2A_HOTELS_AGENT_TOKEN` | Component token from [console.acuvity.ai](https://console.acuvity.ai) |
+| `A2A_PRICING_AGENT_TOKEN` | Component token from [console.acuvity.ai](https://console.acuvity.ai) |
+| `CA_BUNDLE_PATH` | Path to your CA bundle PEM file |
+
+Import the [manifest file](./multi-agent/deploy/config/manifest.yaml) into [console.acuvity.ai](https://console.acuvity.ai), then issue a component token for each agent component.
+
+For full instructions see the [Acuvity AppSec docs](https://docs.acuvity.ai/wURWAaVt0FMiS39eKrS9/appsec).
+
+## Kubernetes Deployment
+
+<details><summary>Click to expand</summary>
+
+```bash
+export ANTHROPIC_API_KEY=<your_anthropic_key>
+export A2A_TRAVEL_PLANNER_TOKEN=<token>
+export A2A_FLIGHTS_AGENT_TOKEN=<token>
+export A2A_HOTELS_AGENT_TOKEN=<token>
+export A2A_PRICING_AGENT_TOKEN=<token>
+export CA_BUNDLE_PATH=<path/to/ca.pem>
+
+./multi-agent/deploy/k8s/deploy.sh
+```
+
+This script creates the `a2a-multi-agent` namespace, applies the CA bundle, and installs the Helm chart.
+
+To visualize this agent, import the [manifest file](./multi-agent/deploy/config/manifest.yaml) into the Acuvity console using [instructions provided here](../../infra/cli/README.md).
+
+### Configuration
+
+Each agent reads its configuration from `/app/config.yaml`, mounted into the pod from the `a2a-secrets` Secret. Helm renders this file from `deploy/k8s/charts/a2a-multi-agent/values.yaml` — the same values each agent reads locally from `multi-agent/src/backend/config.yaml`, just with Kubernetes service URLs and your tokens filled in.
+
+To route agent-to-agent A2A traffic through the Acuvity AI Security Gateway, set `gateway.url`:
+
+```bash
+helm upgrade a2a-multi-agent ./multi-agent/deploy/k8s/charts/a2a-multi-agent \
+  --namespace a2a-multi-agent \
+  --reuse-values \
+  --set gateway.url="https://<your-gateway-host>"
+```
+
+Leave `gateway.url` empty (`--set gateway.url=""`) to have agents call each other directly via Kubernetes service DNS instead.
+
+</details>
+
+## Local Development
+
+<details><summary>Click to expand</summary>
 
 ```bash
 cd multi-agent/src/backend
 uv sync
 ```
 
-Edit `agents/.env`:
+Edit `config.yaml` with your tokens and (optionally) a gateway URL:
 
-```env
-ANTHROPIC_API_KEY=your_anthropic_api_key
+```yaml
+gateway:
+  url: ""   # leave empty to call sub-agents directly, or set to route through a gateway
 
-# Gateway settings (if routing agents through a gateway)
-GATEWAY_URL=https://<gateway-host>/<org>/<project>
-APP_COMP_TOKEN=your_bearer_token
-CA_CERT_PATH=/path/to/ca-chain.pem
+ca_cert_path: ""
+
+litellm:
+  api_base: "http://localhost:4500"
+
+agents:
+  travel_planner:
+    agent_token: "<travel-planner-token>"
+    ...
+  flights_agent:
+    agent_token: "<flights-agent-token>"
+    ...
 ```
 
-## Running
-
-Start each agent in a separate terminal from `multi-agent/src/backend/`:
+Start each agent in a separate terminal:
 
 ```bash
-# Terminal 1 — flights sub-agent
-uv run python agents/flights_agent.py
-
-# Terminal 2 — hotels sub-agent (optional if using gateway)
-uv run python agents/hotels_agent.py
-
-# Terminal 3 — orchestrator
-uv run python agents/travel_planner_agent.py
+uv run python agents/pricing_agent.py      # Terminal 1
+uv run python agents/flights_agent.py      # Terminal 2
+uv run python agents/hotels_agent.py       # Terminal 3
+uv run python agents/travel_planner_agent.py  # Terminal 4
 ```
 
-## Talking to the agent
-
-From the `a2a/` directory:
+Talk to the travel planner:
 
 ```bash
-# Direct (no gateway)
+# From the a2a/ directory
 uv run python cli.py --url http://localhost:41241
 
-# Via gateway with TLS and bearer token
+# Via gateway (if gateway.url is set in config.yaml)
 uv run python cli.py \
-  --url https://<gateway-host>/<org>/<project>/a2a-travel-agent \
-  --token $APP_COMP_TOKEN \
+  --url https://<gateway-host>/<org>/<project>/a2a-travel-planner \
+  --token <travel-planner-token> \
   --ca-cert /path/to/ca-chain.pem
 ```
+
+</details>

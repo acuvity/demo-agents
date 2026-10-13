@@ -1,0 +1,199 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: a2a-pricing-agent
+  labels:
+    app: a2a-pricing-agent
+spec:
+  replicas: {{ .Values.pricingAgent.replicas }}
+  selector:
+    matchLabels:
+      app: a2a-pricing-agent
+  template:
+    metadata:
+      labels:
+        app: a2a-pricing-agent
+    spec:
+      containers:
+        - name: pricing-agent
+          image: "{{ .Values.pricingAgent.image.repository }}:{{ .Values.pricingAgent.image.tag }}"
+          imagePullPolicy: {{ .Values.pricingAgent.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.pricingAgent.port }}
+          envFrom:
+            - secretRef:
+                name: a2a-secrets
+          volumeMounts:
+            - name: a2a-config
+              mountPath: "/app/config.yaml"
+              subPath: config.yaml
+              readOnly: true
+            - name: custom-ca
+              mountPath: "/etc/ssl/certs/custom"
+              readOnly: true
+          env:
+            - name: REQUESTS_CA_BUNDLE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            - name: SSL_CERT_FILE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+      volumes:
+        - name: a2a-config
+          secret:
+            secretName: a2a-secrets
+            items:
+              - key: config.yaml
+                path: config.yaml
+        - name: custom-ca
+          configMap:
+            name: apex-ca-bundle
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: a2a-flights-agent
+  labels:
+    app: a2a-flights-agent
+spec:
+  replicas: {{ .Values.flightsAgent.replicas }}
+  selector:
+    matchLabels:
+      app: a2a-flights-agent
+  template:
+    metadata:
+      labels:
+        app: a2a-flights-agent
+    spec:
+      containers:
+        - name: flights-agent
+          image: "{{ .Values.flightsAgent.image.repository }}:{{ .Values.flightsAgent.image.tag }}"
+          imagePullPolicy: {{ .Values.flightsAgent.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.flightsAgent.port }}
+          envFrom:
+            - secretRef:
+                name: a2a-secrets
+          volumeMounts:
+            - name: a2a-config
+              mountPath: "/app/config.yaml"
+              subPath: config.yaml
+              readOnly: true
+            - name: custom-ca
+              mountPath: "/etc/ssl/certs/custom"
+              readOnly: true
+          env:
+            - name: CA_CERT_PATH
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            - name: REQUESTS_CA_BUNDLE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            - name: SSL_CERT_FILE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+      volumes:
+        - name: a2a-config
+          secret:
+            secretName: a2a-secrets
+            items:
+              - key: config.yaml
+                path: config.yaml
+        - name: custom-ca
+          configMap:
+            name: apex-ca-bundle
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: a2a-hotels-agent
+  labels:
+    app: a2a-hotels-agent
+spec:
+  replicas: {{ .Values.hotelsAgent.replicas }}
+  selector:
+    matchLabels:
+      app: a2a-hotels-agent
+  template:
+    metadata:
+      labels:
+        app: a2a-hotels-agent
+    spec:
+      containers:
+        - name: hotels-agent
+          image: "{{ .Values.hotelsAgent.image.repository }}:{{ .Values.hotelsAgent.image.tag }}"
+          imagePullPolicy: {{ .Values.hotelsAgent.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.hotelsAgent.port }}
+          envFrom:
+            - secretRef:
+                name: a2a-secrets
+          volumeMounts:
+            - name: a2a-config
+              mountPath: "/app/config.yaml"
+              subPath: config.yaml
+              readOnly: true
+            - name: custom-ca
+              mountPath: "/etc/ssl/certs/custom"
+              readOnly: true
+          env:
+            - name: REQUESTS_CA_BUNDLE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            - name: SSL_CERT_FILE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+      volumes:
+        - name: a2a-config
+          secret:
+            secretName: a2a-secrets
+            items:
+              - key: config.yaml
+                path: config.yaml
+        - name: custom-ca
+          configMap:
+            name: apex-ca-bundle
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: a2a-travel-planner
+  labels:
+    app: a2a-travel-planner
+spec:
+  replicas: {{ .Values.travelPlanner.replicas }}
+  selector:
+    matchLabels:
+      app: a2a-travel-planner
+  template:
+    metadata:
+      labels:
+        app: a2a-travel-planner
+    spec:
+      containers:
+        - name: travel-planner
+          image: "{{ .Values.travelPlanner.image.repository }}:{{ .Values.travelPlanner.image.tag }}"
+          imagePullPolicy: {{ .Values.travelPlanner.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.travelPlanner.port }}
+          envFrom:
+            - secretRef:
+                name: a2a-secrets
+          volumeMounts:
+            - name: a2a-config
+              mountPath: "/app/config.yaml"
+              subPath: config.yaml
+              readOnly: true
+            - name: custom-ca
+              mountPath: "/etc/ssl/certs/custom"
+              readOnly: true
+          env:
+            - name: CA_CERT_PATH
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            - name: REQUESTS_CA_BUNDLE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            - name: SSL_CERT_FILE
+              value: "/etc/ssl/certs/custom/ca-bundle.crt"
+      volumes:
+        - name: a2a-config
+          secret:
+            secretName: a2a-secrets
+            items:
+              - key: config.yaml
+                path: config.yaml
+        - name: custom-ca
+          configMap:
+            name: apex-ca-bundle

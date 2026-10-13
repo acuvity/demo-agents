@@ -1,0 +1,39 @@
+services:
+  pricing-agent:
+    image: acuvity/a2a-pricing-agent:latest
+    ports:
+      - "41244:41244"
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    restart: always
+
+  flights-agent:
+    image: acuvity/a2a-flights-agent:latest
+    ports:
+      - "41242:41242"
+    depends_on:
+      - pricing-agent
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      PRICING_AGENT_URL: "http://pricing-agent:41244"
+    restart: always
+
+  hotels-agent:
+    image: acuvity/a2a-hotels-agent:latest
+    ports:
+      - "41243:41243"
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    restart: always
+
+  travel-planner:
+    image: acuvity/a2a-travel-planner:latest
+    ports:
+      - "41241:41241"
+    depends_on:
+      - flights-agent
+      - hotels-agent
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GATEWAY_URL: "http://travel-planner:41241"
+    restart: always

@@ -1,0 +1,36 @@
+# Gateway URL for routing agent-to-agent A2A traffic (e.g. through Acuvity).
+# Leave empty to call sub-agents directly via their agent_url.
+gateway:
+  url: "https://127.0.0.1:1443/acuvity.ai/aisg1"
+
+ca_cert_path: ""
+
+litellm:
+  api_base: "https://127.0.0.1:1443/acuvity.ai/aisg1/anthropic-api"
+
+agents:
+  travel_planner:
+    port: 41241
+    # URL advertised in this agent's own card (supported_interfaces)
+    agent_url: "http://127.0.0.1:41241"
+    # Direct URLs to reach each sub-agent (used when gateway.url is empty)
+    flights_agent_url: "http://127.0.0.1:41242"
+    hotels_agent_url: "http://127.0.0.1:41243"
+    # Path segments used to reach each sub-agent via the gateway
+    flights_agent_gateway_path: "/a2a-flights-agent"
+    hotels_agent_gateway_path: "/a2a-hotels-agent"
+    agent_token: "PASTE_A2A_TRAVEL_PLANNER_TOKEN_HERE"
+  flights_agent:
+    port: 41242
+    agent_url: "http://127.0.0.1:41242"
+    pricing_agent_url: "http://127.0.0.1:41244"
+    pricing_agent_gateway_path: "/a2a-pricing-agent"
+    agent_token: "PASTE_A2A_FLIGHTS_AGENT_TOKEN_HERE"
+  hotels_agent:
+    port: 41243
+    agent_url: "http://127.0.0.1:41243"
+    agent_token: ""
+  pricing_agent:
+    port: 41244
+    agent_url: "http://127.0.0.1:41244"
+    agent_token: "PASTE_A2A_PRICING_AGENT_TOKEN_HERE"
