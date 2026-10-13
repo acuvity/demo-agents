@@ -1,0 +1,54 @@
+{
+  "name": "travel_planner",
+  "description": "Plans a trip by finding flights and hotels, then presenting a combined travel plan.",
+  "version": "0.1.0",
+  "supported_interfaces": [
+    {
+      "url": "http://localhost:41241/",
+      "protocol_binding": "JSONRPC",
+      "protocol_version": "1.0"
+    }
+  ],
+  "default_input_modes": ["text/plain"],
+  "default_output_modes": ["text/plain"],
+  "capabilities": {
+    "streaming": true,
+    "push_notifications": false
+  },
+  "security_schemes": {
+    "bearerAuth": {
+      "http_auth_security_scheme": {
+        "scheme": "Bearer",
+        "bearer_format": "JWT",
+        "description": "Bearer token authentication required for all requests."
+      }
+    }
+  },
+  "security": [
+    {"bearerAuth": []}
+  ],
+  "skills": [
+    {
+      "id": "travel_planner",
+      "name": "trip-planning",
+      "description": "Orchestrates flights_agent and hotels_agent to produce a complete travel plan with flights and hotel options.",
+      "tags": ["llm", "travel", "orchestrator"],
+      "examples": [
+        "Plan a trip from London to Barcelona for 4 nights",
+        "I want to visit Tokyo next month, help me plan flights and hotels"
+      ]
+    },
+    {
+      "id": "travel_planner-flights_agent",
+      "name": "flights_agent",
+      "description": "Finds flight options for a destination and travel dates.",
+      "tags": ["llm", "travel", "flights", "sub-agent"]
+    },
+    {
+      "id": "travel_planner-hotels_agent",
+      "name": "hotels_agent",
+      "description": "Finds hotel options for a destination and travel dates.",
+      "tags": ["llm", "travel", "hotels", "sub-agent"]
+    }
+  ]
+}

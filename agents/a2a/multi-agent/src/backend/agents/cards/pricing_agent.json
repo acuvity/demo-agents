@@ -1,0 +1,42 @@
+{
+  "name": "pricing_agent",
+  "description": "Evaluates whether flight prices are good deals based on typical market rates.",
+  "version": "0.1.0",
+  "supported_interfaces": [
+    {
+      "url": "http://localhost:41244/",
+      "protocol_binding": "JSONRPC",
+      "protocol_version": "1.0"
+    }
+  ],
+  "default_input_modes": ["text/plain"],
+  "default_output_modes": ["text/plain"],
+  "capabilities": {
+    "streaming": true,
+    "push_notifications": false
+  },
+  "security_schemes": {
+    "bearerAuth": {
+      "http_auth_security_scheme": {
+        "scheme": "Bearer",
+        "bearer_format": "JWT",
+        "description": "Bearer token authentication required for all requests."
+      }
+    }
+  },
+  "security": [
+    {"bearerAuth": []}
+  ],
+  "skills": [
+    {
+      "id": "pricing_agent",
+      "name": "price-evaluation",
+      "description": "Evaluates flight prices against typical market rates and labels each as Good deal, Fair price, or Overpriced.",
+      "tags": ["llm", "travel", "pricing"],
+      "examples": [
+        "Delta | JFK→CDG | $450 | 7h 30m",
+        "United | LAX→NRT | $850 | 11h"
+      ]
+    }
+  ]
+}

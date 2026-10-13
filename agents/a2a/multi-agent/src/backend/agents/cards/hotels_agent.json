@@ -1,0 +1,42 @@
+{
+  "name": "hotels_agent",
+  "description": "Finds hotel options for a travel destination and dates.",
+  "version": "0.1.0",
+  "supported_interfaces": [
+    {
+      "url": "http://localhost:41243/",
+      "protocol_binding": "JSONRPC",
+      "protocol_version": "1.0"
+    }
+  ],
+  "default_input_modes": ["text/plain"],
+  "default_output_modes": ["text/plain"],
+  "capabilities": {
+    "streaming": true,
+    "push_notifications": false
+  },
+  "security_schemes": {
+    "bearerAuth": {
+      "http_auth_security_scheme": {
+        "scheme": "Bearer",
+        "bearer_format": "JWT",
+        "description": "Bearer token authentication required for all requests."
+      }
+    }
+  },
+  "security": [
+    {"bearerAuth": []}
+  ],
+  "skills": [
+    {
+      "id": "hotels_agent",
+      "name": "hotel-search",
+      "description": "Returns 3 mocked hotel options for any destination and travel dates.",
+      "tags": ["llm", "travel", "hotels"],
+      "examples": [
+        "Find hotels in Paris for 5 nights starting June 10",
+        "What hotels are available in Tokyo for 3 people?"
+      ]
+    }
+  ]
+}

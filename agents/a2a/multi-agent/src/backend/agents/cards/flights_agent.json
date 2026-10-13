@@ -1,0 +1,42 @@
+{
+  "name": "flights_agent",
+  "description": "Finds flight options for a travel destination and dates.",
+  "version": "0.1.0",
+  "supported_interfaces": [
+    {
+      "url": "http://localhost:41242/",
+      "protocol_binding": "JSONRPC",
+      "protocol_version": "1.0"
+    }
+  ],
+  "default_input_modes": ["text/plain"],
+  "default_output_modes": ["text/plain"],
+  "capabilities": {
+    "streaming": true,
+    "push_notifications": false
+  },
+  "security_schemes": {
+    "bearerAuth": {
+      "http_auth_security_scheme": {
+        "scheme": "Bearer",
+        "bearer_format": "JWT",
+        "description": "Bearer token authentication required for all requests."
+      }
+    }
+  },
+  "security": [
+    {"bearerAuth": []}
+  ],
+  "skills": [
+    {
+      "id": "flights_agent",
+      "name": "flight-search",
+      "description": "Returns 3 mocked flight options for any destination and travel dates.",
+      "tags": ["llm", "travel", "flights"],
+      "examples": [
+        "Find flights from New York to Paris for next week",
+        "What flights are available to Tokyo in December?"
+      ]
+    }
+  ]
+}

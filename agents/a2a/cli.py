@@ -72,7 +72,7 @@ async def main() -> None:
     """Run the A2A terminal client."""
     parser = argparse.ArgumentParser(description='A2A Terminal Client')
     parser.add_argument('--url', default='http://127.0.0.1:41241', help='Agent base URL (used to fetch agent card)')
-    parser.add_argument('--token', default=None, help='Bearer token for gateway authorization')
+    parser.add_argument('--appCompToken', default=None, help='Bearer token for gateway authorization')
     parser.add_argument(
         '--transport',
         default=TransportProtocol.JSONRPC,
@@ -83,22 +83,17 @@ async def main() -> None:
         action='store_true',
         help='Use non-streaming message:send instead of message:stream',
     )
-    parser.add_argument(
-        '--no-verify-ssl',
-        action='store_true',
-        help='Disable SSL certificate verification (for self-signed certs)',
-    )
+
     parser.add_argument(
         '--ca-cert',
-        default="/Users/kgupta/Desktop/acuvity/backend/dev/data/certificates/ca-chain-external.pem",
+        default=None,
         help='Path to CA certificate PEM file for TLS verification',
     )
     args = parser.parse_args()
 
-    headers = {'Authorization': f'Bearer {args.token}'} if args.token else {}
-    if args.no_verify_ssl:
-        verify: bool | str = False
-    elif args.ca_cert:
+    headers = {'Authorization': f'Bearer {args.appCompToken}'} if args.appCompToken else {}
+    verify: bool | str
+    if args.ca_cert:
         verify = args.ca_cert
     else:
         verify = True
