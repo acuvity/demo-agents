@@ -27,18 +27,40 @@ NOTE: This demo agent has a [manifest file](./deploy/config/manifest.yaml) which
 
 For additional MCP servers and capabilities, visit the [Acuvity MCP Servers Registry](https://mcp.acuvity.ai) or [GitHub](https://github.com/acuvity/mcp-servers-registry).
 
+## Connectivity Modes
+
+The deployment supports two independent connectivity modes — one for the agent workload and one for LiteLLM — so you can mix and match based on what credentials you have.
+
+### Agent
+
+| Condition | Behaviour | Extra requirements |
+|-----------|-----------|-------------------|
+| `GOOGLE_ADK_AGENT_TOKEN` provided | Outbound traffic is routed through the AI Security Gateway via an authenticated HTTP/S proxy (`http://token:<token>@<host>:<port>`). | `PROXY_HOST`, `CA_BUNDLE_PATH` |
+| Token absent | No proxy; agent connects directly. | — |
+
+### LiteLLM
+
+| Condition | Behaviour | Extra requirements |
+|-----------|-----------|-------------------|
+| `GATEWAY_URL` provided | LiteLLM calls the Acuvity gateway as `api_base`, authenticated with `GOOGLE_ADK_LITELLM_TOKEN`. No CA bundle or transport proxy needed. | `GOOGLE_ADK_LITELLM_TOKEN` |
+| `GATEWAY_URL` absent | LiteLLM calls the Anthropic API via transport proxy, authenticated with `GOOGLE_ADK_LITELLM_TOKEN`. | `GOOGLE_ADK_LITELLM_TOKEN`, `ANTHROPIC_API_KEY`, `PROXY_HOST`, `CA_BUNDLE_PATH` |
+
+> **`PROXY_HOST` and `CA_BUNDLE_PATH`** are only required when at least one component runs in proxy mode (LiteLLM without a gateway URL, or the agent with a component token).
+
 ## Prerequisites
 
-Obtain the following API keys before proceeding:
+Obtain the following credentials before proceeding:
 
-| Provider | Environment Variable | Obtain From |
-|----------|---------------------|-------------|
-| Anthropic | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
-| Brave Search | `BRAVE_API_KEY` | [brave.com/search/api](https://brave.com/search/api) |
-| Acuvity | `GOOGLE_ADK_AGENT_TOKEN` | Component token — issue at [console.acuvity.ai](https://console.acuvity.ai) after manifest import (see below) |
-| Acuvity | `GOOGLE_ADK_LITELLM_TOKEN` | Component token — issue at [console.acuvity.ai](https://console.acuvity.ai) after manifest import (see below) |
-| Acuvity | `PROXY_HOST` | Host of your AI Security Gateway deployment (e.g. `ais-demo-gw.<namespace>.svc.cluster.local`) |
-| — | `CA_BUNDLE_PATH` | Path to your CA bundle PEM file for TLS verification |
+| Variable | Required when | Obtain From |
+|----------|--------------|-------------|
+| `BRAVE_API_KEY` | Always | [brave.com/search/api](https://brave.com/search/api) |
+| `LITELLM_MASTER_KEY` | Always | Choose any secret string |
+| `GOOGLE_ADK_LITELLM_TOKEN` | Always | Component token — issue at [console.acuvity.ai](https://console.acuvity.ai) after manifest import |
+| `GATEWAY_URL` | LiteLLM gateway mode | URL of your Acuvity gateway endpoint |
+| `ANTHROPIC_API_KEY` | LiteLLM proxy mode (no `GATEWAY_URL`) | [console.anthropic.com](https://console.anthropic.com) |
+| `GOOGLE_ADK_AGENT_TOKEN` | Agent proxy mode (optional) | Component token — issue at [console.acuvity.ai](https://console.acuvity.ai) after manifest import |
+| `PROXY_HOST` | Any proxy mode | Host of your AI Security Gateway (e.g. `ais-demo-gw.<namespace>.svc.cluster.local`) |
+| `CA_BUNDLE_PATH` | Any proxy mode | Path to your CA bundle PEM file for TLS verification |
 
 ### Component Tokens
 
@@ -54,18 +76,32 @@ For full instructions see the [Acuvity AppSec docs](https://docs.acuvity.ai/wURW
 
 <details><summary>Click to expand</summary>
 
-The deployment script handles the complete setup including MCP servers:
+The deployment script handles the complete setup including MCP servers.
+
+**Gateway mode** — LiteLLM calls the Acuvity gateway; agent also uses authenticated proxy:
 
 ```bash
-# Set required environment variables
-export ANTHROPIC_API_KEY=<your_anthropic_key>
 export BRAVE_API_KEY=<your_brave_key>
-export GOOGLE_ADK_AGENT_TOKEN=<your_agent_component_token>
+export LITELLM_MASTER_KEY=<secret>
+export GATEWAY_URL=<your_acuvity_gateway_url>
 export GOOGLE_ADK_LITELLM_TOKEN=<your_litellm_component_token>
+export GOOGLE_ADK_AGENT_TOKEN=<your_agent_component_token>  # enables agent proxy
+export PROXY_HOST=<your_ai_security_gateway_host>           # required with agent token
+export CA_BUNDLE_PATH=<path/to/ca.pem>                      # required with agent token
+
+./deploy/k8s/deploy.sh
+```
+
+**Proxy mode** — LiteLLM calls Anthropic directly via transport proxy:
+
+```bash
+export BRAVE_API_KEY=<your_brave_key>
+export LITELLM_MASTER_KEY=<secret>
+export ANTHROPIC_API_KEY=<your_anthropic_key>
 export PROXY_HOST=<your_ai_security_gateway_host>
 export CA_BUNDLE_PATH=<path/to/ca.pem>
+export GOOGLE_ADK_AGENT_TOKEN=<your_agent_component_token>  # optional, enables agent proxy
 
-# Run the deployment script
 ./deploy/k8s/deploy.sh
 ```
 

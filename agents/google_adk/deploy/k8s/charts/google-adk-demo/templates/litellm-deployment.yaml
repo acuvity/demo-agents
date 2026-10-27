@@ -8,7 +8,14 @@ data:
       - model_name: {{ .Values.litellm.modelName }}
         litellm_params:
           model: {{ .Values.litellm.model }}
+          {{- if .Values.litellm.gateway_url }}
+          api_key: os.environ/GOOGLE_ADK_LITELLM_TOKEN
+          {{- else }}
           api_key: os.environ/ANTHROPIC_API_KEY
+          {{- end }}
+          {{- if .Values.litellm.gateway_url }}
+          api_base: {{ .Values.litellm.gateway_url | quote }}
+          {{- end }}
     litellm_settings:
       callbacks: ["otel"]
       forward_client_headers:
@@ -44,25 +51,36 @@ spec:
             - name: config-volume
               mountPath: /app/proxy_server_config.yaml
               subPath: config.yaml
+            {{- if not .Values.litellm.gateway_url }}
             - name: custom-ca
               mountPath: "/etc/ssl/certs/custom"
               readOnly: true
+            {{- end }}
           env:
             - name: PORT
               value: "4500"
+            {{- if not .Values.litellm.gateway_url }}
             - name: REQUESTS_CA_BUNDLE
               value: "/etc/ssl/certs/custom/ca-bundle.crt"
             - name: SSL_CERT_FILE
               value: "/etc/ssl/certs/custom/ca-bundle.crt"
+            {{- end }}
             - name: GOOGLE_ADK_LITELLM_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: agent-secrets
                   key: GOOGLE_ADK_LITELLM_TOKEN
+            {{- if not .Values.litellm.gateway_url }}
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: agent-secrets
+                  key: ANTHROPIC_API_KEY
             - name: HTTPS_PROXY
               value: "https://token:$(GOOGLE_ADK_LITELLM_TOKEN)@{{ .Values.proxy.host }}:{{ .Values.proxy.httpsPort }}"
             - name: HTTP_PROXY
               value: "http://token:$(GOOGLE_ADK_LITELLM_TOKEN)@{{ .Values.proxy.host }}:{{ .Values.proxy.httpPort }}"
+            {{- end }}
           envFrom:
             - secretRef:
                 name: agent-secrets
@@ -70,8 +88,10 @@ spec:
         - name: config-volume
           configMap:
             name: litellm-config-file
+        {{- if not .Values.litellm.gateway_url }}
         - name: custom-ca
           configMap:
             name: apex-ca-bundle
+        {{- end }}
 
 

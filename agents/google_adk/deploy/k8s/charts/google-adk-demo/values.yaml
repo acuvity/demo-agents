@@ -17,7 +17,7 @@ agent:
       description: Brave search MCP server
       url: "http://mcp-server-brave-search.google-adk-demo.svc.cluster.local:8000/mcp"
     - name: arcade-mcp-gateway
-      url: https://api.arcade.dev/mcp/acuvity
+      url: https://api.arcade.dev/mcp/gw_3Eff6BBPyymZD3pKxiNPekoPtuD
 
   otel:
     enabled: true
@@ -42,13 +42,14 @@ ui:
 litellm:
   apiKey: ""
   apiBase: "http://litellm.google-adk-demo.svc.cluster.local:4500"
-  image: "docker.litellm.ai/berriai/litellm:main-stable"
+  image: "ghcr.io/berriai/litellm:v1.106.4"
   modelName: "claude-sonnet-4-6"
   model: "anthropic/claude-sonnet-4-6"
+  gateway_url: ""
 
 
 arcade:
-  userId: ""
+  userId: "default_user"
 
 proxy:
   host: "ais-demo-gw.proofpoint-ais.svc.cluster.local"
@@ -61,5 +62,6 @@ secrets:
   arcadeApiKey: ""
   agentToken: ""
   litellmToken: ""
+  litellmMasterKey: ""
 
 
