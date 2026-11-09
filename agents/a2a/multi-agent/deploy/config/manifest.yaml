@@ -1,0 +1,108 @@
+label: apps/a2a-multi-agent
+apps:
+  - name: a2a-multi-agent
+    description: "A2A multi-agent travel planner using Google ADK."
+    subject:
+      - - "@source:namespace=/"
+        - "@org=acuvity.ai"
+    tracing: Recording
+    selector:
+      type: Kubernetes
+      kubernetes:
+        kubernetesNamespace: a2a-multi-agent
+    components:
+      - name: travel-planner
+        description: "Orchestrator agent that coordinates flights and hotels agents."
+        kind: Agent
+        selector:
+          type: Kubernetes
+          kubernetes:
+            name: a2a-travel-planner
+            kubernetesNamespace: a2a-multi-agent
+            type: Deployment
+        provider:
+          category: App
+          providerType: "Agent"
+          hosts:
+            - a2a-travel-planner-svc
+            - a2a-travel-planner-svc.a2a-multi-agent
+            - a2a-travel-planner-svc.a2a-multi-agent.svc.cluster.local
+          extractors:
+            - ref: a2a/input-http
+            - ref: a2a/output-http
+            - ref: a2a/agent-card-input
+            - ref: a2a/agent-card-output
+        egress:
+          defaultPolicyAction: Allow
+
+      - name: flights-agent
+        description: "Sub-agent that finds flight options and calls pricing agent."
+        kind: Agent
+        selector:
+          type: Kubernetes
+          kubernetes:
+            name: a2a-flights-agent
+            kubernetesNamespace: a2a-multi-agent
+            type: Deployment
+        provider:
+          category: App
+          providerType: "Agent"
+          hosts:
+            - a2a-flights-agent-svc
+            - a2a-flights-agent-svc.a2a-multi-agent
+            - a2a-flights-agent-svc.a2a-multi-agent.svc.cluster.local
+          extractors:
+            - ref: a2a/input-http
+            - ref: a2a/output-http
+            - ref: a2a/agent-card-input
+            - ref: a2a/agent-card-output
+        egress:
+          defaultPolicyAction: Allow
+
+      - name: hotels-agent
+        description: "Sub-agent that finds hotel options."
+        kind: Agent
+        selector:
+          type: Kubernetes
+          kubernetes:
+            name: a2a-hotels-agent
+            kubernetesNamespace: a2a-multi-agent
+            type: Deployment
+        provider:
+          category: App
+          providerType: "Agent"
+          hosts:
+            - a2a-hotels-agent-svc
+            - a2a-hotels-agent-svc.a2a-multi-agent
+            - a2a-hotels-agent-svc.a2a-multi-agent.svc.cluster.local
+          extractors:
+            - ref: a2a/input-http
+            - ref: a2a/output-http
+            - ref: a2a/agent-card-input
+            - ref: a2a/agent-card-output
+        egress:
+          defaultPolicyAction: Allow
+
+      - name: pricing-agent
+        description: "Sub-agent that evaluates flight prices."
+        kind: Agent
+        selector:
+          type: Kubernetes
+          kubernetes:
+            name: a2a-pricing-agent
+            kubernetesNamespace: a2a-multi-agent
+            type: Deployment
+        provider:
+          category: App
+          providerType: "Agent"
+          hosts:
+            - a2a-pricing-agent-svc
+            - a2a-pricing-agent-svc.a2a-multi-agent
+            - a2a-pricing-agent-svc.a2a-multi-agent.svc.cluster.local
+          extractors:
+            - ref: a2a/input-http
+            - ref: a2a/output-http
+            - ref: a2a/agent-card-input
+            - ref: a2a/agent-card-output
+        egress:
+          defaultPolicyAction: Allow

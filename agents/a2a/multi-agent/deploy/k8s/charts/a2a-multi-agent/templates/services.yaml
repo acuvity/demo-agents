@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: a2a-pricing-agent-svc
+spec:
+  selector:
+    app: a2a-pricing-agent
+  ports:
+    - port: 80
+      targetPort: {{ .Values.pricingAgent.port }}
+  type: {{ .Values.pricingAgent.serviceType }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: a2a-flights-agent-svc
+spec:
+  selector:
+    app: a2a-flights-agent
+  ports:
+    - port: 80
+      targetPort: {{ .Values.flightsAgent.port }}
+  type: {{ .Values.flightsAgent.serviceType }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: a2a-hotels-agent-svc
+spec:
+  selector:
+    app: a2a-hotels-agent
+  ports:
+    - port: 80
+      targetPort: {{ .Values.hotelsAgent.port }}
+  type: {{ .Values.hotelsAgent.serviceType }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: a2a-travel-planner-svc
+spec:
+  selector:
+    app: a2a-travel-planner
+  ports:
+    - port: 80
+      targetPort: {{ .Values.travelPlanner.port }}
+  type: {{ .Values.travelPlanner.serviceType }}

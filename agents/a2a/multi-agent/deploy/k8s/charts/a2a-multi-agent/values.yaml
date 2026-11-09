@@ -1,0 +1,55 @@
+travelPlanner:
+  image:
+    repository: acuvity/a2a-travel-planner
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 41241
+  serviceType: ClusterIP
+
+flightsAgent:
+  image:
+    repository: acuvity/a2a-flights-agent
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 41242
+  serviceType: ClusterIP
+
+hotelsAgent:
+  image:
+    repository: acuvity/a2a-hotels-agent
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 41243
+  serviceType: ClusterIP
+
+pricingAgent:
+  image:
+    repository: acuvity/a2a-pricing-agent
+    tag: latest
+    pullPolicy: Always
+  replicas: 1
+  port: 41244
+  serviceType: ClusterIP
+
+litellm:
+  apiBase: ""   # optional: override Anthropic API base (e.g. a gateway URL)
+
+caBundle:
+  enabled: false   # mount the apex-ca-bundle ConfigMap and trust it (set by deploy.sh when CA_BUNDLE_PATH is given)
+
+gateway:
+  url: ""   # optional: route agent-to-agent A2A traffic through a gateway
+  paths:    # gateway path per sub-agent (e.g. "/flights-agent"); empty = call that agent directly
+    flights: ""
+    hotels: ""
+    pricing: ""
+
+secrets:
+  anthropicApiKey: ""
+  travelPlannerToken: ""
+  flightsAgentToken: ""
+  hotelsAgentToken: ""
+  pricingAgentToken: ""
